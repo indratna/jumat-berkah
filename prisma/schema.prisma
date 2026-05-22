@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  donor
+  admin
+}
+
+enum DonationStatus {
+  pending
+  settlement
+  expire
+  cancel
+  deny
+  failure
+  refund
+}
+
+model User {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String?
+  email     String     @unique
+  role      UserRole   @default(donor)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  donations Donation[]
+  expenses  Expense[]
+  auditLogs AuditLog[]
+
+  @@index([role])
+  @@map("users")
+}
+
+model Donation {
+  id                     String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId                String         @unique @map("order_id")
+  userId                 String?        @map("user_id") @db.Uuid
+  donorName              String?        @map("donor_name")
+  donorEmail             String?        @map("donor_email")
+  donorPhone             String?        @map("donor_phone")
+  isAnonymous            Boolean        @default(false) @map("is_anonymous")
+  showNamePublicly       Boolean        @default(true) @map("show_name_publicly")
+  amount                 Int
+  message                String?
+  paymentProvider        String         @default("midtrans") @map("payment_provider")
+  paymentMethod          String         @default("qris") @map("payment_method")
+  status                 DonationStatus @default(pending)
+  midtransTransactionId  String?        @map("midtrans_transaction_id")
+  paidAt                 DateTime?      @map("paid_at")
+  createdAt              DateTime       @default(now()) @map("created_at")
+  updatedAt              DateTime       @updatedAt @map("updated_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([paidAt])
+  @@index([userId])
+  @@map("donations")
+}
+
+model Expense {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  expenseDate DateTime @map("expense_date") @db.Date
+  category    String
+  description String
+  amount      Int
+  vendorName  String?  @map("vendor_name")
+  receiptUrl  String?  @map("receipt_url")
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  creator User @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@index([expenseDate])
+  @@index([category])
+  @@index([createdBy])
+  @@map("expenses")
+}
+
+model MidtransWebhookLog {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId           String   @map("order_id")
+  transactionStatus String   @map("transaction_status")
+  fraudStatus       String?  @map("fraud_status")
+  signatureValid    Boolean  @map("signature_valid")
+  rawPayload        Json     @map("raw_payload")
+  receivedAt        DateTime @default(now()) @map("received_at")
+
+  @@index([orderId])
+  @@index([receivedAt])
+  @@map("midtrans_webhook_logs")
+}
+
+model AuditLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorUserId String?  @map("actor_user_id") @db.Uuid
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  before      Json?
+  after       Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

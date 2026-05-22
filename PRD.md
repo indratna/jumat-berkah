@@ -68,6 +68,8 @@ Siapa saja yang ingin melihat laporan pemasukan dan pengeluaran tanpa perlu logi
 - Login admin.
 - Login opsional donatur.
 - Riwayat donasi untuk donatur login.
+- Notifikasi Telegram donasi settlement ke chat admin.
+- Catat pengeluaran via perintah Telegram dari chat admin yang ada di allowlist.
 
 ### 5.2 Di Luar Scope MVP
 
@@ -362,6 +364,40 @@ Catatan aktivitas penting untuk menjaga integritas laporan.
 - Aktivitas penting dapat ditelusuri.
 - Audit log tidak dapat diubah melalui UI normal.
 
+## 8.11 Notifikasi & Bot Telegram
+
+### Deskripsi
+
+Integrasi Telegram Bot untuk mengirim notifikasi donasi settlement ke chat admin dan menerima perintah pencatatan pengeluaran dari chat admin yang masuk allowlist. Fitur opsional dan opt-in melalui environment variable.
+
+### Kebutuhan Fungsional
+
+- Mengirim notifikasi ke chat admin saat donasi berubah status menjadi `settlement`.
+- Notifikasi hanya terkirim sekali per perubahan status (idempoten terhadap webhook ganda).
+- Notifikasi tidak boleh memuat email atau nomor donatur.
+- Notifikasi memakai aturan privasi laporan publik (`Anonim` jika anonim atau nama disembunyikan).
+- Menerima perintah `/pengeluaran` dari chat admin yang ada di allowlist.
+- Menerima perintah read-only admin: `/saldo`, `/donasi_terbaru`, `/pengeluaran_terbaru`, `/cari`, `/laporan`, dan `/csv`.
+- Menerima perintah admin write dengan konfirmasi: `/edit_pengeluaran` dan `/hapus_pengeluaran`.
+- Memverifikasi secret token webhook Telegram pada header `X-Telegram-Bot-Api-Secret-Token`.
+- Memvalidasi input perintah seperti API admin pengeluaran (tanggal, kategori, nominal, deskripsi, vendor opsional).
+- Membuat audit log untuk setiap pengeluaran via Telegram dengan penanda channel `telegram`.
+- Kegagalan kirim notifikasi tidak boleh menggagalkan webhook Midtrans.
+- Allowlist chat admin dikelola via environment variable, bukan hardcoded.
+
+### Acceptance Criteria
+
+- Hanya chat admin di allowlist yang dapat membuat pengeluaran via Telegram.
+- Webhook Telegram dengan secret token salah ditolak.
+- Perintah dengan format invalid tidak membuat pengeluaran dan menampilkan petunjuk format.
+- Perintah read-only Telegram hanya dapat dijalankan dari chat admin yang masuk allowlist.
+- Balasan read-only memakai format Rupiah dan tidak mengekspos email/nomor donatur.
+- Edit/hapus pengeluaran via Telegram hanya berjalan setelah konfirmasi dari admin chat/user yang sama.
+- Edit/hapus pengeluaran via Telegram membuat audit log before/after.
+- Donasi settlement memicu tepat satu notifikasi per perubahan status.
+- Notifikasi tidak pernah mengekspos email/nomor donatur.
+- Telegram bot mati atau tidak dikonfigurasi tidak menggagalkan flow donasi atau webhook Midtrans.
+
 ## 9. Role dan Hak Akses
 
 | Role | Hak Akses |
@@ -369,6 +405,7 @@ Catatan aktivitas penting untuk menjaga integritas laporan.
 | Pengunjung | Donasi, lihat laporan publik |
 | Donatur Login | Donasi, lihat laporan publik, lihat riwayat donasi pribadi |
 | Admin | Kelola donasi, pengeluaran, laporan, export, audit |
+| Admin Telegram (chat di allowlist) | Catat pengeluaran via perintah `/pengeluaran` dan menerima notifikasi donasi settlement |
 
 ## 10. Data Model Awal
 
@@ -474,6 +511,12 @@ Menyimpan aktivitas penting aplikasi.
 |---|---|---|
 | POST | `/api/webhooks/midtrans` | Menerima notifikasi pembayaran |
 
+### 11.2a Telegram
+
+| Method | Endpoint | Fungsi |
+|---|---|---|
+| POST | `/api/webhooks/telegram` | Menerima update Telegram (perintah admin) dengan verifikasi secret token |
+
 ### 11.3 Donatur Login
 
 | Method | Endpoint | Fungsi |
@@ -500,7 +543,9 @@ Menyimpan aktivitas penting aplikasi.
 - Semua endpoint admin wajib autentikasi.
 - Role admin wajib dicek di server.
 - Webhook Midtrans wajib validasi signature key.
-- Secret Midtrans tidak boleh diekspos ke client.
+- Webhook Telegram wajib validasi secret token via header `X-Telegram-Bot-Api-Secret-Token`.
+- Allowlist chat admin Telegram wajib dicek di server sebelum aksi tulis.
+- Secret Midtrans dan token bot Telegram tidak boleh diekspos ke client.
 - Input nominal harus divalidasi di server.
 - Data pribadi donatur tidak boleh tampil publik tanpa izin.
 
@@ -509,6 +554,7 @@ Menyimpan aktivitas penting aplikasi.
 - Donatur dapat memilih anonim.
 - Email dan nomor WhatsApp tidak tampil di laporan publik.
 - Nama donatur hanya tampil jika `show_name_publicly = true` dan tidak anonim.
+- Notifikasi Telegram memakai aturan publik yang sama (Anonim untuk donatur anonim/disembunyikan, tidak pernah memuat email atau nomor).
 
 ### 12.3 Reliabilitas
 
@@ -612,6 +658,8 @@ Menyimpan aktivitas penting aplikasi.
 - Export CSV.
 - Upload bukti pengeluaran.
 - Audit log detail.
+- Notifikasi Telegram donasi settlement ke admin.
+- Catat pengeluaran via perintah Telegram untuk admin di allowlist.
 
 ### P2 - Pengembangan Lanjutan
 
@@ -620,6 +668,13 @@ Menyimpan aktivitas penting aplikasi.
 - Donasi berulang.
 - Grafik laporan.
 - Halaman campaign khusus.
+- Perintah admin Telegram read-only: `/saldo`, `/donasi_terbaru`, `/pengeluaran_terbaru`, `/cari`, `/laporan`, `/csv`.
+- Perintah admin Telegram tulis dengan konfirmasi: `/edit_pengeluaran`, `/hapus_pengeluaran`.
+- (future) Notifikasi terjadwal Telegram: ringkasan harian Jumat, mingguan, alert saldo rendah, alert pending donation, alert webhook signature invalid.
+- (future) Upload struk via Telegram dan approval pengeluaran besar.
+- (done) Self-service donatur via Telegram dan reminder Jumat opt-in (informational, bukan auto debit).
+- Bot publik transparansi: `/saldo_publik`, `/pengeluaran_publik`, `/laporan_publik`, dan broadcast laporan mingguan ke channel publik.
+- Alert operasional dan keamanan via Telegram: failed login berulang, audit log kritis, dan health check.
 
 ## 18. Milestone Pengembangan
 
@@ -657,6 +712,16 @@ Menyimpan aktivitas penting aplikasi.
 - Login donatur.
 - Profil dasar.
 - Riwayat donasi pribadi.
+
+### Milestone 6 - Notifikasi & Bot Telegram
+
+- Bot Telegram terkonfigurasi dengan secret token dan allowlist admin chat.
+- Notifikasi Telegram saat donasi settlement.
+- Perintah `/pengeluaran` untuk admin di allowlist.
+- Cloudflare DNS, TLS, dan setup webhook didokumentasikan.
+- Perintah publik Telegram menampilkan data transparansi tanpa email, nomor WhatsApp, atau ID internal.
+- Admin allowlist dapat menjalankan `/broadcast_laporan` untuk mengirim ringkasan mingguan ke channel publik.
+- Telegram mengirim alert operasional untuk failed admin login berulang, pengeluaran besar/dihapus, dan health check bermasalah.
 
 ## 19. Open Questions
 

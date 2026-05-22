@@ -5,6 +5,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { ADMIN_SESSION_COOKIE, requireAdminUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { serializeExpenseForAudit, validateExpenseInput } from "@/lib/expenses";
+import { maybeSendCriticalAuditAlert } from "@/lib/telegram-alerts";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -14,10 +15,16 @@ export async function PATCH(request: Request, context: RouteContext) {
   const admin = await getAdminFromCookie();
 
   if (!admin) {
-    return NextResponse.json({ errors: { auth: "Unauthorized" } }, { status: 401 });
+    return NextResponse.json(
+      { errors: { auth: "Unauthorized" } },
+      { status: 401 },
+    );
   }
 
-  const payload = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  const payload = (await request.json().catch(() => null)) as Record<
+    string,
+    unknown
+  > | null;
   const validation = validateExpenseInput(payload ?? {});
 
   if (!validation.success) {
@@ -61,7 +68,10 @@ export async function PATCH(request: Request, context: RouteContext) {
   });
 
   if (!updated) {
-    return NextResponse.json({ errors: { expense: "Pengeluaran tidak ditemukan." } }, { status: 404 });
+    return NextResponse.json(
+      { errors: { expense: "Pengeluaran tidak ditemukan." } },
+      { status: 404 },
+    );
   }
 
   return NextResponse.json({
@@ -79,7 +89,10 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const admin = await getAdminFromCookie();
 
   if (!admin) {
-    return NextResponse.json({ errors: { auth: "Unauthorized" } }, { status: 401 });
+    return NextResponse.json(
+      { errors: { auth: "Unauthorized" } },
+      { status: 401 },
+    );
   }
 
   const { id } = await context.params;
@@ -108,8 +121,19 @@ export async function DELETE(_request: Request, context: RouteContext) {
   });
 
   if (!deleted) {
-    return NextResponse.json({ errors: { expense: "Pengeluaran tidak ditemukan." } }, { status: 404 });
+    return NextResponse.json(
+      { errors: { expense: "Pengeluaran tidak ditemukan." } },
+      { status: 404 },
+    );
   }
+
+  await maybeSendCriticalAuditAlert({
+    action: "expense.deleted",
+    entityId: deleted.id,
+    actorLabel: admin.email,
+    amount: deleted.amount,
+    description: deleted.description,
+  });
 
   return NextResponse.json({ ok: true });
 }

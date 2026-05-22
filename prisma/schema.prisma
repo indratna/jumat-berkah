@@ -27,13 +27,21 @@ enum DonationStatus {
   refund
 }
 
+enum ExpenseApprovalStatus {
+  approved
+  pending_approval
+}
+
 model User {
   id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name      String?
   email     String     @unique
-  role      UserRole   @default(donor)
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
+  role                  UserRole @default(donor)
+  telegramChatId        BigInt?  @unique @map("telegram_chat_id")
+  telegramReminderOptIn Boolean  @default(false) @map("telegram_reminder_opt_in")
+  telegramLinkCode      String?  @unique @map("telegram_link_code")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
   donations Donation[]
   expenses  Expense[]
@@ -78,17 +86,36 @@ model Expense {
   description String
   amount      Int
   vendorName  String?  @map("vendor_name")
-  receiptUrl  String?  @map("receipt_url")
-  createdBy   String   @map("created_by") @db.Uuid
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  receiptUrl       String?                @map("receipt_url")
+  approvalStatus   ExpenseApprovalStatus @default(approved) @map("approval_status")
+  approvalRequired Int                   @default(1) @map("approval_required")
+  approvedAt       DateTime?             @map("approved_at")
+  createdBy        String                @map("created_by") @db.Uuid
+  createdAt        DateTime              @default(now()) @map("created_at")
+  updatedAt        DateTime              @updatedAt @map("updated_at")
 
-  creator User @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  creator   User              @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  approvals ExpenseApproval[]
 
   @@index([expenseDate])
   @@index([category])
   @@index([createdBy])
+  @@index([approvalStatus])
   @@map("expenses")
+}
+
+model ExpenseApproval {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  expenseId      String   @map("expense_id") @db.Uuid
+  telegramChatId BigInt   @map("telegram_chat_id")
+  telegramUserId BigInt   @map("telegram_user_id")
+  approvedAt     DateTime @default(now()) @map("approved_at")
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+
+  @@unique([expenseId, telegramUserId])
+  @@index([expenseId])
+  @@map("expense_approvals")
 }
 
 model MidtransWebhookLog {

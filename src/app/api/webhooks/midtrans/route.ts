@@ -5,6 +5,13 @@ import {
   parseMidtransNotification,
   verifyMidtransSignature,
 } from "@/lib/midtrans";
+import {
+  formatDonationSettlementMessage,
+  getTelegramBotToken,
+  getTelegramNotifyChatId,
+  isTelegramNotifyEnabled,
+  safeSendTelegramMessage,
+} from "@/lib/telegram";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -64,17 +71,32 @@ export async function POST(request: Request) {
         status: true,
         paidAt: true,
         midtransTransactionId: true,
+        amount: true,
+        donorName: true,
+        isAnonymous: true,
+        showNamePublicly: true,
+        message: true,
       },
     });
 
     if (!donation) {
-      return { donationFound: false, statusChanged: false };
+      return {
+        donationFound: false,
+        statusChanged: false,
+        donation: null,
+        updatedDonation: null,
+      };
     }
 
     const nextStatus = getSafeNextStatus(donation.status, mappedStatus);
 
     if (nextStatus === donation.status) {
-      return { donationFound: true, statusChanged: false };
+      return {
+        donationFound: true,
+        statusChanged: false,
+        donation,
+        updatedDonation: null,
+      };
     }
 
     const updatedDonation = await tx.donation.update({
@@ -113,7 +135,12 @@ export async function POST(request: Request) {
       },
     });
 
-    return { donationFound: true, statusChanged: true };
+    return {
+      donationFound: true,
+      statusChanged: true,
+      donation,
+      updatedDonation,
+    };
   });
 
   if (!result.donationFound) {
@@ -121,6 +148,24 @@ export async function POST(request: Request) {
       { errors: { orderId: "Donasi tidak ditemukan." } },
       { status: 404 },
     );
+  }
+
+  // Fire-and-forget Telegram notification for settlement transitions only.
+  // Notification failure must NOT break the webhook response.
+  if (
+    result.statusChanged &&
+    result.updatedDonation?.status === DonationStatus.settlement &&
+    result.donation
+  ) {
+    await maybeSendSettlementNotification({
+      orderId: result.donation.orderId,
+      amount: result.donation.amount,
+      donorName: result.donation.donorName,
+      isAnonymous: result.donation.isAnonymous,
+      showNamePublicly: result.donation.showNamePublicly,
+      message: result.donation.message,
+      paidAt: result.updatedDonation.paidAt ?? new Date(),
+    });
   }
 
   return NextResponse.json({
@@ -131,7 +176,42 @@ export async function POST(request: Request) {
   });
 }
 
-function getSafeNextStatus(currentStatus: DonationStatus, requestedStatus: DonationStatus) {
+type SettlementNotificationInput = {
+  orderId: string;
+  amount: number;
+  donorName: string | null;
+  isAnonymous: boolean;
+  showNamePublicly: boolean;
+  message: string | null;
+  paidAt: Date;
+};
+
+async function maybeSendSettlementNotification(
+  input: SettlementNotificationInput,
+) {
+  if (!isTelegramNotifyEnabled()) {
+    return;
+  }
+
+  if (!getTelegramBotToken()) {
+    return;
+  }
+
+  const chatId = getTelegramNotifyChatId();
+
+  if (chatId === null) {
+    return;
+  }
+
+  const text = formatDonationSettlementMessage(input);
+
+  await safeSendTelegramMessage({ chatId, text });
+}
+
+function getSafeNextStatus(
+  currentStatus: DonationStatus,
+  requestedStatus: DonationStatus,
+) {
   if (
     currentStatus === DonationStatus.settlement &&
     requestedStatus !== DonationStatus.refund

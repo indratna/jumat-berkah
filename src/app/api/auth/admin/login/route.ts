@@ -6,6 +6,7 @@ import {
   getAdminSessionMaxAge,
 } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
+import { recordFailedAdminLogin } from "@/lib/telegram-alerts";
 
 type LoginPayload = {
   email?: unknown;
@@ -13,9 +14,15 @@ type LoginPayload = {
 };
 
 export async function POST(request: Request) {
-  const payload = (await request.json().catch(() => null)) as LoginPayload | null;
-  const email = typeof payload?.email === "string" ? payload.email.trim().toLowerCase() : "";
-  const loginCode = typeof payload?.loginCode === "string" ? payload.loginCode : "";
+  const payload = (await request
+    .json()
+    .catch(() => null)) as LoginPayload | null;
+  const email =
+    typeof payload?.email === "string"
+      ? payload.email.trim().toLowerCase()
+      : "";
+  const loginCode =
+    typeof payload?.loginCode === "string" ? payload.loginCode : "";
   const expectedLoginCode = process.env.ADMIN_LOGIN_CODE;
 
   if (!expectedLoginCode) {
@@ -26,6 +33,10 @@ export async function POST(request: Request) {
   }
 
   if (!email || !loginCode || loginCode !== expectedLoginCode) {
+    await recordFailedAdminLogin({
+      email,
+      ipAddress: getClientIp(request),
+    });
     return NextResponse.json(
       { errors: { auth: "Email atau kode admin tidak valid." } },
       { status: 401 },
@@ -39,6 +50,10 @@ export async function POST(request: Request) {
   });
 
   if (!admin || admin.role !== "admin") {
+    await recordFailedAdminLogin({
+      email,
+      ipAddress: getClientIp(request),
+    });
     return NextResponse.json(
       { errors: { auth: "Akun admin tidak ditemukan." } },
       { status: 401 },
@@ -57,4 +72,14 @@ export async function POST(request: Request) {
   });
 
   return response;
+}
+
+function getClientIp(request: Request): string | null {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+
+  if (forwardedFor) {
+    return forwardedFor.split(",")[0]?.trim() || null;
+  }
+
+  return request.headers.get("x-real-ip");
 }

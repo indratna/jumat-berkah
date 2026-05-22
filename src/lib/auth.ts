@@ -63,7 +63,11 @@ export function verifyAdminSession(session: string | undefined) {
 
   const payload = parseSessionPayload(encodedPayload);
 
-  if (!payload || payload.role !== "admin" || payload.expiresAt < Math.floor(Date.now() / 1000)) {
+  if (
+    !payload ||
+    payload.role !== "admin" ||
+    payload.expiresAt < Math.floor(Date.now() / 1000)
+  ) {
     return null;
   }
 
@@ -89,7 +93,11 @@ export function verifyDonorSession(session: string | undefined) {
 
   const payload = parseDonorSessionPayload(encodedPayload);
 
-  if (!payload || payload.role !== "donor" || payload.expiresAt < Math.floor(Date.now() / 1000)) {
+  if (
+    !payload ||
+    payload.role !== "donor" ||
+    payload.expiresAt < Math.floor(Date.now() / 1000)
+  ) {
     return null;
   }
 
@@ -124,7 +132,13 @@ export async function getDonorUser(session: string | undefined) {
 
   return prisma.user.findFirst({
     where: { id: payload.userId, email: payload.email, role: "donor" },
-    select: { id: true, name: true, email: true, role: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      telegramLinkCode: true,
+    },
   });
 }
 
@@ -143,10 +157,14 @@ function signSessionPayload(encodedPayload: string) {
     throw new Error("AUTH_SECRET is required for admin session signing.");
   }
 
-  return createHmac("sha256", secret).update(encodedPayload).digest("base64url");
+  return createHmac("sha256", secret)
+    .update(encodedPayload)
+    .digest("base64url");
 }
 
-function parseSessionPayload(encodedPayload: string): AdminSessionPayload | null {
+function parseSessionPayload(
+  encodedPayload: string,
+): AdminSessionPayload | null {
   try {
     const payload = JSON.parse(base64UrlDecode(encodedPayload)) as unknown;
 
@@ -160,7 +178,9 @@ function parseSessionPayload(encodedPayload: string): AdminSessionPayload | null
   }
 }
 
-function parseDonorSessionPayload(encodedPayload: string): DonorSessionPayload | null {
+function parseDonorSessionPayload(
+  encodedPayload: string,
+): DonorSessionPayload | null {
   try {
     const payload = JSON.parse(base64UrlDecode(encodedPayload)) as unknown;
 
@@ -174,7 +194,9 @@ function parseDonorSessionPayload(encodedPayload: string): DonorSessionPayload |
   }
 }
 
-function isAdminSessionPayload(payload: unknown): payload is AdminSessionPayload {
+function isAdminSessionPayload(
+  payload: unknown,
+): payload is AdminSessionPayload {
   return (
     typeof payload === "object" &&
     payload !== null &&
@@ -187,7 +209,9 @@ function isAdminSessionPayload(payload: unknown): payload is AdminSessionPayload
   );
 }
 
-function isDonorSessionPayload(payload: unknown): payload is DonorSessionPayload {
+function isDonorSessionPayload(
+  payload: unknown,
+): payload is DonorSessionPayload {
   return (
     typeof payload === "object" &&
     payload !== null &&
@@ -206,7 +230,10 @@ function safeEqual(value: string, expected: string) {
   const valueBuffer = Buffer.from(value);
   const expectedBuffer = Buffer.from(expected);
 
-  return valueBuffer.length === expectedBuffer.length && timingSafeEqual(valueBuffer, expectedBuffer);
+  return (
+    valueBuffer.length === expectedBuffer.length &&
+    timingSafeEqual(valueBuffer, expectedBuffer)
+  );
 }
 
 function base64UrlEncode(value: string) {

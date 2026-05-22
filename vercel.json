@@ -1,0 +1,8 @@
+{
+  "crons": [
+    { "path": "/api/cron/telegram/daily", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/telegram/weekly", "schedule": "0 0 * * 5" },
+    { "path": "/api/cron/telegram/donor-reminder", "schedule": "0 0 * * 5" },
+    { "path": "/api/cron/telegram/health", "schedule": "*/30 * * * *" }
+  ]
+}

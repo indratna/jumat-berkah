@@ -5,16 +5,25 @@ import { Prisma } from "@/generated/prisma/client";
 import { ADMIN_SESSION_COOKIE, requireAdminUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { serializeExpenseForAudit, validateExpenseInput } from "@/lib/expenses";
+import { maybeSendCriticalAuditAlert } from "@/lib/telegram-alerts";
 
 export async function POST(request: Request) {
   const cookieStore = await cookies();
-  const admin = await requireAdminUser(cookieStore.get(ADMIN_SESSION_COOKIE)?.value);
+  const admin = await requireAdminUser(
+    cookieStore.get(ADMIN_SESSION_COOKIE)?.value,
+  );
 
   if (!admin) {
-    return NextResponse.json({ errors: { auth: "Unauthorized" } }, { status: 401 });
+    return NextResponse.json(
+      { errors: { auth: "Unauthorized" } },
+      { status: 401 },
+    );
   }
 
-  const payload = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  const payload = (await request.json().catch(() => null)) as Record<
+    string,
+    unknown
+  > | null;
   const validation = validateExpenseInput(payload ?? {});
 
   if (!validation.success) {
@@ -47,6 +56,14 @@ export async function POST(request: Request) {
     });
 
     return created;
+  });
+
+  await maybeSendCriticalAuditAlert({
+    action: "expense.created",
+    entityId: expense.id,
+    actorLabel: admin.email,
+    amount: expense.amount,
+    description: expense.description,
   });
 
   return NextResponse.json({

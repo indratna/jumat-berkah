@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+npm-debug.log*
+Dockerfile
+docker-compose*.yml
+DEPLOYMENT_READINESS.md
+AGENTS.md
+IMPLEMENTATION_PLAN.md
+PRD.md
+TECHNICAL_SPEC.md
+README.md

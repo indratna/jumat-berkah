@@ -1,4 +1,7 @@
-import { DonationStatus } from "@/generated/prisma/client";
+import {
+  DonationStatus,
+  ExpenseApprovalStatus,
+} from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/db";
 import { getPublicDonorName } from "@/lib/reports";
 
@@ -48,6 +51,7 @@ export async function getAdminDashboardSummary() {
       _sum: { amount: true },
     }),
     prisma.expense.aggregate({
+      where: { approvalStatus: ExpenseApprovalStatus.approved },
       _sum: { amount: true },
     }),
     prisma.donation.count({ where: { status: DonationStatus.pending } }),
@@ -258,15 +262,17 @@ export async function getAdminReportExport(filters: {
           },
         }
       : {};
-  const expenseWhere =
-    from || to
+  const expenseWhere = {
+    approvalStatus: ExpenseApprovalStatus.approved,
+    ...(from || to
       ? {
           expenseDate: {
             ...(from ? { gte: from } : {}),
             ...(to ? { lte: to } : {}),
           },
         }
-      : {};
+      : {}),
+  };
 
   const [donations, expenses] = await Promise.all([
     prisma.donation.findMany({

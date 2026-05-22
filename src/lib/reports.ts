@@ -1,4 +1,7 @@
-import { DonationStatus } from "@/generated/prisma/client";
+import {
+  DonationStatus,
+  ExpenseApprovalStatus,
+} from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/db";
 
 export type ReportDateRange = {
@@ -16,7 +19,10 @@ export function parseReportDateRange(params: URLSearchParams): ReportDateRange {
 export async function getPublicReport(range: ReportDateRange) {
   const prisma = getPrisma();
   const donationDateFilter = buildDateFilter(range, "paidAt");
-  const expenseDateFilter = buildDateFilter(range, "expenseDate");
+  const expenseDateFilter = {
+    approvalStatus: ExpenseApprovalStatus.approved,
+    ...buildDateFilter(range, "expenseDate"),
+  };
 
   const [
     periodIncome,
@@ -38,7 +44,10 @@ export async function getPublicReport(range: ReportDateRange) {
       where: { status: DonationStatus.settlement },
       _sum: { amount: true },
     }),
-    prisma.expense.aggregate({ _sum: { amount: true } }),
+    prisma.expense.aggregate({
+      where: { approvalStatus: ExpenseApprovalStatus.approved },
+      _sum: { amount: true },
+    }),
     prisma.donation.findMany({
       where: { status: DonationStatus.settlement, ...donationDateFilter },
       orderBy: { paidAt: "desc" },

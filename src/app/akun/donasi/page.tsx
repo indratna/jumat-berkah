@@ -4,18 +4,32 @@ import { redirect } from "next/navigation";
 
 import { DonationStatus } from "@/generated/prisma/client";
 import { DONOR_SESSION_COOKIE, getDonorUser } from "@/lib/auth";
+import { createDonorLinkCode } from "@/lib/telegram-donor";
 import { getPrisma } from "@/lib/db";
 import { DonorLogoutButton } from "./logout-button";
 
 export default async function DonorDonationHistoryPage() {
   const cookieStore = await cookies();
-  const donor = await getDonorUser(cookieStore.get(DONOR_SESSION_COOKIE)?.value);
+  const donor = await getDonorUser(
+    cookieStore.get(DONOR_SESSION_COOKIE)?.value,
+  );
 
   if (!donor) {
     redirect("/masuk");
   }
 
   const prisma = getPrisma();
+  const donorTelegram = await prisma.user.update({
+    where: { id: donor.id },
+    data: donor.telegramLinkCode
+      ? {}
+      : { telegramLinkCode: createDonorLinkCode() },
+    select: {
+      telegramChatId: true,
+      telegramReminderOptIn: true,
+      telegramLinkCode: true,
+    },
+  });
   const donations = await prisma.donation.findMany({
     where: { userId: donor.id },
     orderBy: { createdAt: "desc" },
@@ -42,8 +56,12 @@ export default async function DonorDonationHistoryPage() {
         <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-emerald-100">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">Akun Donatur</p>
-              <h1 className="mt-4 text-3xl font-bold">Riwayat donasi pribadi.</h1>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+                Akun Donatur
+              </p>
+              <h1 className="mt-4 text-3xl font-bold">
+                Riwayat donasi pribadi.
+              </h1>
               <p className="mt-3 text-sm leading-6 text-emerald-900/70">
                 {donor.name ?? "Donatur"} · {donor.email}
               </p>
@@ -52,10 +70,48 @@ export default async function DonorDonationHistoryPage() {
           </div>
         </div>
 
+        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-emerald-100">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+            Telegram Donatur
+          </p>
+          {donorTelegram.telegramChatId ? (
+            <p className="mt-3 text-sm text-emerald-900/70">
+              Telegram sudah terhubung. Reminder Jumat:{" "}
+              {donorTelegram.telegramReminderOptIn ? "aktif" : "nonaktif"}.
+            </p>
+          ) : (
+            <div className="mt-3 space-y-3 text-sm text-emerald-900/70">
+              <p>
+                Kirim perintah ini ke bot Telegram untuk menghubungkan akun:
+              </p>
+              <code className="block rounded-2xl bg-emerald-50 px-4 py-3 font-mono text-emerald-950">
+                /mulai {donorTelegram.telegramLinkCode}
+              </code>
+              <p>
+                Kode sekali pakai. Setelah terhubung, bot dapat menampilkan
+                riwayat donasi akun ini saja.
+              </p>
+            </div>
+          )}
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-3">
-          <SummaryCard label="Total donasi berhasil" value={formatRupiah(totalSuccessful)} />
-          <SummaryCard label="Jumlah transaksi" value={String(donations.length)} />
-          <SummaryCard label="Donasi pending" value={String(donations.filter((donation) => donation.status === DonationStatus.pending).length)} />
+          <SummaryCard
+            label="Total donasi berhasil"
+            value={formatRupiah(totalSuccessful)}
+          />
+          <SummaryCard
+            label="Jumlah transaksi"
+            value={String(donations.length)}
+          />
+          <SummaryCard
+            label="Donasi pending"
+            value={String(
+              donations.filter(
+                (donation) => donation.status === DonationStatus.pending,
+              ).length,
+            )}
+          />
         </div>
 
         <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-emerald-100">
@@ -74,14 +130,32 @@ export default async function DonorDonationHistoryPage() {
                 </thead>
                 <tbody>
                   {donations.map((donation) => (
-                    <tr key={donation.id} className="border-t border-emerald-100 align-top">
-                      <td className="px-4 py-4 font-medium">{donation.orderId}</td>
-                      <td className="px-4 py-4">{formatRupiah(donation.amount)}</td>
-                      <td className="px-4 py-4"><StatusBadge status={donation.status} /></td>
-                      <td className="px-4 py-4 text-emerald-900/70">{getPrivacyLabel(donation)}</td>
-                      <td className="px-4 py-4">{formatDate(donation.paidAt ?? donation.createdAt)}</td>
+                    <tr
+                      key={donation.id}
+                      className="border-t border-emerald-100 align-top"
+                    >
+                      <td className="px-4 py-4 font-medium">
+                        {donation.orderId}
+                      </td>
                       <td className="px-4 py-4">
-                        <Link href={`/donasi/status/${donation.orderId}`} className="font-semibold text-emerald-700">Lihat status</Link>
+                        {formatRupiah(donation.amount)}
+                      </td>
+                      <td className="px-4 py-4">
+                        <StatusBadge status={donation.status} />
+                      </td>
+                      <td className="px-4 py-4 text-emerald-900/70">
+                        {getPrivacyLabel(donation)}
+                      </td>
+                      <td className="px-4 py-4">
+                        {formatDate(donation.paidAt ?? donation.createdAt)}
+                      </td>
+                      <td className="px-4 py-4">
+                        <Link
+                          href={`/donasi/status/${donation.orderId}`}
+                          className="font-semibold text-emerald-700"
+                        >
+                          Lihat status
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -90,12 +164,16 @@ export default async function DonorDonationHistoryPage() {
             </div>
           ) : (
             <div className="p-8 text-sm text-emerald-900/70">
-              Belum ada donasi yang terhubung ke akun ini. Donasi baru saat login akan muncul di sini.
+              Belum ada donasi yang terhubung ke akun ini. Donasi baru saat
+              login akan muncul di sini.
             </div>
           )}
         </div>
 
-        <Link href="/donasi" className="inline-flex rounded-full bg-emerald-700 px-6 py-3 font-semibold text-white">
+        <Link
+          href="/donasi"
+          className="inline-flex rounded-full bg-emerald-700 px-6 py-3 font-semibold text-white"
+        >
           Donasi Lagi
         </Link>
       </section>
@@ -113,10 +191,17 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
 }
 
 function StatusBadge({ status }: { status: DonationStatus }) {
-  return <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase text-emerald-800">{status}</span>;
+  return (
+    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase text-emerald-800">
+      {status}
+    </span>
+  );
 }
 
-function getPrivacyLabel(input: { isAnonymous: boolean; showNamePublicly: boolean }) {
+function getPrivacyLabel(input: {
+  isAnonymous: boolean;
+  showNamePublicly: boolean;
+}) {
   if (input.isAnonymous) {
     return "Anonim";
   }
@@ -125,9 +210,17 @@ function getPrivacyLabel(input: { isAnonymous: boolean; showNamePublicly: boolea
 }
 
 function formatRupiah(amount: number) {
-  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(amount);
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
 
 function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(date);
+  return new Intl.DateTimeFormat("id-ID", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Jakarta",
+  }).format(date);
 }

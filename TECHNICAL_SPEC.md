@@ -28,6 +28,7 @@ Aplikasi web donasi publik untuk program Jumat Berkah. Donatur dapat berdonasi v
 | Payment | Midtrans Snap/Core API | QRIS payment |
 | Hosting | Vercel/Railway/Fly.io | Final choice can be decided during deploy |
 | Storage | S3-compatible/R2 optional | For expense receipts later |
+| Notifications & Bot | Telegram Bot API | Server-only token, optional via env vars |
 
 ## 4. Architecture Principles
 
@@ -39,6 +40,11 @@ Aplikasi web donasi publik untuk program Jumat Berkah. Donatur dapat berdonasi v
 - Public report must never expose private donor email or phone.
 - Admin-only operations must be checked on server.
 - Changes to financial records must be auditable.
+- Telegram bot token and webhook secret are server-only and never sent to client.
+- Telegram webhook must verify the secret token from `X-Telegram-Bot-Api-Secret-Token` before any state change.
+- Telegram admin write actions must be gated by an env-driven chat ID allowlist enforced server-side.
+- Telegram notifications are fire-and-forget: a Telegram outage must not fail Midtrans webhook processing.
+- Outbound notifications must follow public donor display rules (no email/phone, `Anonim` when anonymous or hidden).
 
 ## 5. Route Structure
 
@@ -62,6 +68,7 @@ Recommended API routes:
 /api/donations
 /api/donations/[orderId]
 /api/webhooks/midtrans
+/api/webhooks/telegram
 /api/reports/public
 /api/me/donations
 /api/admin/donations
@@ -257,6 +264,19 @@ Indexes:
 - Duplicate successful webhook must not double count income.
 - Payment status should only move according to safe state transitions.
 
+### 7.6 Telegram Rules
+
+- All Telegram features are opt-in. When `TELEGRAM_BOT_TOKEN` is empty, no Telegram code path may run.
+- Telegram webhook must verify the secret token via the `X-Telegram-Bot-Api-Secret-Token` header before any side effect.
+- Telegram write commands must check the sender chat ID against `TELEGRAM_ADMIN_CHAT_IDS` before reaching business logic.
+- Telegram read commands must also check the sender chat ID against `TELEGRAM_ADMIN_CHAT_IDS` before returning admin operational data.
+- Telegram-created/updated/deleted expenses must reuse expense validators where applicable and write audit logs with `actor_user_id = null` plus `channel: telegram` metadata.
+- Telegram edit/delete commands must require inline confirmation from the same chat and Telegram user that initiated the command.
+- Settlement notification fires once per donation status transition: only when `statusChanged === true` and the new internal status is `settlement`.
+- Settlement notification must omit donor email and phone, and must apply public donor display rules (`Anonim` for anonymous or hidden donors).
+- Telegram send failures must be caught so they cannot fail the Midtrans webhook response or block donation state updates.
+- Settlement notifications require `TELEGRAM_NOTIFY_ENABLED=true`, a non-empty `TELEGRAM_BOT_TOKEN`, and a numeric `TELEGRAM_NOTIFY_CHAT_ID`. Otherwise the notification is silently skipped.
+
 ## 8. API Contracts
 
 ### 8.1 Create Donation
@@ -400,6 +420,44 @@ Success response:
 }
 ```
 
+### 8.6 Telegram Webhook
+
+`POST /api/webhooks/telegram`
+
+Auth: Telegram secret token via header `X-Telegram-Bot-Api-Secret-Token` plus admin chat ID allowlist for write commands.
+
+Expected payload: standard Telegram Bot API `Update` object.
+
+Must:
+
+- Reject any request whose `X-Telegram-Bot-Api-Secret-Token` does not match `TELEGRAM_WEBHOOK_SECRET`.
+- Reject write commands from chat IDs that are not in `TELEGRAM_ADMIN_CHAT_IDS`.
+- Parse the `/pengeluaran` command and reuse `validateExpenseInput` for validation.
+- Persist the expense and create an audit log with `channel: telegram` marker.
+- Reply with a Telegram message that confirms success or explains the validation error.
+- Return 200 for successfully handled updates so Telegram does not retry.
+
+Expense command format:
+
+```txt
+/pengeluaran YYYY-MM-DD | Kategori | Nominal | Deskripsi | Vendor (opsional)
+```
+
+The parser accepts id-ID thousand separators (`300.000`), rejects fractional amounts, and recognises both `/pengeluaran` and `/pengeluaran@BotName` forms.
+
+Read-only admin commands supported in Phase 12:
+
+| Command | Function |
+|---|---|
+| `/saldo` | Current all-time balance, total income/expenses, today income, week income |
+| `/donasi_terbaru [n]` | Latest settlement donations, default 5, max 20, public-safe donor names |
+| `/pengeluaran_terbaru [n]` | Latest expenses, default 5, max 20 |
+| `/cari <orderId>` | Public-safe donation status/detail by order ID |
+| `/laporan <hari|minggu|bulan>` | Public report summary for selected period |
+| `/csv [from] [to]` | Send admin report CSV as Telegram document |
+| `/edit_pengeluaran <id> field=value ...` | Start confirmed expense edit flow with field allowlist |
+| `/hapus_pengeluaran <id>` | Start confirmed expense delete flow |
+
 ## 9. Midtrans Integration
 
 ### 9.1 Environment Variables
@@ -453,6 +511,106 @@ Compare with `signature_key` from payload using safe comparison where possible.
 | failure | any | failure | no |
 | refund | any | refund | no |
 
+## 9A. Telegram Integration
+
+### 9A.1 Environment Variables
+
+All variables are optional. The bot stays disabled when these are empty.
+
+```txt
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_WEBHOOK_SECRET=
+TELEGRAM_ADMIN_CHAT_IDS=
+TELEGRAM_NOTIFY_CHAT_ID=
+TELEGRAM_NOTIFY_ENABLED=false
+TELEGRAM_PUBLIC_CHANNEL_ID=
+TELEGRAM_FAILED_LOGIN_ALERT_THRESHOLD=5
+TELEGRAM_FAILED_LOGIN_ALERT_WINDOW_MINUTES=15
+TELEGRAM_ALERT_COOLDOWN_MINUTES=30
+TELEGRAM_LARGE_EXPENSE_ALERT_THRESHOLD_RUPIAH=500000
+```
+
+Never expose `TELEGRAM_BOT_TOKEN` or `TELEGRAM_WEBHOOK_SECRET` to the client.
+
+### 9A.2 Inbound Command Flow
+
+1. Telegram delivers an `Update` to `POST /api/webhooks/telegram`.
+2. Server reads `X-Telegram-Bot-Api-Secret-Token` and rejects with 401 if it does not match `TELEGRAM_WEBHOOK_SECRET`.
+3. Server parses the update and the command token (handles `/pengeluaran@BotName`).
+4. Server checks `chat.id` against `TELEGRAM_ADMIN_CHAT_IDS`. Unauthorised chats receive a denial reply and the request is recorded as rejected.
+5. For `/pengeluaran`, the parser produces a `ParsedExpenseCommand` and `validateExpenseInput` runs.
+6. On success, the server creates an `Expense` row and an audit log with `actor_user_id = null` and `channel: telegram` plus `telegramChatId` and `telegramUserId` in the audit `after` payload.
+7. The server replies with a confirmation Telegram message that includes the new expense ID.
+
+### 9A.2a Read-only Admin Command Flow
+
+1. Telegram delivers an `Update` to `POST /api/webhooks/telegram`.
+2. Server verifies the Telegram secret token.
+3. Server checks `chat.id` against `TELEGRAM_ADMIN_CHAT_IDS`.
+4. Server routes `/saldo`, `/donasi_terbaru`, `/pengeluaran_terbaru`, `/cari`, `/laporan`, or `/csv` to read-only handlers.
+5. Calculations reuse `src/lib/reports.ts` or existing admin export logic where practical.
+6. Donation names use public donor display rules, so hidden/anonymous donors show as `Anonim`.
+7. CSV export is sent through Telegram `sendDocument` as a text/csv file.
+
+### 9A.2b Confirmed Write Command Flow
+
+1. Telegram delivers `/edit_pengeluaran` or `/hapus_pengeluaran` to `POST /api/webhooks/telegram`.
+2. Server verifies Telegram secret token and checks admin chat allowlist.
+3. `/edit_pengeluaran` accepts only allowlisted fields: `tanggal`, `kategori`, `nominal`, `deskripsi`, `vendor`, `struk` (also English/internal aliases).
+4. Server validates the merged expense payload before creating a pending confirmation.
+5. Server stores a short-lived pending action (in-memory or DB-backed) with chat ID, Telegram user ID, expense ID, and expiry.
+6. Server sends inline keyboard buttons (`Ya`, `Batal`).
+7. Callback query must come from the same chat ID and same Telegram user ID that initiated the action.
+8. Confirmed edit updates the expense and writes an `expense.updated` audit log with before/after plus `channel: telegram` metadata.
+9. Confirmed delete deletes the expense and writes an `expense.deleted` audit log with before plus `channel: telegram` metadata.
+10. Expired or unauthorized confirmations must not mutate expense data.
+
+### 9A.2c Public Transparency & Broadcast Flow
+
+1. Public commands `/saldo_publik`, `/pengeluaran_publik [n]`, and `/laporan_publik <hari|minggu|bulan>` work from any chat after Telegram secret verification.
+2. Public commands do not require `TELEGRAM_ADMIN_CHAT_IDS` membership.
+3. Public commands are rate-limited per chat ID to reduce spam and cost.
+4. Public outputs must never include donor email, donor phone, internal expense IDs, raw donor user IDs, or admin-only operational data.
+5. `/broadcast_laporan` requires an allowlisted admin chat and sends the weekly public report summary to `TELEGRAM_PUBLIC_CHANNEL_ID`.
+6. `TELEGRAM_PUBLIC_CHANNEL_ID` must be a numeric Telegram channel/chat ID, and the bot must have permission to post there.
+
+### 9A.2d Operational & Security Alert Flow
+
+1. Failed admin login attempts write `admin.login.failed` audit logs.
+2. When failed login count reaches `TELEGRAM_FAILED_LOGIN_ALERT_THRESHOLD` inside `TELEGRAM_FAILED_LOGIN_ALERT_WINDOW_MINUTES`, Telegram sends one alert to `TELEGRAM_NOTIFY_CHAT_ID`.
+3. Expense delete always sends a critical audit alert after the database transaction commits.
+4. Expense create sends a critical audit alert when amount is at or above `TELEGRAM_LARGE_EXPENSE_ALERT_THRESHOLD_RUPIAH`.
+5. `GET /api/cron/telegram/health` is protected by `X-Cron-Secret` or Vercel Cron `Authorization: Bearer $CRON_SECRET`; it checks database connectivity and required env values.
+6. All operational/security alerts respect `TELEGRAM_ALERT_COOLDOWN_MINUTES` to avoid spam.
+
+### 9A.3 Outbound Settlement Notification Flow
+
+1. Midtrans webhook validates signature and updates donation state inside a database transaction.
+2. After the transaction commits, the route inspects the result.
+3. If `statusChanged === true` and the new status is `settlement`, the server calls `safeSendTelegramMessage` with a privacy-safe message.
+4. Send errors are logged and swallowed; webhook response remains 200 to avoid Midtrans retries that could double notify.
+5. Notification is silently skipped when `TELEGRAM_NOTIFY_ENABLED !== "true"`, `TELEGRAM_BOT_TOKEN` is empty, or `TELEGRAM_NOTIFY_CHAT_ID` is missing/invalid.
+
+### 9A.4 Notification Privacy Mapping
+
+| Donor State | Public Display in Notification |
+|---|---|
+| `is_anonymous = true` | `Anonim` |
+| `show_name_publicly = false` | `Anonim` |
+| `donor_name = null` | `Anonim` |
+| Otherwise | `donor_name` as submitted |
+
+Notifications never include `donor_email` or `donor_phone`.
+
+### 9A.5 Audit Log Markers
+
+Telegram-driven writes use the existing `audit_logs` table with these conventions:
+
+- `actor_user_id`: `null` (Telegram updates do not authenticate as a Users row).
+- `entity_type`: `expense`.
+- `action`: `expense.created` (Phase 11). Future write commands will add `expense.updated` and `expense.deleted`.
+- `after`: standard expense JSON plus `channel: "telegram"`, `telegramChatId`, and `telegramUserId`.
+
 ## 10. Auth and Authorization
 
 ### 10.1 Public Access
@@ -481,6 +639,18 @@ Requires admin role:
 - Manage expenses.
 - Export reports.
 - View audit logs if implemented.
+
+### 10.4 Telegram Admin Chat Access
+
+Granted to chat IDs listed in `TELEGRAM_ADMIN_CHAT_IDS`:
+
+- Run `/pengeluaran` to create expenses.
+- Run read-only operational commands: `/saldo`, `/donasi_terbaru`, `/pengeluaran_terbaru`, `/cari`, `/laporan`, and `/csv`.
+- Run confirmed write commands: `/edit_pengeluaran` and `/hapus_pengeluaran`.
+- Run `/broadcast_laporan` to send a weekly public summary to `TELEGRAM_PUBLIC_CHANNEL_ID`.
+- Receive donation settlement notifications when their chat ID is set as `TELEGRAM_NOTIFY_CHAT_ID`.
+
+Does not imply browser-side admin access. The Users table session cookie remains the only path into `/admin/*`.
 
 ## 11. UI Requirements
 
@@ -527,6 +697,18 @@ Recommended test cases:
 - Public report hides private donor data.
 - Expense create requires admin.
 - Expense affects report balance.
+- Telegram webhook rejects requests with missing or wrong `X-Telegram-Bot-Api-Secret-Token`.
+- Telegram write commands rejected when chat ID not in `TELEGRAM_ADMIN_CHAT_IDS`.
+- `/pengeluaran` parser accepts well-formed input and id-ID thousand separators.
+- `/pengeluaran` parser rejects fractional amounts, unknown categories, and missing fields.
+- Settlement notification formatter applies public donor rules and excludes email/phone.
+- Public Telegram commands parse only public-safe commands and remain separate from admin read commands.
+- Public Telegram command rate limiter blocks excess requests in the configured window.
+- Telegram public channel ID parser accepts only integer chat/channel IDs.
+- Failed admin login alert decision respects threshold/window and cooldown.
+- Critical audit alert decision covers expense delete and large expense create.
+- Health alert endpoint remains protected by cron secret via `X-Cron-Secret` or Vercel Cron bearer auth.
+- Settlement notification fires only on `statusChanged === true` to `settlement`.
 
 ## 13. Deployment Notes
 
@@ -539,6 +721,9 @@ Minimum production checklist:
 - Environment variables configured.
 - Public report tested.
 - QRIS payment tested in production with small amount if allowed.
+- (If Telegram features enabled) `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_ADMIN_CHAT_IDS`, `TELEGRAM_NOTIFY_CHAT_ID`, `TELEGRAM_NOTIFY_ENABLED`, and Telegram alert env values configured on host.
+- (If Telegram features enabled) `setWebhook` registered with Telegram pointing at the public `/api/webhooks/telegram` URL with the secret token.
+- (If using Cloudflare in front of webhooks) Bot Fight Mode and JS challenge disabled for `/api/webhooks/*`.
 
 ## 14. Non-Goals for MVP
 

@@ -10,11 +10,11 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 
 ### Current Status
 
-Current Phase: Phase 20 — Deployment Ops Hardening  
+Current Phase: Phase 21 — Backup & Restore Automation  
 Overall Progress: 100%  
 Last Updated: 2026-05-27  
-Current Focus: Phase 20 in progress; repo now includes tunnel compose ownership, auto-heal script, log cleanup, and deployment ops runbook. Remaining work: apply compose-managed tunnel on server and perform manual recovery validation.  
-Blockers: Server manual recovery validation requires server access/session.
+Current Focus: Phase 21 in progress; backup script, restore drill script, retention cleanup, cron/runbook, and safety guidance are added. Remaining work: validate backup and restore drill on server.  
+Blockers: None
 
 ### Phase Progress
 
@@ -40,8 +40,8 @@ Blockers: Server manual recovery validation requires server access/session.
 | Phase 17 | Telegram Public Bot & Broadcast | Done | 100% |
 | Phase 18 | Operational & Security Alerts | Done | 100% |
 | Phase 19 | Admin UX Redesign | Not Started | 0% |
-| Phase 20 | Deployment Ops Hardening | In Progress | 85% |
-| Phase 21 | Backup & Restore Automation | Not Started | 0% |
+| Phase 20 | Deployment Ops Hardening | Done | 100% |
+| Phase 21 | Backup & Restore Automation | In Progress | 85% |
 | Phase 22 | Better Auth Migration | Not Started | 0% |
 | Phase 23 | Profile, Password & Account Management | Not Started | 0% |
 | Phase 24 | Email Notifications | Not Started | 0% |
@@ -77,7 +77,13 @@ Done
 - Validation passed for Phase 20 repo changes: `docker compose -f docker-compose.tunnel.yml config` with dummy token, `sh -n scripts/check-jumat-berkah-tunnel.sh`, `npm run lint`, `npm run build`, `npm test` (63/63).
 - Added bounded cleanup to `scripts/check-jumat-berkah-tunnel.sh` so `/var/log/jumat-berkah-tunnel-watch.log` compacts after `1048576` bytes and keeps the last 200 lines; documented override/manual cleanup commands in `docs/DEPLOYMENT_OPS_RUNBOOK.md`.
 - Validation passed after log cleanup change: `sh -n scripts/check-jumat-berkah-tunnel.sh`, `docker compose -f docker-compose.tunnel.yml config` with dummy token, `npm run lint`, `npm run build`, `npm test` (63/63).
-- Remaining Phase 20 validation is server-only: apply compose-managed tunnel on `/var/www/jumat-berkah`, restart only `jumat-berkah-cloudflared`, confirm public URL recovers, and confirm unrelated container restart timestamps are unchanged.
+- Completed Phase 20 server validation: applied compose-managed `jumat-berkah-cloudflared` with `network_mode: host` and `restart: unless-stopped`, verified tunnel logs show registered HTTP/2 connection, local/public health checks returned expected results, and only the tunnel container was replaced/restarted.
+- Started Phase 21 — Backup & Restore Automation.
+- Added `scripts/backup-postgres.sh` for compressed PostgreSQL backups from `jumat-berkah-postgres`, checksum generation, 14-day default retention, backup directory permission hardening, and log file output without database password logging.
+- Added `scripts/restore-drill-postgres.sh` to restore one `.sql.gz` backup into temporary `jumat-berkah-postgres-restore-drill`, query `users`, `donations`, and `expenses`, then remove the temporary container.
+- Added `docs/BACKUP_RESTORE_RUNBOOK.md` with install steps, manual backup, cron, retention override, restore drill, health checks, forbidden commands, and explicit warning that production restore is not automated.
+- Validation passed for Phase 21 repo changes: `sh -n scripts/backup-postgres.sh`, `sh -n scripts/restore-drill-postgres.sh`, `npm run lint`, `npm run build`, `npm test` (63/63).
+- Remaining Phase 21 validation is server-only: run manual backup, verify checksum, restore drill into temporary container, confirm `users`, `donations`, and `expenses` can be queried, then install cron.
 - Note: `docker compose -f docker-compose.staging.yml config` was not validated locally because `.env.production` is intentionally absent from repo; app compose was previously validated and is already running on server.
 - Completed Phase 10 validation after Telegram smoke passed: bot responded quickly to admin/public commands after setting webhook with `max_connections=1` and `drop_pending_updates=true`.
 - Validation passed: `npm run lint`, `npm run build`, `npm test` (63/63).
@@ -1342,7 +1348,7 @@ Out-of-scope:
 - [x] Tambah log rotation/cleanup ringan untuk `/var/log/jumat-berkah-tunnel-watch.log` jika cron digunakan.
 - [x] Tambah runbook command aman: `docker compose ps`, `docker logs`, `curl -I`, restart app only, restart tunnel only.
 - [x] Dokumentasikan forbidden commands untuk server bersama: `docker system prune`, `docker volume prune`, Docker daemon restart, reboot, stop unrelated containers.
-- [ ] Validasi simulated tunnel recovery: stop/restart only tunnel container, verify public URL recovers.
+- [x] Validasi simulated tunnel recovery: stop/restart only tunnel container, verify public URL recovers.
 - [x] Update `IMPLEMENTATION_PLAN.md` Work Log and checklist after validation.
 
 ## Acceptance Criteria
@@ -1396,12 +1402,12 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Add backup script for `pg_dump` from `jumat-berkah-postgres`.
-- [ ] Add restore drill script/runbook using temporary DB target.
-- [ ] Add retention cleanup script.
-- [ ] Add cron instructions for daily backup.
-- [ ] Add safe backup directory and permission guidance.
-- [ ] Document verification command (`pg_restore`/`psql` sanity query).
+- [x] Add backup script for `pg_dump` from `jumat-berkah-postgres`.
+- [x] Add restore drill script/runbook using temporary DB target.
+- [x] Add retention cleanup script.
+- [x] Add cron instructions for daily backup.
+- [x] Add safe backup directory and permission guidance.
+- [x] Document verification command (`pg_restore`/`psql` sanity query).
 - [ ] Validate backup and restore drill on non-production target.
 
 ## Acceptance Criteria

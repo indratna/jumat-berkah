@@ -128,6 +128,24 @@ Verify:
 crontab -l
 ```
 
+### Tunnel Watch Log Cleanup
+
+`check-jumat-berkah-tunnel.sh` keeps `/var/log/jumat-berkah-tunnel-watch.log` small without touching other logs. Default behavior compacts the file after it exceeds `1048576` bytes and keeps the last 200 lines.
+
+Optional override:
+
+```bash
+sudo JUMAT_BERKAH_TUNNEL_LOG_MAX_BYTES=2097152 /usr/local/bin/check-jumat-berkah-tunnel.sh
+```
+
+Manual safe cleanup, if needed:
+
+```bash
+sudo tail -n 200 /var/log/jumat-berkah-tunnel-watch.log | sudo tee /var/log/jumat-berkah-tunnel-watch.log >/dev/null
+```
+
+Do not truncate unrelated `/var/log/*` files.
+
 ## Safe Restart Commands
 
 Restart app only:

@@ -733,3 +733,227 @@ Minimum production checklist:
 - Multi-branch support.
 - Inventory management.
 - Complex accounting system.
+
+## 15. v1.1+ Technical Addendum
+
+Bagian ini mendefinisikan arah teknis untuk fitur produksi setelah MVP live. Detail final tetap dikerjakan per fase di `IMPLEMENTATION_PLAN.md`.
+
+### 15.1 Backup & Restore Automation
+
+Runtime target:
+
+- Source DB container: `jumat-berkah-postgres`.
+- Database: `jumat_berkah`.
+- User: `jumat_berkah_user`.
+- Backup format: compressed SQL dump (`.sql.gz`) unless later changed to custom `pg_dump -Fc`.
+- Backup directory: server-local path outside Docker volume, e.g. `/var/backups/jumat-berkah`.
+
+Technical rules:
+
+- Backup script must only read from `jumat-berkah-postgres`.
+- Restore drill must target a temporary database/container, never overwrite production without explicit manual confirmation.
+- Retention cleanup must only delete files matching expected backup naming pattern inside configured backup directory.
+- Backup logs must not include database password.
+
+### 15.2 Better Auth Architecture
+
+Preferred auth library: Better Auth.
+
+Planned route:
+
+```txt
+/api/auth/[...all]
+```
+
+Planned auth capabilities:
+
+- Google OAuth for admin and donor users.
+- Email/password login.
+- Password reset/change password.
+- Session management via Better Auth.
+- Profile image from OAuth provider.
+
+Environment variables:
+
+```env
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=https://berkahkaryo.my.id
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+```
+
+Security rules:
+
+- Google OAuth success does not imply admin access.
+- Admin authorization must check a server-side role/allowlist.
+- Donor authorization must limit access to donor-owned records only.
+- Password reset tokens must be time-limited and single-use.
+- Password/session tables must not be exposed to client components.
+- Existing login-code flow must be either migrated with fallback or explicitly removed after validation.
+
+Data model direction:
+
+- Better Auth may create/use auth tables such as user/session/account/verification.
+- Existing domain models (`donations`, `expenses`, audit logs) remain source of truth for financial data.
+- Any bridge between Better Auth user and app user must preserve existing role and privacy rules.
+
+### 15.3 Email Notification Architecture
+
+Provider: TBD per phase (SMTP, Resend, SendGrid, or another transactional provider).
+
+Planned environment variables:
+
+```env
+EMAIL_PROVIDER=
+EMAIL_FROM=
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASSWORD=
+ADMIN_EMAIL_NOTIFICATIONS=
+```
+
+Technical rules:
+
+- Email sending must be server-only.
+- Email failure must not fail Midtrans webhook processing.
+- Auth email templates must avoid email enumeration leaks.
+- Admin notification routing must be configured server-side.
+- Public emails/exports must never include donor private fields unless sent directly to the donor/admin with appropriate purpose.
+
+Initial email events:
+
+- Password reset / email verification.
+- Donation `settlement` admin notification.
+- Large expense / delete expense admin alert.
+- Repeated failed admin login alert.
+- Invalid Midtrans signature alert.
+- Backup failure alert.
+
+### 15.4 Friday Reporting Cycle
+
+Timezone:
+
+```txt
+Asia/Jakarta
+```
+
+Cycle rule:
+
+```txt
+Friday 00:00:00 → Thursday 23:59:59 Asia/Jakarta
+```
+
+Technical rules:
+
+- Friday-cycle calculation must be centralized in a server utility.
+- Report totals must reuse the same central report calculation used by public/admin reports.
+- Only `settlement` donations count as income.
+- Scheduler endpoint must be protected by `CRON_SECRET` or equivalent server-side auth.
+- Telegram auto-post must write audit/log entry for success/failure.
+
+### 15.5 Weekly Donation Target
+
+Potential model:
+
+```txt
+weekly_targets
+- id uuid
+- cycle_start date
+- cycle_end date
+- target_amount integer
+- note text nullable
+- created_by uuid
+- created_at timestamp
+- updated_at timestamp
+```
+
+Rules:
+
+- Money stored as integer Rupiah.
+- Progress = settlement donations in cycle / target amount.
+- Public progress must not expose donor private fields.
+- Low-progress reminders must avoid spam with cooldown/rate-limit.
+
+### 15.6 Distribution Story & Photo Report
+
+Potential model:
+
+```txt
+distribution_reports
+- id uuid
+- cycle_start date
+- title text
+- summary text
+- package_count integer nullable
+- location_summary text nullable
+- photo_urls jsonb
+- published_at timestamp nullable
+- created_by uuid
+- created_at timestamp
+- updated_at timestamp
+```
+
+Privacy rules:
+
+- Avoid showing identifiable vulnerable recipients unless consent exists.
+- Donor email/phone must never appear in public story.
+- Admin should see copy guidance before publishing photos.
+
+### 15.7 Public Transparency Enhancements
+
+Public timeline sources:
+
+- Donations with status `settlement`.
+- Expenses safe for public report.
+- Published distribution reports.
+
+Rules:
+
+- Timeline must use public-safe donor display (`Anonim` when anonymous or hidden).
+- No internal IDs, email, phone, raw Telegram chat IDs, or admin-only contact data.
+- Expense category chart must reuse centralized report/category summary logic.
+
+### 15.8 Admin Audit & Approval UI
+
+Routes (planned):
+
+```txt
+/admin/audit
+/admin/persetujuan
+```
+
+Rules:
+
+- Admin-only server-side auth check required.
+- Audit logs are read-only.
+- Expense approval UI must reflect existing approval/audit logic; do not duplicate approval business rules in client code.
+
+### 15.9 Reporting Export Upgrade
+
+Planned exports:
+
+- PDF report for Friday cycle.
+- Excel export if dependency is approved, otherwise keep CSV and document decision.
+- Donor receipt/share view.
+
+Rules:
+
+- Export totals must match central report calculation.
+- Public exports must exclude donor email/phone.
+- Donor receipt must be tied to order/status and not reveal other donors.
+
+### 15.10 Admin Productivity Tools
+
+Planned tools:
+
+- Quick expense templates.
+- Bulk expense CSV import with preview.
+- Per-row validation errors.
+- Audit log for import.
+
+Rules:
+
+- Bulk import must not create partial confusing data without clear report.
+- Imported expenses must go through same validation and audit rules as manual expenses.
+- This is not inventory management and must not grow into complex accounting without a new explicit phase.

@@ -13,8 +13,8 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 Current Phase: Phase 20 — Deployment Ops Hardening  
 Overall Progress: 100%  
 Last Updated: 2026-05-27  
-Current Focus: Phase 20 in progress; repo now includes tunnel compose ownership, auto-heal script, and deployment ops runbook. Remaining work: apply compose-managed tunnel on server and perform manual recovery validation.  
-Blockers: None
+Current Focus: Phase 20 in progress; repo now includes tunnel compose ownership, auto-heal script, log cleanup, and deployment ops runbook. Remaining work: apply compose-managed tunnel on server and perform manual recovery validation.  
+Blockers: Server manual recovery validation requires server access/session.
 
 ### Phase Progress
 
@@ -40,7 +40,18 @@ Blockers: None
 | Phase 17 | Telegram Public Bot & Broadcast | Done | 100% |
 | Phase 18 | Operational & Security Alerts | Done | 100% |
 | Phase 19 | Admin UX Redesign | Not Started | 0% |
-| Phase 20 | Deployment Ops Hardening | In Progress | 70% |
+| Phase 20 | Deployment Ops Hardening | In Progress | 85% |
+| Phase 21 | Backup & Restore Automation | Not Started | 0% |
+| Phase 22 | Better Auth Migration | Not Started | 0% |
+| Phase 23 | Profile, Password & Account Management | Not Started | 0% |
+| Phase 24 | Email Notifications | Not Started | 0% |
+| Phase 25 | Friday Reporting Cycle | Not Started | 0% |
+| Phase 26 | Weekly Donation Target | Not Started | 0% |
+| Phase 27 | Distribution Story & Photo Report | Not Started | 0% |
+| Phase 28 | Public Transparency Enhancements | Not Started | 0% |
+| Phase 29 | Admin Audit & Approval UI | Not Started | 0% |
+| Phase 30 | Reporting Export Upgrade | Not Started | 0% |
+| Phase 31 | Admin Productivity Tools | Not Started | 0% |
 
 Status values:
 
@@ -55,12 +66,18 @@ Done
 
 ### 2026-05-27
 
+- Updated `PRD.md` with v1.1+ Production Enhancement Roadmap covering Backup & Ops Safety, Better Auth/account management, email notifications, Friday reporting cycle, weekly donation target, distribution story, transparency enhancements, audit/approval UI, export upgrades, and admin productivity tools.
+- Updated `TECHNICAL_SPEC.md` with v1.1+ Technical Addendum for backup/restore, Better Auth architecture, email notification architecture, Friday cycle rules, weekly target model, distribution report model, public transparency rules, audit/approval UI, export upgrade, and admin productivity constraints.
+- Drafted roadmap Phase 21–31 after product owner approved feature ideas 1–19; selected Phase 21 Backup & Restore Automation first to protect live data before larger auth and reporting changes.
 - Started Phase 20 — Deployment Ops Hardening.
 - Added `docker-compose.tunnel.yml` to document/reproduce `jumat-berkah-cloudflared` runtime with `network_mode: host`, `--protocol http2`, and `restart: unless-stopped`.
 - Added `scripts/check-jumat-berkah-tunnel.sh` auto-heal script that checks public URL and local origin, then restarts only `jumat-berkah-cloudflared` when public is unhealthy but local origin is healthy.
 - Added `docs/DEPLOYMENT_OPS_RUNBOOK.md` with runtime resources, safe health checks/logs, tunnel ownership, cron install, safe restart/deploy commands, forbidden shared-server commands, troubleshooting matrix, and smoke checks.
 - Updated deployment docs to point to Cloudflare Tunnel as preferred shared-server path and reference the ops runbook.
 - Validation passed for Phase 20 repo changes: `docker compose -f docker-compose.tunnel.yml config` with dummy token, `sh -n scripts/check-jumat-berkah-tunnel.sh`, `npm run lint`, `npm run build`, `npm test` (63/63).
+- Added bounded cleanup to `scripts/check-jumat-berkah-tunnel.sh` so `/var/log/jumat-berkah-tunnel-watch.log` compacts after `1048576` bytes and keeps the last 200 lines; documented override/manual cleanup commands in `docs/DEPLOYMENT_OPS_RUNBOOK.md`.
+- Validation passed after log cleanup change: `sh -n scripts/check-jumat-berkah-tunnel.sh`, `docker compose -f docker-compose.tunnel.yml config` with dummy token, `npm run lint`, `npm run build`, `npm test` (63/63).
+- Remaining Phase 20 validation is server-only: apply compose-managed tunnel on `/var/www/jumat-berkah`, restart only `jumat-berkah-cloudflared`, confirm public URL recovers, and confirm unrelated container restart timestamps are unchanged.
 - Note: `docker compose -f docker-compose.staging.yml config` was not validated locally because `.env.production` is intentionally absent from repo; app compose was previously validated and is already running on server.
 - Completed Phase 10 validation after Telegram smoke passed: bot responded quickly to admin/public commands after setting webhook with `max_connections=1` and `drop_pending_updates=true`.
 - Validation passed: `npm run lint`, `npm run build`, `npm test` (63/63).
@@ -390,6 +407,7 @@ Done
 | 2026-05-24 | Phase 19 may borrow visual structure from external dashboard reference (sidebar, top tabs, status badges, summary footer) but must keep Admin UI rule "clarity over decoration" from TECHNICAL_SPEC §11.2 and AGENTS §12 | Adopt patterns that genuinely help admin scan donations/expenses, avoid decorative elements that hurt readability |
 | 2026-05-27 | Treat Cloudflare Tunnel reliability hardening as separate Phase 20 instead of expanding Phase 10 | Phase 10 should finish payment/Telegram deploy validation first; ops hardening needs its own validation cycle and must not risk unrelated apps on shared server |
 | 2026-05-27 | Prefer Docker Compose-managed `jumat-berkah-cloudflared` plus health check/runbook as long-term fix, with cron auto-heal allowed as temporary mitigation | Compose ownership documents exact flags (`--network host`, `--protocol http2`) and reduces manual restart risk; cron is safe short-term because it restarts only the tunnel container |
+| 2026-05-27 | Prioritize Backup & Restore Automation as Phase 21 before Better Auth and reporting enhancements | App is live and stores financial/payment data; reliable restore path should exist before major auth/database changes |
 
 ## 6. Execution Rules
 
@@ -1321,7 +1339,7 @@ Out-of-scope:
 - [x] Tambah dokumentasi ops di `docs/` untuk health check dan recovery tunnel.
 - [x] Tambah Compose-managed atau ops-managed definition untuk `jumat-berkah-cloudflared` dengan `--network host` dan `--protocol http2`.
 - [x] Tambah safe health-check script untuk public URL dan local origin, dengan restart terbatas ke `jumat-berkah-cloudflared` saja.
-- [ ] Tambah log rotation/cleanup ringan untuk `/var/log/jumat-berkah-tunnel-watch.log` jika cron digunakan.
+- [x] Tambah log rotation/cleanup ringan untuk `/var/log/jumat-berkah-tunnel-watch.log` jika cron digunakan.
 - [x] Tambah runbook command aman: `docker compose ps`, `docker logs`, `curl -I`, restart app only, restart tunnel only.
 - [x] Dokumentasikan forbidden commands untuk server bersama: `docker system prune`, `docker volume prune`, Docker daemon restart, reboot, stop unrelated containers.
 - [ ] Validasi simulated tunnel recovery: stop/restart only tunnel container, verify public URL recovers.
@@ -1350,3 +1368,530 @@ Operational manual validation:
 - `curl -I https://berkahkaryo.my.id` returns `200` or expected auth redirect for protected routes.
 - Restart only `jumat-berkah-cloudflared`; verify `docker logs jumat-berkah-cloudflared --tail 30` shows `Registered tunnel connection`.
 - Confirm no unrelated container restart timestamps changed.
+
+---
+
+# Phase 21 — Backup & Restore Automation
+
+## Goal
+
+Protect live financial/payment data with automated PostgreSQL backups, retention, and documented restore drill before major feature/database changes.
+
+## Scope
+
+In-scope:
+
+- Backup `jumat-berkah-postgres` database to compressed `.sql.gz` files.
+- Safe backup location outside Docker volume.
+- Retention policy (default 14–30 days).
+- Manual restore runbook to a temporary database/container.
+- Optional checksum/log file for backup success.
+- Admin/ops notification on backup failure if email/Telegram notification env exists.
+
+Out-of-scope:
+
+- Managed cloud backup provider integration unless explicitly selected.
+- Full server image backup.
+- Backup of unrelated Docker volumes/apps.
+
+## Tasks
+
+- [ ] Add backup script for `pg_dump` from `jumat-berkah-postgres`.
+- [ ] Add restore drill script/runbook using temporary DB target.
+- [ ] Add retention cleanup script.
+- [ ] Add cron instructions for daily backup.
+- [ ] Add safe backup directory and permission guidance.
+- [ ] Document verification command (`pg_restore`/`psql` sanity query).
+- [ ] Validate backup and restore drill on non-production target.
+
+## Acceptance Criteria
+
+- Daily backup can be run manually and by cron.
+- Backup file is compressed and timestamped.
+- Restore drill proves at least users/donations/expenses tables can be queried.
+- Retention cleanup deletes only backup files in configured backup directory.
+- No unrelated container/volume is touched.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: run backup, restore to temporary DB, query restored rows, remove temporary DB.
+
+---
+
+# Phase 22 — Better Auth Migration
+
+## Goal
+
+Migrate auth foundation to Better Auth with Google OAuth and email/password while preserving admin/donor authorization rules and privacy.
+
+## Scope
+
+In-scope:
+
+- Better Auth setup for Next.js App Router.
+- Google OAuth for admin and donor users.
+- Email/password auth foundation.
+- Auth database tables/migrations.
+- Server-side admin guard based on admin role, not just Google account.
+- Donor guard for donor-owned history only.
+- Migration/fallback plan from current login-code auth.
+
+Out-of-scope:
+
+- UI redesign beyond auth pages.
+- Email notification templates beyond what auth needs.
+- Public donor ranking.
+
+## Tasks
+
+- [ ] Design Better Auth schema integration with existing `users`/domain models.
+- [ ] Add Better Auth dependency and server config.
+- [ ] Add `/api/auth/[...all]` route.
+- [ ] Add Google provider env and callback documentation.
+- [ ] Add email/password support with secure password policy.
+- [ ] Replace admin session checks with Better Auth-backed role checks.
+- [ ] Replace/bridge donor login flow.
+- [ ] Add tests for admin/donor authorization boundaries.
+
+## Acceptance Criteria
+
+- Admin Google login works only for authorized admin users.
+- Admin email/password login works only for authorized admin users.
+- Donor Google login can view only own donation history.
+- Existing financial/report/payment privacy rules do not regress.
+- Old login-code flow is removed or explicitly retained as documented fallback.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: admin Google login, admin password login, donor Google login, guest access checks.
+
+---
+
+# Phase 23 — Profile, Password & Account Management
+
+## Goal
+
+Provide account management for admin/donor users after Better Auth migration.
+
+## Scope
+
+In-scope:
+
+- Profile page for name/email/image.
+- Profile image from Google, local override only if safe.
+- Change password for email/password accounts.
+- Password reset flow.
+- Session revoke on password reset/change.
+
+Out-of-scope:
+
+- User self-delete.
+- Public profile pages.
+
+## Tasks
+
+- [ ] Add `/akun/profil` page.
+- [ ] Add admin profile area.
+- [ ] Add password change form.
+- [ ] Add password reset request/callback flow.
+- [ ] Add session revoke behavior.
+- [ ] Add audit logs for admin account security events.
+
+## Acceptance Criteria
+
+- User can update allowed profile fields.
+- Password changes require current password or reset token.
+- Reset token is time-limited and single-use.
+- Sensitive fields are never exposed publicly.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: update profile, change password, reset password, verify old sessions behavior.
+
+---
+
+# Phase 24 — Email Notifications
+
+## Goal
+
+Add transactional email foundation for auth, admin alerts, donation/payment events, and operational failures.
+
+## Scope
+
+In-scope:
+
+- Email provider config (SMTP/Resend/SendGrid; final provider TBD).
+- Password reset/verification emails.
+- Admin email notifications for settlement, large expense, repeated failed login, invalid webhook signature, backup failure.
+- Safe templates with Indonesian copy.
+
+Out-of-scope:
+
+- Marketing email/newsletter.
+- Bulk donor campaigns.
+
+## Tasks
+
+- [ ] Choose email provider and env variables.
+- [ ] Add server-only email utility.
+- [ ] Add templates for auth and admin alerts.
+- [ ] Add retry/logging behavior for failures.
+- [ ] Add tests for template privacy and recipient routing.
+
+## Acceptance Criteria
+
+- Password/auth emails send through configured provider.
+- Admin alerts can be sent to configured admin recipients.
+- Donor email/phone never appears in public-facing templates.
+- Email failures do not break payment/webhook processing.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: send test email, password reset email, settlement admin email.
+
+---
+
+# Phase 25 — Friday Reporting Cycle
+
+## Goal
+
+Align reports and automation to the Jumat Berkah operating cycle: Friday distribution and Friday-to-Thursday reporting.
+
+## Scope
+
+In-scope:
+
+- Friday reporting period helper.
+- Auto Telegram report every Friday.
+- Manual broadcast remains available.
+- Broadcast result log/audit.
+- Public report period option for current Jumat cycle.
+
+Out-of-scope:
+
+- Recurring auto donation.
+- Complex accounting closing entries.
+
+## Tasks
+
+- [ ] Add Friday-cycle date utility.
+- [ ] Add report summary for current Friday cycle.
+- [ ] Update Telegram scheduled report to use Friday cycle.
+- [ ] Add audit log for automatic broadcast.
+- [ ] Add tests around timezone/Jakarta and Friday boundaries.
+
+## Acceptance Criteria
+
+- Friday report covers intended Jumat cycle.
+- Auto Telegram post runs only through protected scheduler.
+- Manual `/broadcast_laporan` still works.
+- Totals match central report calculation.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: simulate Friday cron, verify Telegram channel post.
+
+---
+
+# Phase 26 — Weekly Donation Target
+
+## Goal
+
+Show and manage donation target for the current Jumat cycle.
+
+## Scope
+
+In-scope:
+
+- Admin target amount per cycle.
+- Public progress display.
+- Low target progress reminder to admin.
+- Rupiah formatting and privacy-safe public copy.
+
+Out-of-scope:
+
+- Multi-branch target management.
+- Recurring donations.
+
+## Tasks
+
+- [ ] Add target model/migration.
+- [ ] Add admin target form.
+- [ ] Add public progress card.
+- [ ] Add Telegram/admin low-progress notification.
+- [ ] Add tests for progress calculation.
+
+## Acceptance Criteria
+
+- Admin can set/update target for current cycle.
+- Public sees target progress without private donor data.
+- Progress uses only settlement donations.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: set target, make sandbox donation, verify progress.
+
+---
+
+# Phase 27 — Distribution Story & Photo Report
+
+## Goal
+
+Let admin publish weekly distribution story with photos and package summary for public transparency.
+
+## Scope
+
+In-scope:
+
+- Admin story entry for Friday distribution.
+- Photo URL/upload reference using existing receipt/storage pattern where possible.
+- Public story display.
+- Privacy guidance: avoid exposing vulnerable recipient identity without consent.
+
+Out-of-scope:
+
+- Inventory management.
+- Face blurring automation.
+
+## Tasks
+
+- [ ] Add distribution story model/migration.
+- [ ] Add admin create/edit story page.
+- [ ] Add public story section.
+- [ ] Add Telegram broadcast summary link.
+- [ ] Add privacy copy/guidance for photos.
+
+## Acceptance Criteria
+
+- Admin can publish Friday distribution summary.
+- Public can view story and photos.
+- No donor contact/private data is exposed.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: create story, view public page, verify Telegram link.
+
+---
+
+# Phase 28 — Public Transparency Enhancements
+
+## Goal
+
+Improve public trust with timeline, expense category chart, and program information page.
+
+## Scope
+
+In-scope:
+
+- Public timeline of settlement donations, expenses, distributions.
+- Expense category chart.
+- “Tentang Program” page.
+- Privacy-safe copy and data mapping.
+
+Out-of-scope:
+
+- Donor ranking.
+- Complex analytics.
+
+## Tasks
+
+- [ ] Add public timeline aggregation.
+- [ ] Add category chart UI.
+- [ ] Add `/tentang` page.
+- [ ] Add empty/error/loading states.
+- [ ] Add privacy tests for public timeline.
+
+## Acceptance Criteria
+
+- Public timeline shows no email/phone/private IDs.
+- Expense chart totals match report logic.
+- Program info page explains purpose, schedule, transparency, and contact.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: browse public pages mobile/desktop.
+
+---
+
+# Phase 29 — Admin Audit & Approval UI
+
+## Goal
+
+Expose audit logs and expense approvals clearly to admins.
+
+## Scope
+
+In-scope:
+
+- Audit dashboard.
+- Expense approval list/timeline.
+- Filters by event type, actor, date.
+- Read-only audit integrity.
+
+Out-of-scope:
+
+- Editing audit logs.
+- Complex accounting approval workflow.
+
+## Tasks
+
+- [ ] Add `/admin/audit` page.
+- [ ] Add `/admin/persetujuan` page if needed.
+- [ ] Add filters and detail panel.
+- [ ] Add tests for admin-only access.
+
+## Acceptance Criteria
+
+- Admin can inspect important operational events.
+- Audit logs are read-only.
+- Non-admin/guest cannot access.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: create/edit/delete expense, verify audit UI.
+
+---
+
+# Phase 30 — Reporting Export Upgrade
+
+## Goal
+
+Upgrade reports export for operational sharing and archive.
+
+## Scope
+
+In-scope:
+
+- PDF report for Jumat cycle.
+- Excel export if dependency is approved.
+- Receipt/share page for donor after payment.
+- Thank-you badge/share text.
+
+Out-of-scope:
+
+- Complex accounting statements.
+- Public donor ranking.
+
+## Tasks
+
+- [ ] Add PDF export for current report.
+- [ ] Add Excel export or document CSV-only decision.
+- [ ] Add receipt/share page improvements.
+- [ ] Add thank-you badge/share copy.
+- [ ] Add tests for privacy in exported report.
+
+## Acceptance Criteria
+
+- Exported reports match public report totals.
+- Export does not expose donor email/phone publicly.
+- Donor receipt is tied to order/status safely.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: export PDF/CSV/Excel, inspect content.
+
+---
+
+# Phase 31 — Admin Productivity Tools
+
+## Goal
+
+Speed up repetitive admin operations without expanding into inventory/accounting.
+
+## Scope
+
+In-scope:
+
+- Quick expense templates.
+- Bulk expense CSV import.
+- Validation preview before import.
+- Import audit logs.
+
+Out-of-scope:
+
+- Inventory management.
+- Complex accounting ledger.
+
+## Tasks
+
+- [ ] Add quick expense templates.
+- [ ] Add CSV import with preview.
+- [ ] Add validation errors per row.
+- [ ] Add audit log for imports.
+- [ ] Add tests for CSV validation.
+
+## Acceptance Criteria
+
+- Admin can create common expenses faster.
+- Bulk import rejects invalid rows safely.
+- Imported expenses affect balance and audit logs correctly.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: create template expense, import CSV sample, verify report balance.

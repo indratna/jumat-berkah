@@ -735,3 +735,193 @@ Menyimpan aktivitas penting aplikasi.
 ## 20. Definisi Sukses MVP
 
 MVP dianggap sukses jika donatur publik dapat membuka aplikasi, mengisi nominal donasi, membayar via QRIS Midtrans, status pembayaran otomatis tercatat, admin dapat mencatat pengeluaran, dan publik dapat melihat laporan pemasukan, pengeluaran, serta saldo secara transparan tanpa login.
+
+## 21. v1.1+ Production Enhancement Roadmap
+
+Bagian ini berisi fitur dekat setelah MVP live. Fitur-fitur ini sudah disetujui sebagai arah produk, tetapi tetap dikerjakan bertahap sesuai `IMPLEMENTATION_PLAN.md` dan aturan `AGENTS.md`: satu fase, satu goal, satu validation cycle.
+
+### 21.1 Prinsip v1.1+
+
+- Tetap menjaga tujuan utama: donasi Jumat Berkah mudah, transparan, dan aman.
+- Tidak mengubah non-goals utama tanpa keputusan eksplisit: native mobile app, payroll deduction, recurring auto donation, multi-branch, inventory, dan accounting kompleks tetap bukan scope.
+- Semua fitur baru harus menjaga privasi donor: email, nomor telepon, dan identitas donor anonim tidak tampil publik.
+- Semua data finansial tetap memakai integer Rupiah dan hanya donasi `settlement` yang dihitung sebagai pemasukan.
+- Fitur yang menyentuh auth, payment, email, backup, dan report harus punya acceptance criteria dan validasi sebelum rilis.
+
+### 21.2 v1.1 — Backup & Ops Safety
+
+Tujuan: melindungi data live sebelum perubahan besar berikutnya.
+
+Kebutuhan fungsional:
+
+- Backup database PostgreSQL otomatis harian.
+- Retention backup 14–30 hari.
+- Restore drill ke target sementara.
+- Runbook restore dan recovery.
+- Notifikasi gagal backup jika channel admin tersedia.
+
+Acceptance criteria:
+
+- Backup dapat dijalankan manual dan via cron.
+- Restore drill membuktikan data users, donations, expenses dapat dibaca.
+- Retention hanya menghapus file backup di direktori backup yang ditentukan.
+- Tidak menyentuh container/volume aplikasi lain.
+
+### 21.3 v1.2 — Better Auth & Account Management
+
+Tujuan: menyediakan auth standar untuk admin dan donor.
+
+Kebutuhan fungsional:
+
+- Admin dapat login dengan Google OAuth.
+- Admin dapat login dengan email/password lokal.
+- Donatur dapat login dengan Google OAuth.
+- Admin/donatur dapat melihat/mengelola profil dasar.
+- Profile picture dapat diambil dari akun Google.
+- User email/password dapat mengganti password.
+- User dapat reset password melalui email.
+- Admin access tetap berbasis role admin, bukan sekadar berhasil login Google.
+
+Acceptance criteria:
+
+- Google login admin hanya memberi akses admin jika user punya role admin.
+- Donatur login hanya dapat melihat data donasi miliknya sendiri.
+- Password reset aman, time-limited, dan tidak membocorkan keberadaan email.
+- Session invalidation berjalan setelah reset/change password jika diaktifkan.
+
+### 21.4 v1.3 — Email Notifications
+
+Tujuan: menambah channel notifikasi admin selain Telegram.
+
+Kebutuhan fungsional:
+
+- Email transaksi/auth: verification/reset password.
+- Email admin untuk donasi `settlement`.
+- Email admin untuk pengeluaran besar atau event audit kritis.
+- Email admin untuk repeated failed login, invalid webhook signature, dan backup failure.
+- Template email memakai bahasa Indonesia.
+
+Acceptance criteria:
+
+- Email failure tidak menggagalkan webhook/payment processing.
+- Email admin tidak mengekspos data privat ke publik.
+- Recipient admin dikonfigurasi dari env/server-side config.
+
+### 21.5 v1.4 — Friday Reporting Cycle
+
+Tujuan: menyesuaikan laporan dengan ritme operasional penyaluran setiap Jumat.
+
+Kebutuhan fungsional:
+
+- Periode laporan Jumat–Kamis.
+- Ringkasan laporan Jumat otomatis.
+- Auto-post laporan ke Telegram channel setiap Jumat.
+- Manual `/broadcast_laporan` tetap tersedia.
+- Log/audit hasil broadcast otomatis.
+
+Acceptance criteria:
+
+- Total pemasukan/pengeluaran/saldo sama dengan kalkulasi laporan pusat.
+- Auto-post hanya berjalan dari scheduler terproteksi.
+- Public report tetap tidak menampilkan email/phone donor.
+
+### 21.6 v1.5 — Weekly Donation Target
+
+Tujuan: menunjukkan target penggalangan dana untuk Jumat berjalan.
+
+Kebutuhan fungsional:
+
+- Admin dapat menentukan target dana per siklus Jumat.
+- Landing/report publik menampilkan progress target.
+- Reminder admin jika progress masih rendah menjelang Jumat.
+
+Acceptance criteria:
+
+- Progress hanya menghitung donasi `settlement`.
+- Target/progress ditampilkan dengan format Rupiah jelas.
+- Tidak ada data donor privat pada progress publik.
+
+### 21.7 v1.6 — Distribution Story & Photo Report
+
+Tujuan: meningkatkan transparansi penyaluran.
+
+Kebutuhan fungsional:
+
+- Admin dapat membuat cerita penyaluran Jumat.
+- Admin dapat melampirkan foto kegiatan atau bukti penyaluran.
+- Publik dapat melihat ringkasan paket/penyaluran.
+- Telegram broadcast dapat menyertakan link laporan penyaluran.
+
+Acceptance criteria:
+
+- Cerita publik tidak mengekspos donor email/phone.
+- Foto penyaluran harus mengikuti panduan privasi penerima manfaat.
+- Admin dapat edit cerita jika ada typo/koreksi.
+
+### 21.8 v1.7 — Public Transparency Enhancements
+
+Tujuan: membuat publik lebih mudah memahami alur dana.
+
+Kebutuhan fungsional:
+
+- Timeline publik donasi sukses, pengeluaran, dan penyaluran.
+- Chart kategori pengeluaran.
+- Halaman “Tentang Program”.
+- Copy publik menjelaskan jadwal, tujuan, pengelola, dan prinsip transparansi.
+
+Acceptance criteria:
+
+- Timeline publik tidak menampilkan email, phone, atau ID internal.
+- Chart kategori sesuai total laporan.
+- Halaman tentang program mobile-friendly.
+
+### 21.9 v1.8 — Admin Audit & Approval UI
+
+Tujuan: memudahkan admin memeriksa aktivitas dan persetujuan.
+
+Kebutuhan fungsional:
+
+- Dashboard audit log.
+- Filter audit berdasarkan tanggal, aktor, event type.
+- UI persetujuan pengeluaran besar.
+- Timeline approval.
+
+Acceptance criteria:
+
+- Audit log read-only.
+- Hanya admin yang bisa mengakses halaman audit/approval.
+- Perubahan pengeluaran tetap tercatat di audit log.
+
+### 21.10 v1.9 — Reporting Export Upgrade
+
+Tujuan: memudahkan laporan dibagikan dan diarsipkan.
+
+Kebutuhan fungsional:
+
+- Export PDF laporan periode Jumat.
+- Export Excel atau keputusan eksplisit tetap CSV.
+- Receipt/bukti donasi yang mudah dibagikan donor.
+- Thank-you badge/share text setelah donasi sukses.
+
+Acceptance criteria:
+
+- Export publik tidak mengandung donor email/phone.
+- Total export sama dengan public report.
+- Receipt hanya menampilkan status/order yang aman untuk donor.
+
+### 21.11 v1.10 — Admin Productivity Tools
+
+Tujuan: mempercepat input operasional rutin admin.
+
+Kebutuhan fungsional:
+
+- Quick expense templates untuk item umum.
+- Bulk import pengeluaran dari CSV.
+- Preview dan validasi error per baris sebelum import.
+- Audit log untuk import.
+
+Acceptance criteria:
+
+- Import menolak row invalid tanpa membuat data parsial yang membingungkan.
+- Expense hasil import mempengaruhi saldo dengan benar.
+- Import tetap bukan inventory management atau accounting kompleks.

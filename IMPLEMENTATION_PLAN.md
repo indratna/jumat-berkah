@@ -10,11 +10,11 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 
 ### Current Status
 
-Current Phase: Phase 10 — Export, QA, Deploy  
-Overall Progress: 98%  
-Last Updated: 2026-05-22  
-Current Focus: Docker server-office deployment package complete; staging deploy still blocked by domain/Cloudflare/server execution  
-Blockers: Phase 10 staging deploy still pending host credentials
+Current Phase: Phase 20 — Deployment Ops Hardening  
+Overall Progress: 100%  
+Last Updated: 2026-05-27  
+Current Focus: Phase 20 in progress; repo now includes tunnel compose ownership, auto-heal script, and deployment ops runbook. Remaining work: apply compose-managed tunnel on server and perform manual recovery validation.  
+Blockers: None
 
 ### Phase Progress
 
@@ -30,7 +30,7 @@ Blockers: Phase 10 staging deploy still pending host credentials
 | Phase 7 | Admin Dashboard | Done | 100% |
 | Phase 8 | Expense Management | Done | 100% |
 | Phase 9 | Optional Donor Login | Done | 100% |
-| Phase 10 | Export, QA, Deploy | Blocked | 95% |
+| Phase 10 | Export, QA, Deploy | Done | 100% |
 | Phase 11 | Telegram Bot Foundation, Donation Notif & Cloudflare | Done | 100% |
 | Phase 12 | Telegram Admin Read Commands | Done | 100% |
 | Phase 13 | Telegram Admin Write Commands | Done | 100% |
@@ -39,6 +39,8 @@ Blockers: Phase 10 staging deploy still pending host credentials
 | Phase 16 | Telegram Donor Self-Service | Done | 100% |
 | Phase 17 | Telegram Public Bot & Broadcast | Done | 100% |
 | Phase 18 | Operational & Security Alerts | Done | 100% |
+| Phase 19 | Admin UX Redesign | Not Started | 0% |
+| Phase 20 | Deployment Ops Hardening | In Progress | 70% |
 
 Status values:
 
@@ -50,6 +52,42 @@ Done
 ```
 
 ## 3. Work Log
+
+### 2026-05-27
+
+- Started Phase 20 — Deployment Ops Hardening.
+- Added `docker-compose.tunnel.yml` to document/reproduce `jumat-berkah-cloudflared` runtime with `network_mode: host`, `--protocol http2`, and `restart: unless-stopped`.
+- Added `scripts/check-jumat-berkah-tunnel.sh` auto-heal script that checks public URL and local origin, then restarts only `jumat-berkah-cloudflared` when public is unhealthy but local origin is healthy.
+- Added `docs/DEPLOYMENT_OPS_RUNBOOK.md` with runtime resources, safe health checks/logs, tunnel ownership, cron install, safe restart/deploy commands, forbidden shared-server commands, troubleshooting matrix, and smoke checks.
+- Updated deployment docs to point to Cloudflare Tunnel as preferred shared-server path and reference the ops runbook.
+- Validation passed for Phase 20 repo changes: `docker compose -f docker-compose.tunnel.yml config` with dummy token, `sh -n scripts/check-jumat-berkah-tunnel.sh`, `npm run lint`, `npm run build`, `npm test` (63/63).
+- Note: `docker compose -f docker-compose.staging.yml config` was not validated locally because `.env.production` is intentionally absent from repo; app compose was previously validated and is already running on server.
+- Completed Phase 10 validation after Telegram smoke passed: bot responded quickly to admin/public commands after setting webhook with `max_connections=1` and `drop_pending_updates=true`.
+- Validation passed: `npm run lint`, `npm run build`, `npm test` (63/63).
+- Marked Phase 10 `Done` (100%) after public deploy, Midtrans sandbox QRIS end-to-end, Telegram webhook smoke, and validation commands passed.
+- Validated Midtrans sandbox QRIS end-to-end on public domain: Snap opened, QRIS sandbox payment completed, Midtrans webhook logs stored with `signature_valid = true`, donation status updated to `settlement`, and successful income total became `10000`.
+- Observed transient Cloudflare Tunnel public access failure (`502`/`530`) while local app remained healthy at `http://127.0.0.1:3010`.
+- Root cause appears operational/network-level: `cloudflared` process stayed running but edge connections closed/degraded, so Docker restart policy did not auto-heal.
+- Decided immediate mitigation can be a small cron health check that restarts only `jumat-berkah-cloudflared` when public URL is unhealthy.
+- Added future Phase 20 — Deployment Ops Hardening to replace ad-hoc tunnel handling with documented Docker Compose ownership, health checks, restart policy, logs, and deployment runbook after Phase 10 is complete.
+
+### 2026-05-25
+
+- Completed public Docker deployment on office server at `https://berkahkaryo.my.id` using Cloudflare Tunnel `jumat-berkah` and host-local app binding `127.0.0.1:3010`.
+- Recreated `jumat-berkah-cloudflared` with `--network host` and `--protocol http2` after QUIC instability and Docker bridge loopback caused Cloudflare `502` responses.
+- Verified public smoke test: `/`, `/donasi`, `/laporan`, `/login` return `200`; `/admin`, `/admin/donasi`, `/admin/pengeluaran` return `307` to login for guest access.
+- Verified admin login succeeds with `aditya.indratna@imigrasi.go.id`; removed placeholder admin `admin@example.com` from PostgreSQL.
+- Confirmed `.env.production` has no placeholder values except Midtrans sandbox/merchant placeholders; payment end-to-end remains pending until real Midtrans credentials are configured.
+- Remaining Phase 10 work: configure Midtrans credentials/webhook, configure Telegram bot credentials/webhook, and run payment + Telegram smoke validation.
+
+### 2026-05-24
+
+- Drafted Phase 19 — Admin UX Redesign in `IMPLEMENTATION_PLAN.md` (status `Not Started`, 0%).
+- Goal: redesain UI admin (`/admin`, `/admin/donasi`, `/admin/pengeluaran`) dengan sidebar tetap, top tabs status, status badge konsisten, dan footer ringkasan, tetap mengikuti AGENTS §12 (clarity over decoration) dan TECHNICAL_SPEC §11.2.
+- Scope dibatasi UI/UX admin saja: tidak menyentuh skema DB, API, business logic laporan, halaman publik, halaman donor, atau bot Telegram.
+- Precondition: Phase 10 harus `Done` dulu, Phase 19 dieksekusi setelah live deploy.
+- Added Decision Log entries (2026-05-24) menjelaskan kenapa redesign dipisah ke Phase 19 dan batasan adopsi pola dari referensi eksternal.
+- No code changes yet; checklist Phase 19 belum ada item yang dicentang.
 
 ### 2026-05-22
 
@@ -348,6 +386,10 @@ Done
 | 2026-05-22 | Treat Telegram "Friday morning donor reminder" (Phase 16) as opt-in informational message, NOT recurring auto donation | Avoid conflict with MVP non-goal "Recurring auto donation" — bot only sends a reminder, donor still pays manually via QRIS |
 | 2026-05-22 | Prefer Vercel Cron for Phase 14 scheduled Telegram jobs while keeping endpoints Cloudflare Cron-compatible | Fits Next.js App Router deployment, needs only protected HTTP endpoints, and can still be called by another scheduler if staging/production platform changes |
 | 2026-05-22 | Telegram bot uses single shared bot token for outbound notifications and inbound commands | One Telegram app, simpler ops; allowlist + secret token enforce admin-only writes |
+| 2026-05-24 | Run Admin UX Redesign as a separate Phase 19 after live deploy, not as part of Phase 10 | AGENTS.md §4 "one phase, one goal, one validation cycle" and §5 scope control — UI redesign is not required to complete Phase 10 deploy and must not block production go-live |
+| 2026-05-24 | Phase 19 may borrow visual structure from external dashboard reference (sidebar, top tabs, status badges, summary footer) but must keep Admin UI rule "clarity over decoration" from TECHNICAL_SPEC §11.2 and AGENTS §12 | Adopt patterns that genuinely help admin scan donations/expenses, avoid decorative elements that hurt readability |
+| 2026-05-27 | Treat Cloudflare Tunnel reliability hardening as separate Phase 20 instead of expanding Phase 10 | Phase 10 should finish payment/Telegram deploy validation first; ops hardening needs its own validation cycle and must not risk unrelated apps on shared server |
+| 2026-05-27 | Prefer Docker Compose-managed `jumat-berkah-cloudflared` plus health check/runbook as long-term fix, with cron auto-heal allowed as temporary mitigation | Compose ownership documents exact flags (`--network host`, `--protocol http2`) and reduces manual restart risk; cron is safe short-term because it restarts only the tunnel container |
 
 ## 6. Execution Rules
 
@@ -1153,3 +1195,158 @@ npm test
 ```
 
 Manual: simulate failed admin logins, large expense create, and DB outage; verify alerts.
+
+---
+
+# Phase 19 — Admin UX Redesign
+
+## Goal
+
+Redesain layout dan navigasi panel admin (`/admin`, `/admin/donasi`, `/admin/pengeluaran`) agar lebih cepat dipindai dan konsisten antar halaman, mengikuti pola sidebar tetap, top tabs per halaman, status badge berwarna, dan footer ringkasan.
+
+Fase ini hanya menyentuh UI/UX admin. Tidak mengubah data model, API, business logic donasi/laporan, halaman publik, atau halaman donor. Tetap tunduk pada Admin UI rule “clarity over decoration” (TECHNICAL_SPEC §11.2, AGENTS §12).
+
+## Preconditions
+
+- Phase 10 (Export, QA, Deploy) sudah `Done` dan staging/produksi berjalan stabil.
+- Tidak boleh dimulai jika masih ada blocker produksi terbuka.
+
+## Scope
+
+In-scope:
+
+- Layout admin baru dengan sidebar tetap di `src/app/admin/layout.tsx`.
+- Halaman `/admin` (dashboard ringkasan).
+- Halaman `/admin/donasi` (daftar + filter donasi).
+- Halaman `/admin/pengeluaran` (daftar + form pengeluaran).
+- Komponen admin reusable (sidebar, top tabs, summary footer, status badge, card list).
+- Penyesuaian copy Indonesia agar tetap konsisten.
+- Aksesibilitas dasar: kontras warna, focus state, label form, navigasi keyboard.
+
+Out-of-scope (jangan dikerjakan di fase ini):
+
+- Skema database / Prisma migration.
+- Endpoint API baru atau perubahan kontrak API.
+- Logika perhitungan saldo / laporan publik.
+- Halaman publik (`/`, `/donasi`, `/laporan`, `/login`).
+- Manajemen user admin (tambah/hapus admin via UI) — tetap MVP non-goal.
+- Bot Telegram dan webhook.
+- Native mobile app, payroll deduction, recurring auto donation, multi-branch, inventory, accounting (MVP non-goals dari AGENTS §5 dan PRD §5.2).
+
+## Tasks
+
+- [ ] Inventarisasi halaman admin saat ini (`/admin`, `/admin/donasi`, `/admin/pengeluaran`) dan catat semua data, filter, action yang sudah ada agar tidak hilang setelah redesign.
+- [ ] Tambah `src/app/admin/layout.tsx` dengan sidebar tetap (Dashboard, Donasi, Pengeluaran, Laporan Publik, Logout) dan area konten utama.
+- [ ] Buat komponen reusable di `src/components/admin/` (mis. `AdminSidebar`, `AdminTopTabs`, `AdminSummaryFooter`, `AdminStatusBadge`).
+- [ ] Redesain `/admin` jadi dashboard ringkasan: kartu pemasukan, pengeluaran, saldo, donasi pending, dengan footer ringkasan periode (hari ini / bulan ini).
+- [ ] Redesain `/admin/donasi` dengan top tabs status (Semua, Pending, Settlement, Failed/Expired) + filter tanggal/nama/nominal yang sudah ada di Phase 7, dan status badge berwarna konsisten dengan mapping di TECHNICAL_SPEC §9.4.
+- [ ] Redesain `/admin/pengeluaran` dengan tab kategori atau filter periode + form tambah/edit/hapus existing dari Phase 8, plus konfirmasi destruktif tetap wajib.
+- [ ] Format Rupiah konsisten via util yang sudah ada (`formatRupiah`); jangan duplikasi logika.
+- [ ] Pastikan setiap halaman menangani state loading / empty / error / success (TECHNICAL_SPEC §11.3).
+- [ ] Pastikan layout responsif mobile-first (AGENTS §12); sidebar boleh collapse/drawer di breakpoint kecil.
+- [ ] Pastikan privacy rules tidak regresi: email/telepon donor tetap hanya di view admin, anonim tetap tampil sebagai `Anonim` di admin sesuai konvensi yang ada (PRD §8.7, AGENTS §9).
+- [ ] Pastikan auth guard server-side admin tetap berlaku untuk semua route admin (AGENTS §8, TECHNICAL_SPEC §10.3).
+- [ ] Update / tambah unit/UI test ringan untuk komponen admin baru jika ada logika non-trivial (mis. mapping status → badge).
+- [ ] Update README jika ada perubahan pada cara menjalankan/preview halaman admin.
+
+## Acceptance Criteria
+
+- Semua fungsi admin yang ada di Phase 7 dan Phase 8 tetap bekerja: ringkasan, daftar donasi, filter, detail, tambah/edit/hapus pengeluaran, audit log tercatat.
+- Tidak ada perubahan pada API, skema database, atau logika perhitungan laporan.
+- Halaman publik tidak berubah secara visual maupun fungsional.
+- Status donasi ditampilkan dengan badge yang konsisten dengan status internal (`pending`, `settlement`, `failed`, `expired`) sesuai TECHNICAL_SPEC §9.4.
+- Format Rupiah konsisten di seluruh halaman admin.
+- Layout responsif di mobile dan desktop, navigasi keyboard dasar berjalan.
+- Aksi destruktif (hapus pengeluaran) tetap meminta konfirmasi.
+- Tidak ada regresi privasi: data kontak donor tetap hanya untuk admin.
+- Lint, build, dan test pass.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual:
+
+- Login sebagai admin, buka `/admin`, `/admin/donasi`, `/admin/pengeluaran` di desktop dan mobile width.
+- Verifikasi filter donasi (status/tanggal/nama/nominal) tetap berfungsi.
+- Tambah, edit, dan hapus 1 pengeluaran uji — pastikan audit log tercatat dan saldo laporan publik berubah benar.
+- Buka `/laporan` sebagai publik, pastikan tidak ada perubahan pada laporan publik.
+- Coba akses `/admin*` sebagai guest — harus redirect ke login.
+
+---
+
+# Phase 20 — Deployment Ops Hardening
+
+## Goal
+
+Merapikan operasional deployment setelah Phase 10 selesai agar app, database, dan Cloudflare Tunnel punya ownership yang jelas, recovery otomatis yang aman, dan runbook maintenance untuk server bersama.
+
+Fase ini fokus reliability/operasional. Tidak mengubah fitur produk, skema database, payment logic, Telegram command behavior, atau UI.
+
+## Preconditions
+
+- Phase 10 sudah `Done`: domain publik, Midtrans webhook, Telegram webhook, dan smoke test produksi/sandbox sudah tervalidasi.
+- Tidak ada insiden aktif pada server bersama.
+- Perubahan harus hanya menyentuh resource milik Jumat Berkah (`jumat-berkah-*`) dan tidak boleh restart Docker daemon / app lain.
+
+## Scope
+
+In-scope:
+
+- Masukkan `jumat-berkah-cloudflared` ke deployment ownership yang terdokumentasi (Docker Compose override/file ops khusus) dengan flags yang sudah terbukti:
+  - `--network host`
+  - `--protocol http2`
+  - `--restart unless-stopped`
+- Tambah health check publik untuk `https://berkahkaryo.my.id` dan origin lokal `http://127.0.0.1:3010`.
+- Dokumentasikan temporary cron auto-heal atau ganti dengan mekanisme Compose/systemd timer yang hanya restart `jumat-berkah-cloudflared`.
+- Tambah runbook: restart aman, cek logs, cek status DB/app/tunnel, update deploy, rollback.
+- Tambah monitoring ringan berbasis log file untuk tunnel restart events.
+- Pastikan semua command ops aman untuk server bersama dan tidak menyentuh container/volume app lain.
+
+Out-of-scope:
+
+- Install Nginx/Caddy host-level.
+- Buka port publik 80/443/3010 langsung ke internet.
+- Restart Docker daemon, reboot server, atau prune global Docker resources.
+- Migrasi platform deployment.
+- Perubahan API/payment/Telegram/UI.
+
+## Tasks
+
+- [x] Inventarisasi resource runtime Jumat Berkah: app container, Postgres container, Cloudflare Tunnel container, network, volume, domain route.
+- [x] Tambah dokumentasi ops di `docs/` untuk health check dan recovery tunnel.
+- [x] Tambah Compose-managed atau ops-managed definition untuk `jumat-berkah-cloudflared` dengan `--network host` dan `--protocol http2`.
+- [x] Tambah safe health-check script untuk public URL dan local origin, dengan restart terbatas ke `jumat-berkah-cloudflared` saja.
+- [ ] Tambah log rotation/cleanup ringan untuk `/var/log/jumat-berkah-tunnel-watch.log` jika cron digunakan.
+- [x] Tambah runbook command aman: `docker compose ps`, `docker logs`, `curl -I`, restart app only, restart tunnel only.
+- [x] Dokumentasikan forbidden commands untuk server bersama: `docker system prune`, `docker volume prune`, Docker daemon restart, reboot, stop unrelated containers.
+- [ ] Validasi simulated tunnel recovery: stop/restart only tunnel container, verify public URL recovers.
+- [x] Update `IMPLEMENTATION_PLAN.md` Work Log and checklist after validation.
+
+## Acceptance Criteria
+
+- `jumat-berkah-cloudflared` startup is documented and reproducible without relying on shell history.
+- Tunnel recovery mechanism restarts only `jumat-berkah-cloudflared`, not app/db/Docker daemon/other apps.
+- Public URL health check distinguishes app failure from tunnel failure by checking both public URL and local origin.
+- Runbook includes exact safe commands for daily ops.
+- No unrelated Docker containers, images, networks, or volumes are changed.
+- Lint/build/tests still pass if repo files changed.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Operational manual validation:
+
+- `curl -I http://127.0.0.1:3010` returns `200`.
+- `curl -I https://berkahkaryo.my.id` returns `200` or expected auth redirect for protected routes.
+- Restart only `jumat-berkah-cloudflared`; verify `docker logs jumat-berkah-cloudflared --tail 30` shows `Registered tunnel connection`.
+- Confirm no unrelated container restart timestamps changed.

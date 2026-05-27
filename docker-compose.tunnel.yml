@@ -1,0 +1,14 @@
+services:
+  jumat-berkah-cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: jumat-berkah-cloudflared
+    command:
+      - tunnel
+      - --no-autoupdate
+      - --protocol
+      - http2
+      - run
+      - --token
+      - ${CLOUDFLARED_TOKEN:?CLOUDFLARED_TOKEN is required}
+    network_mode: host
+    restart: unless-stopped

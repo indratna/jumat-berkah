@@ -1,5 +1,7 @@
 # Server Deployment — Ubuntu + Docker + Cloudflare
 
+> Current production-style deployment uses Cloudflare Tunnel (`jumat-berkah-cloudflared`) instead of host Nginx because the shared server already runs multiple apps and host Nginx may not be installed. See `docs/DEPLOYMENT_OPS_RUNBOOK.md` for day-2 operations, tunnel auto-heal, and safe recovery commands.
+
 Target server context:
 
 - OS: Ubuntu
@@ -7,12 +9,13 @@ Target server context:
 - Existing application: `192.168.200.112:3001` — do not touch
 - Jumat Berkah app bind: `127.0.0.1:3010`
 - PostgreSQL: dedicated Docker container
-- Public access: Cloudflare DNS proxy + Nginx reverse proxy
+- Public access: Cloudflare Tunnel to `http://127.0.0.1:3010` (preferred on shared server); Nginx reverse proxy only as fallback
 - Telegram: enabled
 - Midtrans: sandbox first
 
 ## Safety Rules
 
+- Prefer Cloudflare Tunnel on this shared server; do not install or reload host Nginx unless explicitly approved.
 - Do not bind Jumat Berkah to `3001`.
 - Do not expose app container to public network; use `127.0.0.1:3010:3000` only.
 - Do not restart Docker daemon during business hours if other apps run there.

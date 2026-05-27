@@ -2,13 +2,15 @@
 
 Dokumen ini untuk deploy Jumat Berkah ke server kantor tanpa mengganggu aplikasi existing.
 
+> Current deployment uses Cloudflare Tunnel for public access on the shared server. For tunnel health checks, safe restart, and auto-heal cron, see `docs/DEPLOYMENT_OPS_RUNBOOK.md`.
+
 ## Target
 
 - Server Ubuntu: `192.168.200.112`
 - Existing app: `192.168.200.112:3001` — jangan disentuh
 - Jumat Berkah local bind: `127.0.0.1:3010`
 - Docker Compose: app + PostgreSQL dedicated
-- Public access: Cloudflare + Nginx
+- Public access: Cloudflare Tunnel to `127.0.0.1:3010` (preferred); Nginx only as fallback
 - Telegram: aktif
 - Midtrans: sandbox dulu
 

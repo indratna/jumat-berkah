@@ -4,6 +4,7 @@ import {
   Prisma,
 } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/db";
+import { safeSendAdminAlertEmail } from "@/lib/email";
 import {
   formatJakartaDateTime,
   formatRupiah,
@@ -169,6 +170,17 @@ export async function runDailyTelegramCron(now = new Date()) {
     chatId,
     text: messages.join("\n\n---\n\n"),
   });
+
+  if (invalidSignature.shouldAlert) {
+    await safeSendAdminAlertEmail({
+      title: "Signature Midtrans Tidak Valid",
+      bodyLines: [
+        `Jumlah webhook invalid: ${invalidSignature.invalidCount}`,
+        `Window: ${invalidSignature.windowMinutes} menit`,
+      ],
+      occurredAt: now,
+    });
+  }
 
   if (!sent) {
     return { sent: false, reason: "send-failed" as const };

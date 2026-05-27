@@ -80,6 +80,36 @@ Required deployment values:
 - `RECEIPT_STORAGE_PUT_URL` (optional, storage PUT URL template containing `{key}`)
 - `EXPENSE_APPROVAL_THRESHOLD_RUPIAH` (optional, large expense approval threshold)
 - `EXPENSE_APPROVAL_REQUIRED_COUNT` (optional, default `2`)
+- `EMAIL_PROVIDER` (optional, set to `resend` to enable transactional email)
+- `EMAIL_FROM` (optional, verified sender address)
+- `RESEND_API_KEY` (optional, required when `EMAIL_PROVIDER=resend`)
+- `ADMIN_EMAIL_NOTIFICATIONS` (optional, comma-separated admin recipients)
+
+## Email Notifications
+
+Phase 24 uses Resend HTTP API for transactional email. Email sending is server-only and opt-in; leaving email env empty disables delivery safely.
+
+```env
+EMAIL_PROVIDER=resend
+EMAIL_FROM="Jumat Berkah <noreply@example.com>"
+RESEND_API_KEY=replace-with-resend-api-key
+ADMIN_EMAIL_NOTIFICATIONS=admin@example.com,ops@example.com
+```
+
+Current email events:
+
+- Password reset email via Better Auth.
+- Admin email when donation changes to `settlement`.
+- Admin email copies for repeated failed admin login alerts.
+- Admin email copies for large expense/delete expense alerts.
+- Admin email copies for invalid Midtrans signature alerts.
+- Backup failure email from `scripts/backup-postgres.sh` when Resend env is available.
+
+Rules:
+
+- Email failure must not break password reset request or Midtrans webhook response.
+- Admin settlement email uses public donor display rules (`Anonim` for anonymous/hidden donors).
+- Admin recipients are read from server env only.
 
 ## Telegram Bot Setup
 

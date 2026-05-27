@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 import {
   createDonationOrderId,
@@ -8,6 +8,7 @@ import {
 } from "@/lib/donations";
 import { getPrisma } from "@/lib/db";
 import { DONOR_SESSION_COOKIE, getDonorUser } from "@/lib/auth";
+import { getBetterAuthDonorUser } from "@/lib/better-auth-guards";
 import {
   createMidtransSnapTransaction,
   MidtransConfigurationError,
@@ -31,7 +32,10 @@ export async function POST(request: Request) {
 
   const prisma = getPrisma();
   const cookieStore = await cookies();
-  const donor = await getDonorUser(cookieStore.get(DONOR_SESSION_COOKIE)?.value);
+  const legacyDonor = await getDonorUser(
+    cookieStore.get(DONOR_SESSION_COOKIE)?.value,
+  );
+  const donor = legacyDonor ?? (await getBetterAuthDonorUser(await headers()));
   const data = validation.data;
   const donation = await prisma.donation.create({
     data: {

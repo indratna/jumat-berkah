@@ -1,5 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/db";
+import { safeSendAdminAlertEmail } from "@/lib/email";
 import {
   formatJakartaDateTime,
   formatRupiah,
@@ -10,9 +11,9 @@ import {
 } from "@/lib/telegram";
 
 export const FAILED_ADMIN_LOGIN_ACTION = "admin.login.failed";
-export const FAILED_ADMIN_LOGIN_ALERT_ACTION = "telegram.alert.failed_admin_login";
-export const CRITICAL_AUDIT_ALERT_ACTION = "telegram.alert.critical_audit";
-export const HEALTH_ALERT_ACTION = "telegram.alert.health";
+export const FAILED_ADMIN_LOGIN_ALERT_ACTION = "alert.failed_admin_login";
+export const CRITICAL_AUDIT_ALERT_ACTION = "alert.critical_audit";
+export const HEALTH_ALERT_ACTION = "alert.health";
 
 const DEFAULT_FAILED_LOGIN_THRESHOLD = 5;
 const DEFAULT_FAILED_LOGIN_WINDOW_MINUTES = 15;
@@ -135,10 +136,6 @@ export async function recordFailedAdminLogin(input: {
 }
 
 export async function maybeSendFailedAdminLoginAlert(now = new Date()) {
-  if (!canSendTelegramAlert()) {
-    return { sent: false, reason: "telegram-disabled" as const };
-  }
-
   const prisma = getPrisma();
   const threshold = getFailedLoginAlertThreshold();
   const windowMinutes = getFailedLoginAlertWindowMinutes();
@@ -174,18 +171,22 @@ export async function maybeSendFailedAdminLoginAlert(now = new Date()) {
     return { sent: false, reason: "below-threshold" as const, decision };
   }
 
-  const chatId = getTelegramNotifyChatId();
-  if (chatId === null) {
-    return { sent: false, reason: "missing-chat" as const };
-  }
+  const text = formatFailedLoginAlertMessage(decision, now);
+  const [telegramSent, emailResult] = await Promise.all([
+    safeSendTelegramAlert(text),
+    safeSendAdminAlertEmail({
+      title: "Percobaan Login Admin Gagal Berulang",
+      bodyLines: [
+        `Jumlah gagal: ${decision.failedCount}`,
+        `Ambang batas: ${decision.threshold} dalam ${decision.windowMinutes} menit`,
+        `Cooldown alert: ${decision.cooldownMinutes} menit`,
+      ],
+      occurredAt: now,
+    }),
+  ]);
 
-  const sent = await safeSendTelegramMessage({
-    chatId,
-    text: formatFailedLoginAlertMessage(decision, now),
-  });
-
-  if (!sent) {
-    return { sent: false, reason: "send-failed" as const };
+  if (!telegramSent && !emailResult.sent) {
+    return { sent: false, reason: "send-failed" as const, decision };
   }
 
   await prisma.auditLog.create({
@@ -194,7 +195,11 @@ export async function maybeSendFailedAdminLoginAlert(now = new Date()) {
       entityType: "auth",
       entityId: "failed_admin_login",
       before: Prisma.JsonNull,
-      after: decision as unknown as Prisma.InputJsonValue,
+      after: {
+        ...decision,
+        telegramSent,
+        emailSent: emailResult.sent,
+      },
     },
   });
 
@@ -221,10 +226,6 @@ export async function maybeSendCriticalAuditAlert(input: {
     return { sent: false, reason: "not-critical" as const };
   }
 
-  if (!canSendTelegramAlert()) {
-    return { sent: false, reason: "telegram-disabled" as const };
-  }
-
   const prisma = getPrisma();
   const cooldownMinutes = getTelegramAlertCooldownMinutes();
   const occurredAt = input.occurredAt ?? new Date();
@@ -248,17 +249,27 @@ export async function maybeSendCriticalAuditAlert(input: {
     return { sent: false, reason: "cooldown" as const };
   }
 
-  const chatId = getTelegramNotifyChatId();
-  if (chatId === null) {
-    return { sent: false, reason: "missing-chat" as const };
-  }
+  const text = formatCriticalAuditAlertMessage({ ...input, occurredAt });
+  const title =
+    input.action === "expense.deleted"
+      ? "Pengeluaran Dihapus"
+      : "Pengeluaran Besar Dibuat";
+  const [telegramSent, emailResult] = await Promise.all([
+    safeSendTelegramAlert(text),
+    safeSendAdminAlertEmail({
+      title,
+      bodyLines: [
+        `Aksi: ${input.action}`,
+        `ID: ${input.entityId}`,
+        `Aktor: ${input.actorLabel}`,
+        `Nominal: ${input.amount === null ? "-" : formatRupiah(input.amount)}`,
+        `Deskripsi: ${input.description ?? "-"}`,
+      ],
+      occurredAt,
+    }),
+  ]);
 
-  const sent = await safeSendTelegramMessage({
-    chatId,
-    text: formatCriticalAuditAlertMessage({ ...input, occurredAt }),
-  });
-
-  if (!sent) {
+  if (!telegramSent && !emailResult.sent) {
     return { sent: false, reason: "send-failed" as const };
   }
 
@@ -275,6 +286,8 @@ export async function maybeSendCriticalAuditAlert(input: {
         amount: input.amount,
         description: input.description,
         occurredAt: occurredAt.toISOString(),
+        telegramSent,
+        emailSent: emailResult.sent,
       },
     },
   });
@@ -283,10 +296,6 @@ export async function maybeSendCriticalAuditAlert(input: {
 }
 
 export async function runTelegramHealthAlert(now = new Date()) {
-  if (!canSendTelegramAlert()) {
-    return { sent: false, reason: "telegram-disabled" as const };
-  }
-
   const prisma = getPrisma();
   const problems: string[] = [];
 
@@ -322,17 +331,17 @@ export async function runTelegramHealthAlert(now = new Date()) {
     return { sent: false, reason: "cooldown" as const };
   }
 
-  const chatId = getTelegramNotifyChatId();
-  if (chatId === null) {
-    return { sent: false, reason: "missing-chat" as const };
-  }
+  const text = formatHealthAlertMessage(problems, now);
+  const [telegramSent, emailResult] = await Promise.all([
+    safeSendTelegramAlert(text),
+    safeSendAdminAlertEmail({
+      title: "Health Check Bermasalah",
+      bodyLines: problems.map((problem) => `- ${problem}`),
+      occurredAt: now,
+    }),
+  ]);
 
-  const sent = await safeSendTelegramMessage({
-    chatId,
-    text: formatHealthAlertMessage(problems, now),
-  });
-
-  if (!sent) {
+  if (!telegramSent && !emailResult.sent) {
     return { sent: false, reason: "send-failed" as const };
   }
 
@@ -346,11 +355,26 @@ export async function runTelegramHealthAlert(now = new Date()) {
         problems,
         occurredAt: now.toISOString(),
         cooldownMinutes,
+        telegramSent,
+        emailSent: emailResult.sent,
       },
     },
   });
 
   return { sent: true, problems };
+}
+
+async function safeSendTelegramAlert(text: string): Promise<boolean> {
+  if (!canSendTelegramAlert()) {
+    return false;
+  }
+
+  const chatId = getTelegramNotifyChatId();
+  if (chatId === null) {
+    return false;
+  }
+
+  return safeSendTelegramMessage({ chatId, text });
 }
 
 function canSendTelegramAlert(): boolean {

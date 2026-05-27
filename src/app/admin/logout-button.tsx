@@ -1,8 +1,13 @@
 "use client";
 
+import { authClient } from "@/lib/auth-client";
+
 export function LogoutButton() {
   async function handleLogout() {
-    await fetch("/api/auth/admin/logout", { method: "POST" });
+    await Promise.allSettled([
+      fetch("/api/auth/admin/logout", { method: "POST" }),
+      authClient.signOut(),
+    ]);
     window.location.href = "/login";
   }
 

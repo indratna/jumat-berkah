@@ -116,7 +116,7 @@ export async function requireAdminUser(session: string | undefined) {
 
   return prisma.user.findFirst({
     where: { email: payload.email, role: "admin" },
-    select: { id: true, email: true, role: true },
+    select: { id: true, name: true, email: true, role: true },
   });
 }
 

@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ADMIN_SESSION_COOKIE, verifyAdminSession } from "@/lib/auth";
+import { requireBetterAuthAdminUser } from "@/lib/better-auth-guards";
 import { LogoutButton } from "./logout-button";
 
 const adminNavItems = [
@@ -30,6 +31,12 @@ const adminNavItems = [
     description: "Unduh laporan",
     icon: "↓",
   },
+  {
+    href: "/akun/profil",
+    label: "Profil",
+    description: "Akun admin",
+    icon: "◎",
+  },
 ];
 
 export default async function AdminLayout({
@@ -38,11 +45,14 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-  const session = verifyAdminSession(
+  const legacySession = verifyAdminSession(
     cookieStore.get(ADMIN_SESSION_COOKIE)?.value,
   );
+  const betterAuthAdmin = legacySession
+    ? null
+    : await requireBetterAuthAdminUser(await headers());
 
-  if (!session) {
+  if (!legacySession && !betterAuthAdmin) {
     redirect("/login?next=/admin");
   }
 

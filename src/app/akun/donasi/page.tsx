@@ -1,18 +1,20 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { DonationStatus } from "@/generated/prisma/client";
 import { DONOR_SESSION_COOKIE, getDonorUser } from "@/lib/auth";
+import { getBetterAuthDonorUser } from "@/lib/better-auth-guards";
 import { createDonorLinkCode } from "@/lib/telegram-donor";
 import { getPrisma } from "@/lib/db";
 import { DonorLogoutButton } from "./logout-button";
 
 export default async function DonorDonationHistoryPage() {
   const cookieStore = await cookies();
-  const donor = await getDonorUser(
+  const legacyDonor = await getDonorUser(
     cookieStore.get(DONOR_SESSION_COOKIE)?.value,
   );
+  const donor = legacyDonor ?? (await getBetterAuthDonorUser(await headers()));
 
   if (!donor) {
     redirect("/masuk");
@@ -66,7 +68,15 @@ export default async function DonorDonationHistoryPage() {
                 {donor.name ?? "Donatur"} · {donor.email}
               </p>
             </div>
-            <DonorLogoutButton />
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/akun/profil"
+                className="rounded-full border border-emerald-200 px-5 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50"
+              >
+                Profil
+              </Link>
+              <DonorLogoutButton />
+            </div>
           </div>
         </div>
 

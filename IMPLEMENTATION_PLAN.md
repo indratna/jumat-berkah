@@ -10,10 +10,10 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 
 ### Current Status
 
-Current Phase: Phase 21 — Backup & Restore Automation  
+Current Phase: Phase 24 — Email Notifications  
 Overall Progress: 100%  
 Last Updated: 2026-05-27  
-Current Focus: Phase 21 in progress; backup script, restore drill script, retention cleanup, cron/runbook, and safety guidance are added. Remaining work: validate backup and restore drill on server.  
+Current Focus: Phase 24 code complete; Resend email foundation, password reset email delivery, settlement admin email, large expense/delete expense email copies, repeated failed login email copies, invalid webhook signature email copy, backup failure email hook, safe Indonesian templates, recipient routing, and template privacy tests are added and validated. Remaining work: manual email smoke tests with real Resend env.
 Blockers: None
 
 ### Phase Progress
@@ -41,10 +41,10 @@ Blockers: None
 | Phase 18 | Operational & Security Alerts | Done | 100% |
 | Phase 19 | Admin UX Redesign | Not Started | 0% |
 | Phase 20 | Deployment Ops Hardening | Done | 100% |
-| Phase 21 | Backup & Restore Automation | In Progress | 85% |
-| Phase 22 | Better Auth Migration | Not Started | 0% |
-| Phase 23 | Profile, Password & Account Management | Not Started | 0% |
-| Phase 24 | Email Notifications | Not Started | 0% |
+| Phase 21 | Backup & Restore Automation | Done | 100% |
+| Phase 22 | Better Auth Migration | Done | 100% |
+| Phase 23 | Profile, Password & Account Management | Done | 100% |
+| Phase 24 | Email Notifications | In Progress | 90% |
 | Phase 25 | Friday Reporting Cycle | Not Started | 0% |
 | Phase 26 | Weekly Donation Target | Not Started | 0% |
 | Phase 27 | Distribution Story & Photo Report | Not Started | 0% |
@@ -66,6 +66,25 @@ Done
 
 ### 2026-05-27
 
+- Started Phase 24 — Email Notifications. Chose Resend HTTP API to avoid extra dependencies; added server-side email utility, `EMAIL_PROVIDER=resend`, `EMAIL_FROM`, `RESEND_API_KEY`, and `ADMIN_EMAIL_NOTIFICATIONS` config docs.
+- Added Indonesian password reset email delivery through Better Auth, with local reset URL fallback logging when email is disabled or fails.
+- Added settlement admin email on Midtrans `settlement` transitions; email failures are caught and do not break webhook responses.
+- Added email template/recipient tests for admin routing, settlement donor privacy, and password reset copy. Validation passed: `npm run lint`, `npm test` (72/72), `npm run build`.
+- Wired remaining Phase 24 admin email alerts: repeated failed admin login, large expense/delete expense, invalid Midtrans signature, health/ops alert email copies, and backup failure email hook in `scripts/backup-postgres.sh`.
+- Added admin alert email template test and updated README email notification docs.
+- Phase 24 code validation passed: `npm run lint`, `npm test` (73/73), `npm run build`, and `sh -n scripts/backup-postgres.sh`.
+- Phase 24 remains in progress until manual Resend smoke tests pass: test email/password reset email/settlement admin email.
+- Started Phase 23 — Profile, Password & Account Management. First slice targets `/akun/profil`, admin profile entrypoint, profile update, and account audit logs before password change/reset work.
+- Added `/akun/profil` profile page, shared account profile resolver for legacy and Better Auth sessions, profile update API, donor/admin profile entrypoints, Google profile image display allowlist, and `account.profile.updated` audit logs.
+- Added profile validation tests; validation passed for Phase 23 first slice: `npm run lint`, `npm test` (67/67), `npm run build`.
+- Manual validation passed for `/akun/profil`: profile page opened locally and profile update succeeded.
+- Added password change form and `PATCH /api/account/password`; Better Auth changes password with current password verification and `revokeOtherSessions: true`, then writes `account.password.changed` audit log.
+- Added password change validation tests; validation passed after password change slice: `npm run lint`, `npm test` (69/69), `npm run build`.
+- Manual validation passed for password change from `/akun/profil`; password update succeeded locally.
+- Added password reset request page `/lupa-password`, reset callback page `/reset-password`, login reset link, Better Auth reset email hook, 1-hour reset token expiry, reset-session revocation, local development reset URL logging, and `account.password.reset` audit log.
+- Validation passed after password reset slice: `npm run lint`, `npm test` (69/69), `npm run build`.
+- Manual validation passed for password reset: reset request generated local reset URL, reset callback accepted new password, old password failed, and new password login succeeded.
+- Completed Phase 23 — Profile, Password & Account Management.
 - Updated `PRD.md` with v1.1+ Production Enhancement Roadmap covering Backup & Ops Safety, Better Auth/account management, email notifications, Friday reporting cycle, weekly donation target, distribution story, transparency enhancements, audit/approval UI, export upgrades, and admin productivity tools.
 - Updated `TECHNICAL_SPEC.md` with v1.1+ Technical Addendum for backup/restore, Better Auth architecture, email notification architecture, Friday cycle rules, weekly target model, distribution report model, public transparency rules, audit/approval UI, export upgrade, and admin productivity constraints.
 - Drafted roadmap Phase 21–31 after product owner approved feature ideas 1–19; selected Phase 21 Backup & Restore Automation first to protect live data before larger auth and reporting changes.
@@ -83,7 +102,30 @@ Done
 - Added `scripts/restore-drill-postgres.sh` to restore one `.sql.gz` backup into temporary `jumat-berkah-postgres-restore-drill`, query `users`, `donations`, and `expenses`, then remove the temporary container.
 - Added `docs/BACKUP_RESTORE_RUNBOOK.md` with install steps, manual backup, cron, retention override, restore drill, health checks, forbidden commands, and explicit warning that production restore is not automated.
 - Validation passed for Phase 21 repo changes: `sh -n scripts/backup-postgres.sh`, `sh -n scripts/restore-drill-postgres.sh`, `npm run lint`, `npm run build`, `npm test` (63/63).
-- Remaining Phase 21 validation is server-only: run manual backup, verify checksum, restore drill into temporary container, confirm `users`, `donations`, and `expenses` can be queried, then install cron.
+- Completed Phase 21 server validation: manual backup created `/var/backups/jumat-berkah/jumat-berkah-postgres-20260527T054623Z.sql.gz`, checksum verified `OK`, restore drill queried `users=1`, `donations=1`, `expenses=0`, temporary restore container was removed, app/local/public health checks returned healthy/`200`, and daily root cron was installed for `15 2 * * * /usr/local/bin/jumat-berkah-backup-postgres.sh >/dev/null 2>&1`.
+- Started Phase 22 — Better Auth Migration.
+- Added `better-auth` dependency and `src/lib/better-auth.ts` server config for PostgreSQL, Google OAuth, email/password, custom auth table names, and trusted origins.
+- Added `/api/auth/[...all]` App Router handler using `toNextJsHandler`.
+- Added Better Auth database migration for `auth_users`, `auth_sessions`, `auth_accounts`, and `auth_verifications`, kept separate from existing domain `users` table.
+- Added `src/lib/auth-authorization.ts` and `src/lib/better-auth-guards.ts` so Better Auth sessions still require app-side `users.role` checks before admin/donor access.
+- Added tests proving Google/email-auth success alone does not grant admin access and donor access remains donor-role scoped.
+- Validation passed for Phase 22 foundation: `npm run lint`, `npm run build`, `npm test` (65/65). Build emitted expected local placeholder `BETTER_AUTH_SECRET` entropy warnings only; production must set real `BETTER_AUTH_SECRET`.
+- Added `docs/BETTER_AUTH_SETUP.md` with local/production env, Google OAuth origins/redirect URIs, role access rules, fallback plan, and auth table notes.
+- Added Google login and email/password login UI to admin and donor login pages while keeping legacy code-login fallback forms.
+- Updated admin layout and admin APIs for expenses, receipt access, and report export to accept either legacy admin cookie or Better Auth admin session guarded by domain `users.role = admin`.
+- Updated donor donation history, donation creation, donation prefill, and `/api/me/donations` to accept Better Auth donor sessions; missing Better Auth user emails are created as domain donor users, while admin-role users are denied donor area.
+- Updated admin/donor logout buttons to clear both legacy session cookies and Better Auth sessions.
+- Validation passed after UI/guard wiring: `npm run lint`, `npm run build`, `npm test` (65/65). Build still warns if local `BETTER_AUTH_SECRET` is short/low entropy; replace local secret with `openssl rand -base64 32` output if warning persists.
+- Fixed local Prisma drift by adding Better Auth models to `prisma/schema.prisma` matching the `auth_*` migration; local `npx prisma migrate status` confirmed database schema is up to date.
+- Improved admin/donor login UI to avoid stacked forms: Google remains the primary action, while password/signup/legacy code forms are selected via compact method toggles.
+- Local manual validation: `run.bat` started successfully on `http://localhost:3037`, Google login redirect mismatch was fixed by using matching Google OAuth redirect/origin, donor Google login passed, donor `/api/me/donations` passed, admin Google login passed after local domain role setup, admin CSV export passed, and legacy admin/donor code-login fallback passed.
+- Validation passed after UI refinement and schema sync: `npm run lint`, `npm run build`, `npm test` (65/65).
+- Added `scripts/provision-better-auth-admin.ts` and `npm run seed:better-auth-admin` to provision Better Auth email/password admin accounts, then upsert matching domain `users.role = admin`; documented required temporary env values in `docs/BETTER_AUTH_SETUP.md`.
+- Fixed admin provisioning script to load Next.js env files before reading `BETTER_AUTH_URL`, so local `.env.local` values are available when running `npm run seed:better-auth-admin`.
+- Fixed admin provisioning script to send `Origin: BETTER_AUTH_URL` to Better Auth signup, avoiding local CLI `HTTP 403` from origin protection.
+- Local manual validation passed for admin email/password login after provisioning with an unused local test email; login redirected to `/admin` as expected.
+- Validation passed after admin provisioning script addition/fix: `npm run lint`, `npm run build`, `npm test` (65/65).
+- Completed Phase 22 local validation; production rollout still requires server env, migration/deploy, and live auth smoke tests.
 - Note: `docker compose -f docker-compose.staging.yml config` was not validated locally because `.env.production` is intentionally absent from repo; app compose was previously validated and is already running on server.
 - Completed Phase 10 validation after Telegram smoke passed: bot responded quickly to admin/public commands after setting webhook with `max_connections=1` and `drop_pending_updates=true`.
 - Validation passed: `npm run lint`, `npm run build`, `npm test` (63/63).
@@ -414,6 +456,7 @@ Done
 | 2026-05-27 | Treat Cloudflare Tunnel reliability hardening as separate Phase 20 instead of expanding Phase 10 | Phase 10 should finish payment/Telegram deploy validation first; ops hardening needs its own validation cycle and must not risk unrelated apps on shared server |
 | 2026-05-27 | Prefer Docker Compose-managed `jumat-berkah-cloudflared` plus health check/runbook as long-term fix, with cron auto-heal allowed as temporary mitigation | Compose ownership documents exact flags (`--network host`, `--protocol http2`) and reduces manual restart risk; cron is safe short-term because it restarts only the tunnel container |
 | 2026-05-27 | Prioritize Backup & Restore Automation as Phase 21 before Better Auth and reporting enhancements | App is live and stores financial/payment data; reliable restore path should exist before major auth/database changes |
+| 2026-05-27 | Use Resend HTTP API for Phase 24 email notifications | Avoid adding SMTP dependencies, keep server-only transactional email simple, and allow safe opt-in via env |
 
 ## 6. Execution Rules
 
@@ -1408,7 +1451,7 @@ Out-of-scope:
 - [x] Add cron instructions for daily backup.
 - [x] Add safe backup directory and permission guidance.
 - [x] Document verification command (`pg_restore`/`psql` sanity query).
-- [ ] Validate backup and restore drill on non-production target.
+- [x] Validate backup and restore drill on non-production target.
 
 ## Acceptance Criteria
 
@@ -1456,14 +1499,14 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Design Better Auth schema integration with existing `users`/domain models.
-- [ ] Add Better Auth dependency and server config.
-- [ ] Add `/api/auth/[...all]` route.
-- [ ] Add Google provider env and callback documentation.
-- [ ] Add email/password support with secure password policy.
-- [ ] Replace admin session checks with Better Auth-backed role checks.
-- [ ] Replace/bridge donor login flow.
-- [ ] Add tests for admin/donor authorization boundaries.
+- [x] Design Better Auth schema integration with existing `users`/domain models.
+- [x] Add Better Auth dependency and server config.
+- [x] Add `/api/auth/[...all]` route.
+- [x] Add Google provider env and callback documentation.
+- [x] Add email/password support with secure password policy.
+- [x] Replace admin session checks with Better Auth-backed role checks.
+- [x] Replace/bridge donor login flow.
+- [x] Add tests for admin/donor authorization boundaries.
 
 ## Acceptance Criteria
 
@@ -1508,12 +1551,12 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Add `/akun/profil` page.
-- [ ] Add admin profile area.
-- [ ] Add password change form.
-- [ ] Add password reset request/callback flow.
-- [ ] Add session revoke behavior.
-- [ ] Add audit logs for admin account security events.
+- [x] Add `/akun/profil` page.
+- [x] Add admin profile area.
+- [x] Add password change form.
+- [x] Add password reset request/callback flow.
+- [x] Add session revoke behavior.
+- [x] Add audit logs for admin account security events.
 
 ## Acceptance Criteria
 
@@ -1556,11 +1599,11 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Choose email provider and env variables.
-- [ ] Add server-only email utility.
-- [ ] Add templates for auth and admin alerts.
-- [ ] Add retry/logging behavior for failures.
-- [ ] Add tests for template privacy and recipient routing.
+- [x] Choose email provider and env variables.
+- [x] Add server-only email utility.
+- [x] Add templates for auth and admin alerts.
+- [x] Add retry/logging behavior for failures.
+- [x] Add tests for template privacy and recipient routing.
 
 ## Acceptance Criteria
 

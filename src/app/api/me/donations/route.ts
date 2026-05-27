@@ -1,15 +1,22 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { DONOR_SESSION_COOKIE, getDonorUser } from "@/lib/auth";
+import { getBetterAuthDonorUser } from "@/lib/better-auth-guards";
 import { getPrisma } from "@/lib/db";
 
 export async function GET() {
   const cookieStore = await cookies();
-  const donor = await getDonorUser(cookieStore.get(DONOR_SESSION_COOKIE)?.value);
+  const legacyDonor = await getDonorUser(
+    cookieStore.get(DONOR_SESSION_COOKIE)?.value,
+  );
+  const donor = legacyDonor ?? (await getBetterAuthDonorUser(await headers()));
 
   if (!donor) {
-    return NextResponse.json({ errors: { auth: "Unauthorized" } }, { status: 401 });
+    return NextResponse.json(
+      { errors: { auth: "Unauthorized" } },
+      { status: 401 },
+    );
   }
 
   const prisma = getPrisma();

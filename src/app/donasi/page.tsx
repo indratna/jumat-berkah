@@ -1,11 +1,15 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 import { DONOR_SESSION_COOKIE, getDonorUser } from "@/lib/auth";
+import { getBetterAuthDonorUser } from "@/lib/better-auth-guards";
 import { DonationForm } from "./donation-form";
 
 export default async function DonationPage() {
   const cookieStore = await cookies();
-  const donor = await getDonorUser(cookieStore.get(DONOR_SESSION_COOKIE)?.value);
+  const legacyDonor = await getDonorUser(
+    cookieStore.get(DONOR_SESSION_COOKIE)?.value,
+  );
+  const donor = legacyDonor ?? (await getBetterAuthDonorUser(await headers()));
 
   return (
     <main className="min-h-screen bg-emerald-50 px-6 py-12 text-emerald-950 sm:py-16">
@@ -22,8 +26,8 @@ export default async function DonationPage() {
             akan dihubungkan pada fase pembayaran berikutnya.
           </p>
           <div className="rounded-2xl bg-white/10 p-4 text-sm text-emerald-50">
-            Minimal donasi Rp1.000. Email dan WhatsApp bersifat opsional dan tidak
-            akan ditampilkan pada laporan publik.
+            Minimal donasi Rp1.000. Email dan WhatsApp bersifat opsional dan
+            tidak akan ditampilkan pada laporan publik.
           </div>
         </div>
 

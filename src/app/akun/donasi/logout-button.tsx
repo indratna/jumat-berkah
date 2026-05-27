@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 
+import { authClient } from "@/lib/auth-client";
+
 export function DonorLogoutButton() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleLogout() {
     setIsSubmitting(true);
-    await fetch("/api/auth/donor/logout", { method: "POST" });
+    await Promise.allSettled([
+      fetch("/api/auth/donor/logout", { method: "POST" }),
+      authClient.signOut(),
+    ]);
     window.location.href = "/";
   }
 

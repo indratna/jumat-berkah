@@ -1,8 +1,9 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { Prisma } from "@/generated/prisma/client";
 import { ADMIN_SESSION_COOKIE, requireAdminUser } from "@/lib/auth";
+import { requireBetterAuthAdminUser } from "@/lib/better-auth-guards";
 import { getPrisma } from "@/lib/db";
 import { serializeExpenseForAudit, validateExpenseInput } from "@/lib/expenses";
 import { maybeSendCriticalAuditAlert } from "@/lib/telegram-alerts";
@@ -140,5 +141,8 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
 async function getAdminFromCookie() {
   const cookieStore = await cookies();
-  return requireAdminUser(cookieStore.get(ADMIN_SESSION_COOKIE)?.value);
+  const legacyAdmin = await requireAdminUser(
+    cookieStore.get(ADMIN_SESSION_COOKIE)?.value,
+  );
+  return legacyAdmin ?? requireBetterAuthAdminUser(await headers());
 }

@@ -1,15 +1,23 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { ADMIN_SESSION_COOKIE, requireAdminUser } from "@/lib/auth";
+import { requireBetterAuthAdminUser } from "@/lib/better-auth-guards";
 import { getAdminReportExport } from "@/lib/admin";
 
 export async function GET(request: Request) {
   const cookieStore = await cookies();
-  const admin = await requireAdminUser(cookieStore.get(ADMIN_SESSION_COOKIE)?.value);
+  const legacyAdmin = await requireAdminUser(
+    cookieStore.get(ADMIN_SESSION_COOKIE)?.value,
+  );
+  const admin =
+    legacyAdmin ?? (await requireBetterAuthAdminUser(await headers()));
 
   if (!admin) {
-    return NextResponse.json({ errors: { auth: "Unauthorized" } }, { status: 401 });
+    return NextResponse.json(
+      { errors: { auth: "Unauthorized" } },
+      { status: 401 },
+    );
   }
 
   const url = new URL(request.url);
@@ -28,5 +36,7 @@ export async function GET(request: Request) {
 
 function buildExportFilename(from: string | null, to: string | null) {
   const suffix = [from, to].filter(Boolean).join("_");
-  return suffix ? `laporan-jumat-berkah-${suffix}.csv` : "laporan-jumat-berkah.csv";
+  return suffix
+    ? `laporan-jumat-berkah-${suffix}.csv`
+    : "laporan-jumat-berkah.csv";
 }

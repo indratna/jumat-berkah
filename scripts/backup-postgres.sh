@@ -12,6 +12,27 @@ BACKUP_FILE="$BACKUP_DIR/jumat-berkah-postgres-$TIMESTAMP.sql.gz"
 CHECKSUM_FILE="$BACKUP_FILE.sha256"
 LOG_FILE="${JUMAT_BERKAH_BACKUP_LOG:-/var/log/jumat-berkah-backup.log}"
 
+notify_backup_failure() {
+  status="$?"
+  if [ "$status" -eq 0 ]; then
+    return 0
+  fi
+
+  echo "$(date -Is) backup failed with exit code $status" >> "$LOG_FILE"
+
+  if [ "${EMAIL_PROVIDER:-}" = "resend" ] && [ -n "${RESEND_API_KEY:-}" ] && [ -n "${EMAIL_FROM:-}" ] && [ -n "${ADMIN_EMAIL_NOTIFICATIONS:-}" ]; then
+    escaped_error="Backup PostgreSQL Jumat Berkah gagal di host $(hostname). Exit code: $status"
+    curl -fsS https://api.resend.com/emails \
+      -H "Authorization: Bearer $RESEND_API_KEY" \
+      -H "Content-Type: application/json" \
+      --data "{\"from\":\"$EMAIL_FROM\",\"to\":[\"$ADMIN_EMAIL_NOTIFICATIONS\"],\"subject\":\"[Jumat Berkah] Backup PostgreSQL Gagal\",\"text\":\"$escaped_error\"}" >/dev/null 2>&1 || true
+  fi
+
+  exit "$status"
+}
+
+trap notify_backup_failure EXIT
+
 mkdir -p "$BACKUP_DIR" "$(dirname "$LOG_FILE")"
 chmod 700 "$BACKUP_DIR"
 

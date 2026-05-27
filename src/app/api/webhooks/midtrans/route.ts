@@ -5,6 +5,7 @@ import {
   parseMidtransNotification,
   verifyMidtransSignature,
 } from "@/lib/midtrans";
+import { safeSendAdminSettlementEmail } from "@/lib/email";
 import {
   formatDonationSettlementMessage,
   getTelegramBotToken,
@@ -157,7 +158,7 @@ export async function POST(request: Request) {
     result.updatedDonation?.status === DonationStatus.settlement &&
     result.donation
   ) {
-    await maybeSendSettlementNotification({
+    const notificationInput = {
       orderId: result.donation.orderId,
       amount: result.donation.amount,
       donorName: result.donation.donorName,
@@ -165,7 +166,10 @@ export async function POST(request: Request) {
       showNamePublicly: result.donation.showNamePublicly,
       message: result.donation.message,
       paidAt: result.updatedDonation.paidAt ?? new Date(),
-    });
+    };
+
+    await maybeSendSettlementNotification(notificationInput);
+    await safeSendAdminSettlementEmail(notificationInput);
   }
 
   return NextResponse.json({

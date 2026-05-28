@@ -30,6 +30,34 @@ if not exist ".env.local" (
 
 set DOTENV_CONFIG_PATH=.env.local
 set PORT=3037
+set LOCAL_DB_CONTAINER=jumat-berkah-postgres
+set LOCAL_DB_NAME=jumat_berkah
+set LOCAL_DB_USER=jumat_berkah_user
+set LOCAL_DB_PASSWORD=jumat_berkah_password
+set LOCAL_DB_PORT=54329
+
+where docker >nul 2>nul
+if errorlevel 1 (
+  echo WARNING: Docker tidak tersedia di PATH. Lewati auto-start PostgreSQL lokal.
+) else (
+  echo Cek PostgreSQL lokal Docker container %LOCAL_DB_CONTAINER%...
+  docker inspect %LOCAL_DB_CONTAINER% >nul 2>nul
+  if errorlevel 1 (
+    echo Container %LOCAL_DB_CONTAINER% belum ada. Membuat PostgreSQL lokal di port %LOCAL_DB_PORT%...
+    docker run --name %LOCAL_DB_CONTAINER% -e POSTGRES_DB=%LOCAL_DB_NAME% -e POSTGRES_USER=%LOCAL_DB_USER% -e POSTGRES_PASSWORD=%LOCAL_DB_PASSWORD% -p %LOCAL_DB_PORT%:5432 -d postgres:16
+    if errorlevel 1 (
+      echo ERROR: Gagal membuat container PostgreSQL lokal. Pastikan Docker Desktop hidup.
+      goto :fail
+    )
+  ) else (
+    echo Menyalakan container %LOCAL_DB_CONTAINER% jika belum jalan...
+    docker start %LOCAL_DB_CONTAINER% >nul 2>nul
+    if errorlevel 1 (
+      echo ERROR: Gagal start PostgreSQL lokal. Pastikan Docker Desktop hidup dan port %LOCAL_DB_PORT% tidak dipakai.
+      goto :fail
+    )
+  )
+)
 
 if not exist "node_modules" (
   echo node_modules belum ada. Menjalankan npm install...

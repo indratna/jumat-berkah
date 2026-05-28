@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { AdminSummaryFooter } from "@/components/admin/admin-summary-footer";
+import { AdminTopTabs } from "@/components/admin/admin-top-tabs";
 import { AutoSubmitSelect } from "../auto-submit-select";
 import { EXPENSE_CATEGORIES } from "@/lib/expenses";
 import {
@@ -40,6 +42,10 @@ export default async function AdminExpensesPage({
   };
   const expenses = await getAdminExpenses(filters);
   const pageQuery = buildPageQuery(resolvedSearchParams);
+  const categoryTabs = buildCategoryTabs(
+    resolvedSearchParams,
+    filters.category,
+  );
 
   return (
     <main className="mx-auto max-w-6xl space-y-6">
@@ -54,6 +60,8 @@ export default async function AdminExpensesPage({
           memengaruhi laporan publik.
         </p>
       </div>
+
+      <AdminTopTabs tabs={categoryTabs} />
 
       <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
         <TableToolbar filters={filters} />
@@ -76,6 +84,17 @@ export default async function AdminExpensesPage({
             }))}
           />
         </div>
+        <AdminSummaryFooter
+          items={[
+            { label: "Total cocok", value: String(expenses.total) },
+            {
+              label: "Halaman",
+              value: `${expenses.page}/${expenses.totalPages}`,
+            },
+            { label: "Baris", value: String(filters.pageSize) },
+            { label: "Kategori", value: filters.category ?? "Semua" },
+          ]}
+        />
         <TableFooter
           page={expenses.page}
           totalPages={expenses.totalPages}
@@ -256,6 +275,38 @@ function PaginationLink({
       {children}
     </Link>
   );
+}
+
+function buildCategoryTabs(
+  params: Record<string, string | string[] | undefined>,
+  activeCategory: string | null,
+) {
+  const primaryCategories = EXPENSE_CATEGORIES.slice(0, 4);
+  return [
+    {
+      href: buildCategoryHref(params, null),
+      label: "Semua kategori",
+      active: !activeCategory,
+    },
+    ...primaryCategories.map((category) => ({
+      href: buildCategoryHref(params, category),
+      label: category,
+      active: activeCategory === category,
+    })),
+  ];
+}
+
+function buildCategoryHref(
+  params: Record<string, string | string[] | undefined>,
+  category: string | null,
+) {
+  const query = buildPageQuery(params);
+  query.delete("category");
+  if (category) {
+    query.set("category", category);
+  }
+  const queryString = query.toString();
+  return queryString ? `?${queryString}` : "?";
 }
 
 function buildPageQuery(params: Record<string, string | string[] | undefined>) {

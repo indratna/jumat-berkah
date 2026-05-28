@@ -8,6 +8,13 @@ Aplikasi web donasi Jumat Berkah untuk donasi QRIS Midtrans dan laporan pemasuka
 - `PRD.md` — scope produk dan acceptance criteria.
 - `TECHNICAL_SPEC.md` — arsitektur, database, API, payment, security.
 - `IMPLEMENTATION_PLAN.md` — phase checklist dan progress tracker.
+- `docs/FEATURES.md` — ringkasan fitur, route, dan smoke test.
+- `docs/ENV_SETUP.md` — referensi env local/production dan setup provider.
+- `docs/PRODUCTION_CHECKLIST.md` — checklist readiness sebelum production sign-off.
+- `docs/BETTER_AUTH_SETUP.md` — setup Better Auth dan Google OAuth.
+- `docs/BACKUP_RESTORE_RUNBOOK.md` — backup PostgreSQL dan restore drill.
+- `docs/DEPLOYMENT_OPS_RUNBOOK.md` — operasi deploy/tunnel shared server.
+- `docs/REPORT_EXPORTS.md` — catatan export laporan publik.
 
 ## Getting Started
 
@@ -53,6 +60,8 @@ Copy `.env.example` to `.env.local` for local development and replace placeholde
 
 Never commit real `.env` files.
 
+Full env reference, provider setup steps, and smoke tests live in `docs/ENV_SETUP.md`. Production readiness checklist lives in `docs/PRODUCTION_CHECKLIST.md`.
+
 Required deployment values:
 
 - `DATABASE_URL`
@@ -71,6 +80,7 @@ Required deployment values:
 - `TELEGRAM_ADMIN_CHAT_IDS` (optional, comma-separated allowlist)
 - `TELEGRAM_NOTIFY_CHAT_ID` (optional, single chat for settlement notifications)
 - `TELEGRAM_NOTIFY_ENABLED` (optional, set to `true` to enable settlement notifications and cron alerts)
+- `TELEGRAM_PUBLIC_CHANNEL_ID` (optional, public channel ID for `/broadcast_laporan`, must use `-100...` format)
 - `CRON_SECRET` (optional, required for Telegram cron endpoints)
 - `TELEGRAM_LOW_BALANCE_THRESHOLD_RUPIAH` (optional, integer Rupiah threshold for low-balance alert)
 - `TELEGRAM_INVALID_SIGNATURE_ALERT_WINDOW_MINUTES` (optional, default `30`)
@@ -84,6 +94,47 @@ Required deployment values:
 - `EMAIL_FROM` (optional, verified sender address)
 - `RESEND_API_KEY` (optional, required when `EMAIL_PROVIDER=resend`)
 - `ADMIN_EMAIL_NOTIFICATIONS` (optional, comma-separated admin recipients)
+- `WHATSAPP_REMINDER_ENABLED` (optional, set to `true` to enable WhatsApp reminder sends)
+- `WHATSAPP_CLOUD_ACCESS_TOKEN` (optional, server-only Meta WhatsApp Cloud API token)
+- `WHATSAPP_CLOUD_PHONE_NUMBER_ID` (optional, Meta WhatsApp phone number ID)
+- `WHATSAPP_REMINDER_TEMPLATE_NAME` (optional, approved WhatsApp template name)
+- `WHATSAPP_REMINDER_TEMPLATE_LANGUAGE` (optional, default `id`)
+- `WHATSAPP_REMINDER_BATCH_LIMIT` (optional, default `20`, max `100`)
+
+## WhatsApp Donation Reminders
+
+Phase 35 uses Meta WhatsApp Cloud API only. Token stays server-only. Reminders send only to donation records with explicit WhatsApp reminder opt-in and a phone number.
+
+```env
+WHATSAPP_REMINDER_ENABLED=false
+WHATSAPP_CLOUD_ACCESS_TOKEN=replace-with-whatsapp-cloud-token
+WHATSAPP_CLOUD_PHONE_NUMBER_ID=replace-with-phone-number-id
+WHATSAPP_REMINDER_TEMPLATE_NAME=jumat_berkah_reminder
+WHATSAPP_REMINDER_TEMPLATE_LANGUAGE=id
+WHATSAPP_REMINDER_BATCH_LIMIT=20
+```
+
+Admin dry-run endpoint:
+
+```bash
+curl -X POST https://your-domain.example.com/api/admin/whatsapp-reminders \
+  -H "Content-Type: application/json" \
+  -d '{"dryRun":true,"limit":10}'
+```
+
+Cron endpoint:
+
+```bash
+curl -H "X-Cron-Secret: YOUR_CRON_SECRET" \
+  https://your-domain.example.com/api/cron/whatsapp/reminders
+```
+
+Rules:
+
+- Dry-run is default for admin endpoint unless `dryRun:false` is sent.
+- Live send requires `WHATSAPP_REMINDER_ENABLED=true`, token, and phone number ID.
+- Failed WhatsApp requests are logged in audit and do not crash batch/cron.
+- Response masks phone numbers; raw token is never returned to client.
 
 ## Email Notifications
 
@@ -128,7 +179,10 @@ safely.
 4. Pick the chat that should receive donation settlement notifications and set
    `TELEGRAM_NOTIFY_CHAT_ID` to that chat ID. To turn notifications on, set
    `TELEGRAM_NOTIFY_ENABLED="true"`.
-5. Register the webhook with Telegram (run once after deploy):
+5. For `/broadcast_laporan`, add the bot as admin in the public channel with
+   permission to post messages. Set `TELEGRAM_PUBLIC_CHANNEL_ID` to the numeric
+   channel ID in `-100...` format.
+6. Register the webhook with Telegram (run once after deploy):
 
    ```bash
    curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
@@ -140,13 +194,22 @@ safely.
      }'
    ```
 
-6. Test from an allowlisted admin chat:
+7. Test from an allowlisted admin chat:
 
    ```
    /pengeluaran 2026-05-22 | Beras | 300000 | 30 kg beras | Pasar Senen
    ```
 
    The bot replies with a confirmation and creates an expense plus audit log.
+
+8. Test public channel broadcast from an allowlisted admin chat:
+
+   ```
+   /broadcast_laporan
+   ```
+
+   If sending fails, verify `TELEGRAM_PUBLIC_CHANNEL_ID=-100...`, bot admin
+   status in the channel, and post permission.
 
 ### Telegram Cron Setup
 

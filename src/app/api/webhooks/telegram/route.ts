@@ -6,6 +6,8 @@ import {
   Prisma,
 } from "@/generated/prisma/client";
 import { getAdminReportExport } from "@/lib/admin";
+import { getCurrentFridayCycleReport } from "@/lib/reports";
+import { getPublishedDistributionReportForCurrentCycle } from "@/lib/distribution-report";
 import { getPrisma } from "@/lib/db";
 import {
   bindDonorTelegramChat,
@@ -1210,7 +1212,7 @@ async function handleBroadcastReportCommand(message: TelegramMessage) {
   if (channelId === null) {
     await safeSendTelegramMessage({
       chatId: message.chat.id,
-      text: "TELEGRAM_PUBLIC_CHANNEL_ID belum dikonfigurasi.",
+      text: "TELEGRAM_PUBLIC_CHANNEL_ID belum dikonfigurasi. Isi dengan ID channel publik format -100..., lalu jadikan bot admin channel dengan izin post pesan.",
     });
     return NextResponse.json({
       ok: true,
@@ -1219,14 +1221,14 @@ async function handleBroadcastReportCommand(message: TelegramMessage) {
     });
   }
 
-  const text = await buildPublicReportReply("minggu");
+  const text = await buildFridayCyclePublicReportReply();
   const sent = await safeSendTelegramMessage({ chatId: channelId, text });
 
   await safeSendTelegramMessage({
     chatId: message.chat.id,
     text: sent
       ? "✅ Laporan mingguan terkirim ke channel publik."
-      : "Laporan gagal dikirim ke channel publik. Cek token/channel bot.",
+      : "Laporan gagal dikirim ke channel publik. Cek TELEGRAM_PUBLIC_CHANNEL_ID format -100..., bot harus admin channel, dan punya izin post pesan.",
   });
 
   return NextResponse.json({
@@ -1356,6 +1358,37 @@ async function buildPublicExpensesReply(limit: number) {
       ].join("\n"),
     ),
   ].join("\n");
+}
+
+async function buildFridayCyclePublicReportReply() {
+  const { cycle, report } = await getCurrentFridayCycleReport();
+  const distribution = await getPublishedDistributionReportForCurrentCycle();
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/+$/, "");
+  const lines = [
+    `📊 Laporan Publik Siklus Jumat`,
+    `Periode: ${cycle.label}`,
+    `Pemasukan: ${formatRupiah(report.summary.income)}`,
+    `Pengeluaran: ${formatRupiah(report.summary.expenses)}`,
+    `Saldo periode: ${formatRupiah(report.summary.periodBalance)}`,
+    `Saldo saat ini: ${formatRupiah(report.summary.currentBalance)}`,
+    `Jumlah donasi tampil: ${report.donations.length}`,
+    `Jumlah pengeluaran tampil: ${report.expenses.length}`,
+  ];
+
+  if (distribution.report) {
+    lines.push("", `🍽️ Cerita Penyaluran: ${distribution.report.title}`);
+    if (distribution.report.packageCount !== null) {
+      lines.push(`Paket: ${distribution.report.packageCount}`);
+    }
+  }
+
+  if (baseUrl) {
+    lines.push(`Detail laporan: ${baseUrl}/laporan?period=jumat`);
+  } else {
+    lines.push("Detail lengkap: buka halaman /laporan?period=jumat.");
+  }
+
+  return lines.join("\n");
 }
 
 async function buildPublicReportReply(period: "hari" | "minggu" | "bulan") {

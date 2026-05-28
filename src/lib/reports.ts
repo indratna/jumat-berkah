@@ -3,6 +3,7 @@ import {
   ExpenseApprovalStatus,
 } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/db";
+import { getCurrentFridayCycleRange } from "@/lib/friday-cycle";
 
 export type ReportDateRange = {
   from: Date | null;
@@ -10,10 +11,22 @@ export type ReportDateRange = {
 };
 
 export function parseReportDateRange(params: URLSearchParams): ReportDateRange {
+  if (params.get("period") === "jumat") {
+    const cycle = getCurrentFridayCycleRange();
+    return { from: cycle.from, to: cycle.to };
+  }
+
   return {
     from: parseDateStart(params.get("from")),
     to: parseDateEnd(params.get("to")),
   };
+}
+
+export async function getCurrentFridayCycleReport(now = new Date()) {
+  const cycle = getCurrentFridayCycleRange(now);
+  const report = await getPublicReport({ from: cycle.from, to: cycle.to });
+
+  return { cycle, report };
 }
 
 export async function getPublicReport(range: ReportDateRange) {
@@ -31,6 +44,7 @@ export async function getPublicReport(range: ReportDateRange) {
     totalExpenses,
     donations,
     expenses,
+    distributions,
   ] = await Promise.all([
     prisma.donation.aggregate({
       where: { status: DonationStatus.settlement, ...donationDateFilter },
@@ -73,6 +87,21 @@ export async function getPublicReport(range: ReportDateRange) {
         amount: true,
       },
     }),
+    prisma.distributionReport.findMany({
+      where: {
+        publishedAt: { not: null },
+        ...buildDateFilter(range, "cycleStart"),
+      },
+      orderBy: { cycleStart: "desc" },
+      take: 20,
+      select: {
+        cycleStart: true,
+        title: true,
+        summary: true,
+        packageCount: true,
+        locationSummary: true,
+      },
+    }),
   ]);
 
   const income = periodIncome._sum.amount ?? 0;
@@ -104,6 +133,7 @@ export async function getPublicReport(range: ReportDateRange) {
       amount: expense.amount,
     })),
     expenseCategories: summarizeExpenseCategories(expenses),
+    timeline: buildPublicTimeline({ donations, expenses, distributions }),
   };
 }
 
@@ -117,6 +147,88 @@ export function getPublicDonorName(input: {
   }
 
   return input.donorName;
+}
+
+export type PublicTimelineItem = {
+  type: "donation" | "expense" | "distribution";
+  date: string;
+  sortDate: Date;
+  title: string;
+  description: string;
+  amount: number | null;
+  meta: string | null;
+};
+
+export function buildPublicTimeline(input: {
+  donations: Array<{
+    paidAt: Date | null;
+    createdAt: Date;
+    donorName: string | null;
+    isAnonymous: boolean;
+    showNamePublicly: boolean;
+    amount: number;
+    message: string | null;
+  }>;
+  expenses: Array<{
+    expenseDate: Date;
+    category: string;
+    description: string;
+    amount: number;
+  }>;
+  distributions: Array<{
+    cycleStart: Date;
+    title: string;
+    summary: string;
+    packageCount: number | null;
+    locationSummary: string | null;
+  }>;
+}): PublicTimelineItem[] {
+  const donationItems: PublicTimelineItem[] = input.donations.map(
+    (donation) => {
+      const date = donation.paidAt ?? donation.createdAt;
+      const donorName = getPublicDonorName({
+        donorName: donation.donorName,
+        isAnonymous: donation.isAnonymous,
+        showNamePublicly: donation.showNamePublicly,
+      });
+
+      return {
+        type: "donation",
+        date: formatDate(date),
+        sortDate: date,
+        title: `Donasi dari ${donorName}`,
+        description: donation.message ?? "Donasi berhasil diterima.",
+        amount: donation.amount,
+        meta: "Donasi berhasil",
+      };
+    },
+  );
+
+  const expenseItems: PublicTimelineItem[] = input.expenses.map((expense) => ({
+    type: "expense",
+    date: formatDate(expense.expenseDate),
+    sortDate: expense.expenseDate,
+    title: expense.category,
+    description: expense.description,
+    amount: expense.amount,
+    meta: "Pengeluaran program",
+  }));
+
+  const distributionItems: PublicTimelineItem[] = input.distributions.map(
+    (distribution) => ({
+      type: "distribution",
+      date: formatDate(distribution.cycleStart),
+      sortDate: distribution.cycleStart,
+      title: distribution.title,
+      description: distribution.summary,
+      amount: null,
+      meta: buildDistributionMeta(distribution),
+    }),
+  );
+
+  return [...donationItems, ...expenseItems, ...distributionItems]
+    .sort((a, b) => b.sortDate.getTime() - a.sortDate.getTime())
+    .slice(0, 30);
 }
 
 export function summarizeExpenseCategories(
@@ -154,9 +266,23 @@ function parseDateEnd(value: string | null) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function buildDistributionMeta(distribution: {
+  packageCount: number | null;
+  locationSummary: string | null;
+}) {
+  const parts: string[] = [];
+  if (distribution.packageCount !== null) {
+    parts.push(`${distribution.packageCount} paket`);
+  }
+  if (distribution.locationSummary) {
+    parts.push(distribution.locationSummary);
+  }
+  return parts.length > 0 ? parts.join(" • ") : "Penyaluran dipublikasikan";
+}
+
 function buildDateFilter(
   range: ReportDateRange,
-  field: "paidAt" | "expenseDate",
+  field: "paidAt" | "expenseDate" | "cycleStart",
 ) {
   if (!range.from && !range.to) {
     return {};

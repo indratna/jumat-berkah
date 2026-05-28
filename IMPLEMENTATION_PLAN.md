@@ -10,11 +10,11 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 
 ### Current Status
 
-Current Phase: Phase 24 — Email Notifications  
+Current Phase: Phase 38 — Final QA & Production Readiness Review  
 Overall Progress: 100%  
-Last Updated: 2026-05-27  
-Current Focus: Phase 24 code complete; Resend email foundation, password reset email delivery, settlement admin email, large expense/delete expense email copies, repeated failed login email copies, invalid webhook signature email copy, backup failure email hook, safe Indonesian templates, recipient routing, and template privacy tests are added and validated. Remaining work: manual email smoke tests with real Resend env.
-Blockers: None
+Last Updated: 2026-05-28  
+Current Focus: Phase 38 completed. Code validation is green; production sign-off depends on live provider smoke for Midtrans, Telegram public channel, WhatsApp, and strong production auth secrets.
+Blockers: Live provider smoke remains required: Telegram public channel broadcast needs `TELEGRAM_PUBLIC_CHANNEL_ID=-100...` plus bot admin/post permission; production `BETTER_AUTH_SECRET` must be high entropy; Midtrans live QRIS and WhatsApp live send need provider credentials/templates.
 
 ### Phase Progress
 
@@ -39,19 +39,26 @@ Blockers: None
 | Phase 16 | Telegram Donor Self-Service | Done | 100% |
 | Phase 17 | Telegram Public Bot & Broadcast | Done | 100% |
 | Phase 18 | Operational & Security Alerts | Done | 100% |
-| Phase 19 | Admin UX Redesign | Not Started | 0% |
+| Phase 19 | Admin UX Redesign | Done | 100% |
 | Phase 20 | Deployment Ops Hardening | Done | 100% |
 | Phase 21 | Backup & Restore Automation | Done | 100% |
 | Phase 22 | Better Auth Migration | Done | 100% |
 | Phase 23 | Profile, Password & Account Management | Done | 100% |
-| Phase 24 | Email Notifications | In Progress | 90% |
-| Phase 25 | Friday Reporting Cycle | Not Started | 0% |
-| Phase 26 | Weekly Donation Target | Not Started | 0% |
-| Phase 27 | Distribution Story & Photo Report | Not Started | 0% |
-| Phase 28 | Public Transparency Enhancements | Not Started | 0% |
-| Phase 29 | Admin Audit & Approval UI | Not Started | 0% |
-| Phase 30 | Reporting Export Upgrade | Not Started | 0% |
-| Phase 31 | Admin Productivity Tools | Not Started | 0% |
+| Phase 24 | Email Notifications | Done | 100% |
+| Phase 25 | Friday Reporting Cycle | Done | 100% |
+| Phase 26 | Weekly Donation Target | Done | 100% |
+| Phase 27 | Distribution Story & Photo Report | Done | 100% |
+| Phase 28 | Public Transparency Enhancements | Done | 100% |
+| Phase 29 | Admin Audit & Approval UI | Done | 100% |
+| Phase 30 | Reporting Export Upgrade | Done | 100% |
+| Phase 31 | Admin Productivity Tools | Done | 100% |
+| Phase 32 | Admin UX & Navigation Cleanup | Done | 100% |
+| Phase 33 | Admin Donor Database | Done | 100% |
+| Phase 34 | Communication Consent Foundation | Done | 100% |
+| Phase 35 | WhatsApp Donation Reminder | Done | 100% |
+| Phase 36 | Report Print & Public Report Redesign | Done | 100% |
+| Phase 37 | Documentation & Env Setup Guide | Done | 100% |
+| Phase 38 | Final QA & Production Readiness Review | Done | 100% |
 
 Status values:
 
@@ -64,6 +71,69 @@ Done
 
 ## 3. Work Log
 
+### 2026-05-28
+
+- Completed Phase 38 — Final QA & Production Readiness Review. Added `docs/FINAL_QA_REVIEW.md` with automated validation results, public/admin/provider smoke review, security/privacy review, navigation review, production env checklist review, and remaining live-provider blockers. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`. No code-level critical blocker found. Remaining production sign-off items: Telegram public channel `/broadcast_laporan`, strong production `BETTER_AUTH_SECRET`, Midtrans live QRIS smoke, and WhatsApp live template send.
+
+- Completed Phase 37 — Documentation & Env Setup Guide. Added `docs/FEATURES.md`, `docs/ENV_SETUP.md`, and `docs/PRODUCTION_CHECKLIST.md`; updated `README.md` documentation pointers; aligned WhatsApp env names/routes in `TECHNICAL_SPEC.md`; and added safe missing optional/ops placeholders to `.env.example`. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`. Manual fresh-maintainer doc pass completed by checking feature/env/checklist coverage against current phase scope. Build still warns local `BETTER_AUTH_SECRET` is low entropy; production checklist now calls this out.
+
+- Completed Phase 36 — Report Print & Public Report Redesign. Redesigned `/laporan` for clearer public hierarchy, added A4 print stylesheet and print button/copy, hid filters/export controls in print, improved PDF export content with category and timeline sections, and added export privacy/totals tests. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`. Manual print preview/PDF inspection not run in local browser during this session; code-level print/PDF validation passed. Build still warns local `BETTER_AUTH_SECRET` is low entropy; production follow-up remains to set a strong secret.
+
+- Completed Phase 35 — WhatsApp Donation Reminder. Added server-only WhatsApp Cloud API reminder config/parser, template send utility, opted-in donor recipient query with phone dedupe, admin guarded dry-run/manual endpoint `/api/admin/whatsapp-reminders`, protected cron endpoint `/api/cron/whatsapp/reminders`, Vercel cron schedule, audit logging for dry-run/sent/skipped/failed batches, masked phone responses, README/env docs, and tests for disabled-by-default config, provider gating, phone normalization, and safe send failure. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`. Manual live send not run because WhatsApp Cloud API env/template is not configured locally. Build still warns local `BETTER_AUTH_SECRET` is low entropy; production follow-up remains to set a strong secret.
+
+- Completed Phase 34 — Communication Consent Foundation. Added donation-level WhatsApp reminder consent fields and migration with default non-opt-in behavior for existing donors. Added donation form opt-in checkbox with explicit Indonesian consent and opt-out copy; server validation stores opt-in only when WhatsApp number is present. Admin donor database now shows consent badge/detail status and opt-in timestamp. Added tests for default non-opt-in, missing-phone opt-in rejection, and valid phone opt-in. Applied local migration `20260528090000_communication_consent` and updated `prisma.config.ts` to load `.env.local` for Prisma CLI commands. Validation passed: `npx prisma generate`, `npm run lint`, `npm test` (94/94), `npm run build`. Manual smoke passed by user: create donation with/without opt-in and verify `/admin/donatur` consent state. Build still warns local `BETTER_AUTH_SECRET` is low entropy; production follow-up remains to set a strong secret.
+
+- Completed Phase 33 — Admin Donor Database. Added /admin/donatur with admin-only donor search by name/email/phone, activity filters, donor detail summary, matching donation-history links, and sidebar navigation. Donor aggregation combines registered donor users and guest donation contact fields; settlement totals exclude pending/failed donations. Added donor aggregation/navigation tests. Validation passed: npm run lint, npm test (91/91), npm run build. Manual smoke passed by user: donor search, detail inspection, and public report contact privacy check. Build still warns local BETTER_AUTH_SECRET is low entropy; production follow-up remains to set a strong secret.
+
+- Completed Phase 32 — Admin UX & Navigation Cleanup. Audited current admin routes (`/admin`, `/admin/donasi`, `/admin/pengeluaran`, `/admin/penyaluran`, `/admin/persetujuan`, `/admin/audit`) plus related report/export/profile links. Grouped sidebar into Utama, Operasional, Laporan, and Sistem; shortened labels while keeping every existing admin route reachable. Added navigation reachability test. Validation passed: `npm run lint`, `npm test` (89/89), `npm run build`. Build still warns local `BETTER_AUTH_SECRET` is low entropy; production follow-up remains to set a strong secret.
+
+- Added post-Phase 31 roadmap based on product review: Phase 32 admin navigation cleanup, Phase 33 admin donor database, Phase 34 communication consent foundation, Phase 35 WhatsApp reminder, Phase 36 report print/public report redesign, Phase 37 documentation/env guide, and Phase 38 final QA/readiness review. Updated `PRD.md`, `TECHNICAL_SPEC.md`, and `IMPLEMENTATION_PLAN.md` only; no code changes in this planning pass.
+
+- Completed Phase 31 — Admin Productivity Tools. Added quick expense templates in `/admin/pengeluaran`, CSV preview/import UI, admin API `/api/admin/expenses/import`, shared CSV validation with per-row errors, transaction-safe all-or-nothing import, row-level and batch audit logs, and CSV validation tests. Validation passed: `npm run lint`, `npm test` (88/88), `npm run build`. Manual smoke passed by user: template expense, sample CSV import, and report balance verification.
+
+- Completed Phase 30 — Reporting Export Upgrade. Added public Friday-cycle PDF and CSV exports at `/api/reports/public/export`, linked both from `/laporan`, and kept totals sourced from centralized public report logic. Documented CSV-only decision for Excel in `docs/REPORT_EXPORTS.md` because no new export dependency was approved. Improved `/donasi/status/[orderId]` with safe receipt/share badge for successful donations. Added export privacy/PDF tests. Validation passed: `npm run lint`, `npm test` (85/85), `npm run build`. Manual PDF smoke passed by user; PDF berhasil digenerate.
+
+- Completed Phase 29 — Admin Audit & Approval UI. Added `/admin/audit` read-only audit dashboard with action/entity/actor/date filters, expandable before/after detail panel, pagination, and admin sidebar link. Added `/admin/persetujuan` read-only monitoring page for pending large-expense approvals and recent Telegram approval timeline. Added admin-only guard test covering `/admin/audit` and `/admin/persetujuan`. Validation passed: `npm run lint`, `npm test` (83/83), `npm run build`. Manual expense create/edit/delete audit UI smoke passed by user.
+
+- Resumed Phase 19 — Admin UX Redesign after later phases had completed. Inventory confirmed existing admin dashboard, donation filters/list/detail, and expense filter/form/edit/delete flows are present. Extracted reusable admin sidebar, top tabs, summary footer, and status badge components; wired consistent badge mapping and quick filters into admin donation/expense pages; centralized admin Rupiah formatting via `src/lib/format.ts`; added status badge mapping test. Code validation passed: `npm run lint`, `npm test` (82/82), `npm run build`. Manual admin smoke remains before marking Phase 19 Done.
+- Started Phase 28 — Public Transparency Enhancements. Scope: public-safe timeline, expense category chart, `/tentang` page, empty/error/loading states, and privacy tests; `/broadcast_laporan` public channel smoke from Phase 27 remains deferred to final live validation due channel setup.
+- Added public transparency timeline aggregation in `src/lib/reports.ts` from settlement donations, approved expenses, and published distribution reports. Timeline uses `getPublicDonorName`, omits private IDs/contact fields, and limits public output.
+- Replaced expense category summary on `/laporan` with simple mobile-friendly bar chart whose totals reuse centralized `summarizeExpenseCategories` report logic.
+- Added `Timeline Transparansi` section to `/laporan`, plus `src/app/laporan/loading.tsx` and `src/app/laporan/error.tsx` for loading/error states. Existing empty states remain for donation, expense, category, and timeline panels.
+- Added `/tentang` page explaining purpose, Friday schedule, transparency principles, privacy, and contact guidance in Indonesian copy.
+- Added public timeline privacy/sort tests. Validation passed: `npm run lint`, `npm test` (81/81), `npm run build`. Build still warns local `BETTER_AUTH_SECRET` is low entropy; production follow-up remains to set a strong secret.
+- Completed Phase 28 — Public Transparency Enhancements for code validation. Manual browser smoke passed by user: `/tentang` is visible, and `/laporan?period=jumat` shows timeline, expense category chart, and distribution story.
+- Investigated deferred Telegram `/broadcast_laporan` issue. Local env has `TELEGRAM_BOT_TOKEN` set but `TELEGRAM_PUBLIC_CHANNEL_ID` is missing, so public channel send cannot run yet. Improved bot replies and README setup docs to explicitly require channel ID format `-100...`, bot admin status, and post permission. Validation passed after messaging/docs change: `npm run lint`, `npm test` (81/81).
+
+### 2026-05-28
+
+- Started Phase 27 — Distribution Story & Photo Report. Added `DistributionReport` Prisma model + migration `prisma/migrations/20260528001500_distribution_report` (unique per `cycle_start`, FK ke `users.id`, JSON `photo_urls`, optional `package_count`/`location_summary`, `published_at`).
+- Added `src/lib/distribution-report.ts` server helpers: validasi (Jumat cycle, judul/ringkasan wajib, max 6 photo URL https/http), upsert per siklus, list 10 terakhir, getter draft+published untuk public.
+- Added `POST /api/admin/distribution-report` admin route guarded by legacy admin cookie atau Better Auth admin role; menulis audit log `distribution_report.created`/`distribution_report.updated`.
+- Added admin nav `/admin/penyaluran` dan halaman admin (`page.tsx` + `distribution-report-form.tsx`) untuk membuat/edit cerita, simpan draft, atau publish per siklus berjalan. Form menyertakan panduan privasi penerima manfaat.
+- Added public section di `/laporan`: hanya menampilkan cerita yang `publishedAt` ada, ikut periode siklus berjalan, foto link external dengan `loading="lazy"`, tetap tidak menampilkan email/phone donor.
+- Updated Telegram `/broadcast_laporan` untuk menyertakan judul cerita penyaluran yang sudah dipublish dan link `${NEXT_PUBLIC_APP_URL}/laporan?period=jumat` saat env tersedia (fallback ke pesan generic).
+- Added validation tests untuk distribution report (judul wajib, max 6 foto, harus Jumat).
+- Validation passed: `npx prisma generate`, `npm run lint`, `npm test` (79/79), `npm run build`.
+- Fixed admin penyaluran form to call `router.refresh()` after save so `Riwayat Cerita` updates immediately; local admin smoke confirmed story save/history works.
+- Local public smoke for Phase 27 passed: `/laporan?period=jumat` displays the published distribution story/photos. Telegram `/broadcast_laporan` command attempted send and returned channel-delivery failure because local public channel setup is not ready; public channel smoke deferred to final live validation.
+- Completed Phase 27 — Distribution Story & Photo Report for local validation.
+- Removed `next/font/google` dependency from root layout and switched to local CSS font fallbacks so production build no longer fails when Google Fonts network fetch is unavailable. Revalidation passed: `npm run lint`, `npm test` (79/79), `npm run build`.
+- Local manual smoke for Phase 26 passed: admin form `/admin` saved weekly target for current Jumat cycle, target card showed `Rp500.000` progress, `/laporan?period=jumat` public card displayed target/percentage with no donor private fields exposed. Multi-cycle/historical target editing intentionally out of scope; tracked as future enhancement.
+- Updated `prisma/seed-admin.ts` to load env via `@next/env` `loadEnvConfig` so `npm run seed:admin` works with `.env.local` like the Better Auth provisioning script.
+- Completed Phase 26 — Weekly Donation Target for local validation. Production smoke deferred to final live validation pass.
+- Started Phase 26 — Weekly Donation Target. Added `WeeklyTarget` Prisma model + `prisma/migrations/20260528000000_weekly_target` migration with unique `cycle_start`, FK to `users.id`.
+- Added `src/lib/weekly-target.ts` server helpers for cycle-start validation (must be Jakarta Friday), upsert per cycle, and progress calculation using only `settlement` donations.
+- Added `POST /api/admin/weekly-target` admin route guarded by legacy admin cookie or Better Auth admin role; writes `weekly_target.created`/`weekly_target.updated` audit logs.
+- Added admin dashboard target card + `WeeklyTargetForm` client component for setting/updating the current Jumat cycle target with optional note.
+- Added public progress card on `/laporan` showing target, terkumpul, percentage, and note (still hides donor private fields).
+- Wired Telegram low-progress reminder into `runDailyTelegramCron`; alert respects threshold (`TELEGRAM_LOW_TARGET_PROGRESS_PERCENT`, default 60), `TELEGRAM_LOW_TARGET_PROGRESS_DAY_OFFSET` (default 1 day before Friday), and once-per-cycle audit cooldown.
+- Added validation/progress/low-progress tests (`78/78`).
+- Validation passed: `npm run lint`, `npm test` (78/78), `npm run build`, `npx prisma generate`.
+- Local manual smoke test for Phase 25 passed: `/laporan?period=jumat` rendered with current Friday-cycle period; protected `GET /api/cron/telegram/weekly` triggered with local `CRON_SECRET` and the rekap siklus Jumat message arrived in the Telegram notify chat.
+- Updated `run.bat` to auto-start (or auto-create) the local PostgreSQL Docker container `jumat-berkah-postgres` on port `54329` so manual test runs do not require manual Docker steps.
+- Completed Phase 25 — Friday Reporting Cycle for local validation. Production cron/channel smoke test deferred to final live validation pass.
+
 ### 2026-05-27
 
 - Started Phase 24 — Email Notifications. Chose Resend HTTP API to avoid extra dependencies; added server-side email utility, `EMAIL_PROVIDER=resend`, `EMAIL_FROM`, `RESEND_API_KEY`, and `ADMIN_EMAIL_NOTIFICATIONS` config docs.
@@ -73,7 +143,14 @@ Done
 - Wired remaining Phase 24 admin email alerts: repeated failed admin login, large expense/delete expense, invalid Midtrans signature, health/ops alert email copies, and backup failure email hook in `scripts/backup-postgres.sh`.
 - Added admin alert email template test and updated README email notification docs.
 - Phase 24 code validation passed: `npm run lint`, `npm test` (73/73), `npm run build`, and `sh -n scripts/backup-postgres.sh`.
-- Phase 24 remains in progress until manual Resend smoke tests pass: test email/password reset email/settlement admin email.
+- Manual Resend smoke tests passed after `.env.local` email config was added: direct admin test email sent, password reset email template sent through Resend, and settlement admin email sent through Resend. One settlement attempt hit Resend `HTTP 429`, then retry succeeded.
+- Completed Phase 24 — Email Notifications.
+- Started Phase 25 — Friday Reporting Cycle.
+- Added centralized `src/lib/friday-cycle.ts` helper for Asia/Jakarta Friday 00:00 through Thursday 23:59:59.999 cycle ranges.
+- Added current Jumat cycle report support via `period=jumat` in public report parsing and a `/laporan?period=jumat` UI shortcut.
+- Updated Telegram weekly cron to use Friday cycle totals, post to notify chat and public channel when configured, and write audit logs for weekly summary plus channel broadcast result.
+- Updated manual `/broadcast_laporan` to use current Friday-cycle public report while keeping the command available.
+- Added Friday-cycle boundary tests; validation passed: `npm run lint`, `npm test` (75/75), `npm run build` (first build timed out at 180s, rerun with 300s passed).
 - Started Phase 23 — Profile, Password & Account Management. First slice targets `/akun/profil`, admin profile entrypoint, profile update, and account audit logs before password change/reset work.
 - Added `/akun/profil` profile page, shared account profile resolver for legacy and Better Auth sessions, profile update API, donor/admin profile entrypoints, Google profile image display allowlist, and `account.profile.updated` audit logs.
 - Added profile validation tests; validation passed for Phase 23 first slice: `npm run lint`, `npm test` (67/67), `npm run build`.
@@ -457,6 +534,8 @@ Done
 | 2026-05-27 | Prefer Docker Compose-managed `jumat-berkah-cloudflared` plus health check/runbook as long-term fix, with cron auto-heal allowed as temporary mitigation | Compose ownership documents exact flags (`--network host`, `--protocol http2`) and reduces manual restart risk; cron is safe short-term because it restarts only the tunnel container |
 | 2026-05-27 | Prioritize Backup & Restore Automation as Phase 21 before Better Auth and reporting enhancements | App is live and stores financial/payment data; reliable restore path should exist before major auth/database changes |
 | 2026-05-27 | Use Resend HTTP API for Phase 24 email notifications | Avoid adding SMTP dependencies, keep server-only transactional email simple, and allow safe opt-in via env |
+| 2026-05-28 | Phase 26 admin form only manages target for the current Jumat cycle; multi-cycle/historical target editing is treated as future enhancement | Keeps scope aligned with PRD §21.6 and AGENTS §5 (one phase, one goal); avoids progress-vs-period mismatch with public reports |
+| 2026-05-28 | Keep Phase 30 Excel support as documented CSV-only until export dependency is approved | CSV opens in Excel/LibreOffice and avoids adding unreviewed runtime dependency; PDF export is generated without new packages |
 
 ## 6. Execution Rules
 
@@ -1302,19 +1381,19 @@ Out-of-scope (jangan dikerjakan di fase ini):
 
 ## Tasks
 
-- [ ] Inventarisasi halaman admin saat ini (`/admin`, `/admin/donasi`, `/admin/pengeluaran`) dan catat semua data, filter, action yang sudah ada agar tidak hilang setelah redesign.
-- [ ] Tambah `src/app/admin/layout.tsx` dengan sidebar tetap (Dashboard, Donasi, Pengeluaran, Laporan Publik, Logout) dan area konten utama.
-- [ ] Buat komponen reusable di `src/components/admin/` (mis. `AdminSidebar`, `AdminTopTabs`, `AdminSummaryFooter`, `AdminStatusBadge`).
-- [ ] Redesain `/admin` jadi dashboard ringkasan: kartu pemasukan, pengeluaran, saldo, donasi pending, dengan footer ringkasan periode (hari ini / bulan ini).
-- [ ] Redesain `/admin/donasi` dengan top tabs status (Semua, Pending, Settlement, Failed/Expired) + filter tanggal/nama/nominal yang sudah ada di Phase 7, dan status badge berwarna konsisten dengan mapping di TECHNICAL_SPEC §9.4.
-- [ ] Redesain `/admin/pengeluaran` dengan tab kategori atau filter periode + form tambah/edit/hapus existing dari Phase 8, plus konfirmasi destruktif tetap wajib.
-- [ ] Format Rupiah konsisten via util yang sudah ada (`formatRupiah`); jangan duplikasi logika.
-- [ ] Pastikan setiap halaman menangani state loading / empty / error / success (TECHNICAL_SPEC §11.3).
-- [ ] Pastikan layout responsif mobile-first (AGENTS §12); sidebar boleh collapse/drawer di breakpoint kecil.
-- [ ] Pastikan privacy rules tidak regresi: email/telepon donor tetap hanya di view admin, anonim tetap tampil sebagai `Anonim` di admin sesuai konvensi yang ada (PRD §8.7, AGENTS §9).
-- [ ] Pastikan auth guard server-side admin tetap berlaku untuk semua route admin (AGENTS §8, TECHNICAL_SPEC §10.3).
-- [ ] Update / tambah unit/UI test ringan untuk komponen admin baru jika ada logika non-trivial (mis. mapping status → badge).
-- [ ] Update README jika ada perubahan pada cara menjalankan/preview halaman admin.
+- [x] Inventarisasi halaman admin saat ini (`/admin`, `/admin/donasi`, `/admin/pengeluaran`) dan catat semua data, filter, action yang sudah ada agar tidak hilang setelah redesign.
+- [x] Tambah `src/app/admin/layout.tsx` dengan sidebar tetap (Dashboard, Donasi, Pengeluaran, Laporan Publik, Logout) dan area konten utama.
+- [x] Buat komponen reusable di `src/components/admin/` (mis. `AdminSidebar`, `AdminTopTabs`, `AdminSummaryFooter`, `AdminStatusBadge`).
+- [x] Redesain `/admin` jadi dashboard ringkasan: kartu pemasukan, pengeluaran, saldo, donasi pending, dengan footer ringkasan periode (hari ini / bulan ini).
+- [x] Redesain `/admin/donasi` dengan top tabs status (Semua, Pending, Settlement, Failed/Expired) + filter tanggal/nama/nominal yang sudah ada di Phase 7, dan status badge berwarna konsisten dengan mapping di TECHNICAL_SPEC §9.4.
+- [x] Redesain `/admin/pengeluaran` dengan tab kategori atau filter periode + form tambah/edit/hapus existing dari Phase 8, plus konfirmasi destruktif tetap wajib.
+- [x] Format Rupiah konsisten via util yang sudah ada (`formatRupiah`); jangan duplikasi logika.
+- [x] Pastikan setiap halaman menangani state loading / empty / error / success (TECHNICAL_SPEC §11.3).
+- [x] Pastikan layout responsif mobile-first (AGENTS §12); sidebar boleh collapse/drawer di breakpoint kecil.
+- [x] Pastikan privacy rules tidak regresi: email/telepon donor tetap hanya di view admin, anonim tetap tampil sebagai `Anonim` di admin sesuai konvensi yang ada (PRD §8.7, AGENTS §9).
+- [x] Pastikan auth guard server-side admin tetap berlaku untuk semua route admin (AGENTS §8, TECHNICAL_SPEC §10.3).
+- [x] Update / tambah unit/UI test ringan untuk komponen admin baru jika ada logika non-trivial (mis. mapping status → badge).
+- [x] Update README jika ada perubahan pada cara menjalankan/preview halaman admin.
 
 ## Acceptance Criteria
 
@@ -1647,11 +1726,11 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Add Friday-cycle date utility.
-- [ ] Add report summary for current Friday cycle.
-- [ ] Update Telegram scheduled report to use Friday cycle.
-- [ ] Add audit log for automatic broadcast.
-- [ ] Add tests around timezone/Jakarta and Friday boundaries.
+- [x] Add Friday-cycle date utility.
+- [x] Add report summary for current Friday cycle.
+- [x] Update Telegram scheduled report to use Friday cycle.
+- [x] Add audit log for automatic broadcast.
+- [x] Add tests around timezone/Jakarta and Friday boundaries.
 
 ## Acceptance Criteria
 
@@ -1694,11 +1773,11 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Add target model/migration.
-- [ ] Add admin target form.
-- [ ] Add public progress card.
-- [ ] Add Telegram/admin low-progress notification.
-- [ ] Add tests for progress calculation.
+- [x] Add target model/migration.
+- [x] Add admin target form.
+- [x] Add public progress card.
+- [x] Add Telegram/admin low-progress notification.
+- [x] Add tests for progress calculation.
 
 ## Acceptance Criteria
 
@@ -1740,11 +1819,11 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Add distribution story model/migration.
-- [ ] Add admin create/edit story page.
-- [ ] Add public story section.
-- [ ] Add Telegram broadcast summary link.
-- [ ] Add privacy copy/guidance for photos.
+- [x] Add distribution story model/migration.
+- [x] Add admin create/edit story page.
+- [x] Add public story section.
+- [x] Add Telegram broadcast summary link.
+- [x] Add privacy copy/guidance for photos.
 
 ## Acceptance Criteria
 
@@ -1786,11 +1865,11 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Add public timeline aggregation.
-- [ ] Add category chart UI.
-- [ ] Add `/tentang` page.
-- [ ] Add empty/error/loading states.
-- [ ] Add privacy tests for public timeline.
+- [x] Add public timeline aggregation.
+- [x] Add category chart UI.
+- [x] Add `/tentang` page.
+- [x] Add empty/error/loading states.
+- [x] Add privacy tests for public timeline.
 
 ## Acceptance Criteria
 
@@ -1832,10 +1911,10 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Add `/admin/audit` page.
-- [ ] Add `/admin/persetujuan` page if needed.
-- [ ] Add filters and detail panel.
-- [ ] Add tests for admin-only access.
+- [x] Add `/admin/audit` page.
+- [x] Add `/admin/persetujuan` page if needed.
+- [x] Add filters and detail panel.
+- [x] Add tests for admin-only access.
 
 ## Acceptance Criteria
 
@@ -1877,11 +1956,11 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Add PDF export for current report.
-- [ ] Add Excel export or document CSV-only decision.
-- [ ] Add receipt/share page improvements.
-- [ ] Add thank-you badge/share copy.
-- [ ] Add tests for privacy in exported report.
+- [x] Add PDF export for current report.
+- [x] Add Excel export or document CSV-only decision.
+- [x] Add receipt/share page improvements.
+- [x] Add thank-you badge/share copy.
+- [x] Add tests for privacy in exported report.
 
 ## Acceptance Criteria
 
@@ -1923,11 +2002,11 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Add quick expense templates.
-- [ ] Add CSV import with preview.
-- [ ] Add validation errors per row.
-- [ ] Add audit log for imports.
-- [ ] Add tests for CSV validation.
+- [x] Add quick expense templates.
+- [x] Add CSV import with preview.
+- [x] Add validation errors per row.
+- [x] Add audit log for imports.
+- [x] Add tests for CSV validation.
 
 ## Acceptance Criteria
 
@@ -1944,3 +2023,348 @@ npm test
 ```
 
 Manual: create template expense, import CSV sample, verify report balance.
+
+---
+
+# Phase 32 — Admin UX & Navigation Cleanup
+
+## Goal
+
+Reduce admin sidebar clutter and make operational pages easier to find.
+
+## Scope
+
+In-scope:
+
+- Group sidebar items by workflow.
+- Shorten menu labels.
+- Keep all existing admin routes accessible.
+- Improve mobile admin navigation if affected.
+
+Out-of-scope:
+
+- New business features.
+- Database changes.
+- Visual redesign unrelated to navigation clarity.
+
+## Tasks
+
+- [x] Audit current admin menu items and route ownership.
+- [x] Define grouped navigation structure.
+- [x] Update admin sidebar/menu components.
+- [x] Verify every existing admin page remains reachable.
+- [x] Add/update navigation tests if available.
+
+## Acceptance Criteria
+
+- Sidebar is shorter and easier to scan.
+- Admin can reach donation, donor, expense, report, communication, and audit areas in 1–2 clicks.
+- No broken admin navigation links.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: browse every admin menu group on desktop and mobile width.
+
+---
+
+# Phase 33 — Admin Donor Database
+
+## Goal
+
+Give admin a privacy-safe operational donor database.
+
+## Scope
+
+In-scope:
+
+- `/admin/donatur` page.
+- Donor list from registered donor users and guest donation contact fields.
+- Search/filter by name, email, phone, and donation activity.
+- Donor detail/summary with settlement-only totals.
+- Links to matching donation history.
+
+Out-of-scope:
+
+- Public donor directory.
+- Donor ranking/gamification.
+- CRM automation beyond operational viewing.
+
+## Tasks
+
+- [x] Define donor aggregation rules.
+- [x] Add donor list query with settlement totals.
+- [x] Add `/admin/donatur` page and navigation entry.
+- [x] Add donor detail/summary view.
+- [x] Add privacy tests for donor contact fields.
+
+## Acceptance Criteria
+
+- Admin can find donors by name/email/phone.
+- Totals count only `settlement` donations.
+- Donor email/phone remain admin-only.
+- Anonymous public display rules remain unchanged.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: search donor, inspect detail, verify no public report contact leak.
+
+---
+
+# Phase 34 — Communication Consent Foundation
+
+## Goal
+
+Prepare safe consent tracking before any WhatsApp reminder broadcast.
+
+## Scope
+
+In-scope:
+
+- WhatsApp reminder opt-in fields.
+- Donation form opt-in checkbox.
+- Admin donor consent status display.
+- Opt-out instruction copy.
+- Consent audit where meaningful.
+
+Out-of-scope:
+
+- Sending WhatsApp messages.
+- Importing old donors as opted-in.
+- Marketing automation.
+
+## Tasks
+
+- [x] Add consent fields to data model/migration.
+- [x] Add opt-in checkbox to donation form.
+- [x] Store consent only when donor provides phone number.
+- [x] Show consent state in admin donor database.
+- [x] Add tests for default non-opt-in behavior.
+
+## Acceptance Criteria
+
+- Donor can opt in during donation.
+- Existing donors default to not opted-in.
+- Admin can see consent status.
+- No WhatsApp send code runs in this phase.
+
+## Validation
+
+```bash
+npx prisma generate
+npm run lint
+npm run build
+npm test
+```
+
+Manual: create donation with/without opt-in and verify admin donor consent state.
+
+---
+
+# Phase 35 — WhatsApp Donation Reminder
+
+## Goal
+
+Send donation reminders through WhatsApp only to opted-in donors.
+
+## Scope
+
+In-scope:
+
+- WhatsApp Cloud API server-only integration.
+- Reminder template configuration.
+- Admin-only dry-run/preview.
+- Scheduled/manual reminder trigger.
+- Send audit logs and failure handling.
+- Rate-limited batch send to opted-in donors only.
+
+Out-of-scope:
+
+- Sending to non-opt-in donors.
+- Unofficial WhatsApp automation/web session scraping.
+- Two-way WhatsApp bot commands unless explicitly added later.
+
+## Tasks
+
+- [x] Add WhatsApp env placeholders and config parser.
+- [x] Add server-only WhatsApp send utility.
+- [x] Add opted-in donor recipient query.
+- [x] Add dry-run/manual trigger endpoint guarded by admin auth.
+- [x] Add scheduled reminder hook.
+- [x] Add audit logs for sent/skipped/failed reminders.
+- [x] Add tests for opt-in gating and failure safety.
+
+## Acceptance Criteria
+
+- Reminder never sends to donors without opt-in.
+- WhatsApp token never reaches client.
+- Failed send does not crash cron/batch.
+- Admin can dry-run before live send.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: dry-run reminder, then live test to one opted-in test number if provider env is configured.
+
+---
+
+# Phase 36 — Report Print & Public Report Redesign
+
+## Goal
+
+Make public reports and printed/PDF reports look polished and easy to share.
+
+## Scope
+
+In-scope:
+
+- Redesign `/laporan` visual hierarchy.
+- Print-friendly A4 stylesheet.
+- Print button for public users.
+- Improved PDF/report layout.
+- Hide buttons/filter/navigation in print.
+- Keep report totals centralized.
+
+Out-of-scope:
+
+- Complex accounting statements.
+- Donor ranking.
+- Private donor contact fields in report.
+
+## Tasks
+
+- [x] Redesign public report page sections.
+- [x] Add `@media print` styles for A4 layout.
+- [x] Add print button and clear print copy.
+- [x] Improve PDF report presentation.
+- [x] Add privacy/totals tests for print/export data.
+
+## Acceptance Criteria
+
+- Public users can print a clean A4 report.
+- Printed/PDF report totals match public report totals.
+- Email/phone donor never appear in print/PDF.
+- Mobile report remains usable.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: print preview `/laporan`, inspect PDF/export, verify A4 layout.
+
+---
+
+# Phase 37 — Documentation & Env Setup Guide
+
+## Goal
+
+Document all features and every environment variable with setup steps.
+
+## Scope
+
+In-scope:
+
+- Feature documentation.
+- Env variable reference.
+- Provider setup guides for Midtrans, Telegram, Resend/email, Better Auth/Google OAuth, WhatsApp, database, cron, backup, and deployment.
+- Production readiness checklist.
+- Safe examples only.
+
+Out-of-scope:
+
+- Storing real secrets.
+- Provider-specific support beyond setup links/instructions.
+
+## Tasks
+
+- [x] Add `docs/FEATURES.md`.
+- [x] Add/update `docs/ENV_SETUP.md`.
+- [x] Add/update production checklist.
+- [x] Update `README.md` pointers.
+- [x] Verify `.env.example` matches docs.
+
+## Acceptance Criteria
+
+- New maintainer can set up local and production from docs.
+- Every env var is explained with source/provider dashboard guidance.
+- Docs include smoke tests per integration.
+- No real secret appears in docs.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: read docs from fresh-maintainer perspective and verify env checklist completeness.
+
+---
+
+# Phase 38 — Final QA & Production Readiness Review
+
+## Goal
+
+Run end-to-end readiness review after all post-review improvements.
+
+## Scope
+
+In-scope:
+
+- Full app smoke test.
+- Security/privacy review.
+- Broken-link/navigation review.
+- Production env checklist review.
+- Document remaining blockers.
+
+Out-of-scope:
+
+- New feature development.
+- Broad redesign after sign-off unless blocker-level issue found.
+
+## Tasks
+
+- [x] Run automated validation.
+- [x] Smoke donation/Midtrans flow.
+- [x] Smoke admin donor/expense/import/report flows.
+- [x] Smoke Telegram and WhatsApp configured flows.
+- [x] Review public privacy outputs.
+- [x] Update final blockers/work log.
+
+## Acceptance Criteria
+
+- No known critical bug remains.
+- Public views/export/print do not expose private donor contact fields.
+- Production checklist is complete or blockers are explicit.
+- Final status reflects true readiness.
+
+## Validation
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+Manual: full end-to-end smoke checklist across public, donor, admin, Telegram, WhatsApp, and deployment docs.

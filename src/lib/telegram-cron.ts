@@ -5,11 +5,14 @@ import {
 } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/db";
 import { safeSendAdminAlertEmail } from "@/lib/email";
+import { getCurrentFridayCycleRange } from "@/lib/friday-cycle";
+import { getWeeklyTargetProgress } from "@/lib/weekly-target";
 import {
   formatJakartaDateTime,
   formatRupiah,
   getTelegramBotToken,
   getTelegramNotifyChatId,
+  getTelegramPublicChannelId,
   isTelegramNotifyEnabled,
   safeSendTelegramMessage,
 } from "@/lib/telegram";
@@ -20,6 +23,10 @@ const PENDING_DONATION_ALERT_ACTION = "telegram.alert.pending_donation";
 const INVALID_SIGNATURE_ALERT_ACTION = "telegram.alert.invalid_signature";
 const DAILY_SUMMARY_ACTION = "telegram.summary.daily";
 const WEEKLY_SUMMARY_ACTION = "telegram.summary.weekly";
+const FRIDAY_CYCLE_BROADCAST_ACTION = "telegram.broadcast.friday_cycle";
+const LOW_TARGET_PROGRESS_ACTION = "telegram.alert.low_target_progress";
+const DEFAULT_LOW_PROGRESS_THRESHOLD_PERCENT = 60;
+const DEFAULT_LOW_PROGRESS_DAY_OFFSET = 1;
 
 export type TelegramCronSummary = {
   periodLabel: string;
@@ -162,6 +169,11 @@ export async function runDailyTelegramCron(now = new Date()) {
     messages.push(formatInvalidSignatureMessage(invalidSignature));
   }
 
+  const lowTargetProgress = await evaluateLowTargetProgressAlert(now);
+  if (lowTargetProgress.shouldAlert) {
+    messages.push(formatLowTargetProgressMessage(lowTargetProgress));
+  }
+
   if (messages.length === 0) {
     return { sent: false, reason: "no-alerts" as const };
   }
@@ -238,6 +250,25 @@ export async function runDailyTelegramCron(now = new Date()) {
         },
       });
     }
+
+    if (lowTargetProgress.shouldAlert) {
+      await tx.auditLog.create({
+        data: {
+          action: LOW_TARGET_PROGRESS_ACTION,
+          entityType: "weekly_target",
+          entityId: lowTargetProgress.cycleStart,
+          before: Prisma.JsonNull,
+          after: {
+            cycleStart: lowTargetProgress.cycleStart,
+            cycleEnd: lowTargetProgress.cycleEnd,
+            targetAmount: lowTargetProgress.targetAmount,
+            collected: lowTargetProgress.collected,
+            progressPercent: lowTargetProgress.progressPercent,
+            thresholdPercent: lowTargetProgress.thresholdPercent,
+          },
+        },
+      });
+    }
   });
 
   return { sent: true, messageCount: messages.length };
@@ -248,17 +279,15 @@ export async function runWeeklyTelegramCron(now = new Date()) {
     return { sent: false, reason: "telegram-disabled" as const };
   }
 
-  const chatId = getTelegramNotifyChatId();
-  if (chatId === null) {
+  const notifyChatId = getTelegramNotifyChatId();
+  if (notifyChatId === null) {
     return { sent: false, reason: "missing-chat" as const };
   }
 
   const prisma = getPrisma();
-  const startOfWeek = getJakartaStartOfWeek(now);
-  const startOfNextWeek = addDays(startOfWeek, 7);
-  const weeklyKey = formatJakartaDate(startOfWeek);
+  const cycle = getCurrentFridayCycleRange(now);
   const existingWeekly = await prisma.auditLog.findFirst({
-    where: { action: WEEKLY_SUMMARY_ACTION, entityId: weeklyKey },
+    where: { action: WEEKLY_SUMMARY_ACTION, entityId: cycle.fromDate },
     select: { id: true },
   });
 
@@ -267,31 +296,58 @@ export async function runWeeklyTelegramCron(now = new Date()) {
   }
 
   const summary = await buildTelegramCronSummary({
-    periodLabel: `Minggu ini (mulai ${weeklyKey})`,
-    from: startOfWeek,
-    to: startOfNextWeek,
+    periodLabel: `Siklus Jumat (${cycle.label})`,
+    from: cycle.from,
+    to: cycle.to,
+  });
+  const text = formatSummaryMessage("🕌 Rekap Siklus Jumat", summary);
+  const notifySent = await safeSendTelegramMessage({
+    chatId: notifyChatId,
+    text,
+  });
+  const channelId = getTelegramPublicChannelId();
+  const channelSent =
+    channelId === null
+      ? false
+      : await safeSendTelegramMessage({ chatId: channelId, text });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.auditLog.create({
+      data: {
+        action: WEEKLY_SUMMARY_ACTION,
+        entityType: "telegram_cron",
+        entityId: cycle.fromDate,
+        before: Prisma.JsonNull,
+        after: {
+          ...summary,
+          cycleStart: cycle.fromDate,
+          cycleEnd: cycle.toDate,
+          notifySent,
+        } as unknown as Prisma.InputJsonValue,
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        action: FRIDAY_CYCLE_BROADCAST_ACTION,
+        entityType: "telegram_channel",
+        entityId: cycle.fromDate,
+        before: Prisma.JsonNull,
+        after: {
+          cycleStart: cycle.fromDate,
+          cycleEnd: cycle.toDate,
+          channelConfigured: channelId !== null,
+          channelSent,
+        },
+      },
+    });
   });
 
-  const sent = await safeSendTelegramMessage({
-    chatId,
-    text: formatSummaryMessage("🕌 Rekap Jumat Pagi", summary),
-  });
-
-  if (!sent) {
-    return { sent: false, reason: "send-failed" as const };
+  if (!notifySent) {
+    return { sent: false, reason: "send-failed" as const, channelSent };
   }
 
-  await prisma.auditLog.create({
-    data: {
-      action: WEEKLY_SUMMARY_ACTION,
-      entityType: "telegram_cron",
-      entityId: weeklyKey,
-      before: Prisma.JsonNull,
-      after: summary as unknown as Prisma.InputJsonValue,
-    },
-  });
-
-  return { sent: true, messageCount: 1 };
+  return { sent: true, channelSent, messageCount: channelId === null ? 1 : 2 };
 }
 
 async function buildTelegramCronSummary(input: {
@@ -445,6 +501,123 @@ function formatPendingDonationMessage(input: {
   ].join("\n");
 }
 
+function getLowTargetProgressThresholdPercent(): number {
+  const value = process.env.TELEGRAM_LOW_TARGET_PROGRESS_PERCENT;
+  const parsed = typeof value === "string" ? Number(value.trim()) : NaN;
+  if (Number.isFinite(parsed) && parsed > 0 && parsed <= 100) {
+    return parsed;
+  }
+  return DEFAULT_LOW_PROGRESS_THRESHOLD_PERCENT;
+}
+
+function getLowTargetProgressDayOffset(): number {
+  const value = process.env.TELEGRAM_LOW_TARGET_PROGRESS_DAY_OFFSET;
+  const parsed = typeof value === "string" ? Number(value.trim()) : NaN;
+  if (Number.isInteger(parsed) && parsed >= 0 && parsed <= 6) {
+    return parsed;
+  }
+  return DEFAULT_LOW_PROGRESS_DAY_OFFSET;
+}
+
+export type LowTargetProgressDecision = {
+  shouldAlert: boolean;
+  cycleStart: string;
+  cycleEnd: string;
+  targetAmount: number;
+  collected: number;
+  progressPercent: number;
+  thresholdPercent: number;
+};
+
+export function shouldSendLowTargetProgressAlert(input: {
+  targetAmount: number;
+  collected: number;
+  thresholdPercent: number;
+  daysRemaining: number;
+  dayOffset: number;
+  alreadySent: boolean;
+}): {
+  shouldAlert: boolean;
+  progressPercent: number;
+} {
+  const progressPercent =
+    input.targetAmount > 0
+      ? Math.min(Math.round((input.collected / input.targetAmount) * 100), 100)
+      : 0;
+
+  const shouldAlert =
+    input.targetAmount > 0 &&
+    !input.alreadySent &&
+    input.daysRemaining <= input.dayOffset &&
+    progressPercent < input.thresholdPercent;
+
+  return { shouldAlert, progressPercent };
+}
+
+async function evaluateLowTargetProgressAlert(
+  now: Date,
+): Promise<LowTargetProgressDecision> {
+  const cycle = getCurrentFridayCycleRange(now);
+  const progress = await getWeeklyTargetProgress(now);
+  const target = progress.target;
+  const empty: LowTargetProgressDecision = {
+    shouldAlert: false,
+    cycleStart: cycle.fromDate,
+    cycleEnd: cycle.toDate,
+    targetAmount: target?.targetAmount ?? 0,
+    collected: progress.collected,
+    progressPercent: 0,
+    thresholdPercent: getLowTargetProgressThresholdPercent(),
+  };
+
+  if (!target) {
+    return empty;
+  }
+
+  const prisma = getPrisma();
+  const existing = await prisma.auditLog.findFirst({
+    where: {
+      action: LOW_TARGET_PROGRESS_ACTION,
+      entityId: cycle.fromDate,
+    },
+    select: { id: true },
+  });
+
+  const daysRemaining = computeDaysRemainingUntilNextFriday(now);
+  const decision = shouldSendLowTargetProgressAlert({
+    targetAmount: target.targetAmount,
+    collected: progress.collected,
+    thresholdPercent: empty.thresholdPercent,
+    daysRemaining,
+    dayOffset: getLowTargetProgressDayOffset(),
+    alreadySent: Boolean(existing),
+  });
+
+  return {
+    ...empty,
+    targetAmount: target.targetAmount,
+    progressPercent: decision.progressPercent,
+    shouldAlert: decision.shouldAlert,
+  };
+}
+
+function computeDaysRemainingUntilNextFriday(now: Date): number {
+  const cycle = getCurrentFridayCycleRange(now);
+  const msInDay = 24 * 60 * 60 * 1000;
+  const diff = cycle.to.getTime() - now.getTime();
+  return Math.max(Math.ceil(diff / msInDay), 0);
+}
+
+function formatLowTargetProgressMessage(input: LowTargetProgressDecision) {
+  return [
+    "⚠️ Progress Target Siklus Jumat Rendah",
+    `Periode: ${input.cycleStart} s.d. ${input.cycleEnd}`,
+    `Target: ${formatRupiah(input.targetAmount)}`,
+    `Terkumpul: ${formatRupiah(input.collected)} (${input.progressPercent}%)`,
+    `Ambang reminder: ${input.thresholdPercent}%`,
+  ].join("\n");
+}
+
 function formatInvalidSignatureMessage(input: InvalidSignatureAlertDecision) {
   return [
     "🚨 Signature Midtrans Tidak Valid",
@@ -458,25 +631,6 @@ function getJakartaStartOfDay(date: Date) {
   return new Date(
     Date.UTC(parts.year, parts.month - 1, parts.day, -7, 0, 0, 0),
   );
-}
-
-function getJakartaStartOfWeek(date: Date) {
-  const startOfDay = getJakartaStartOfDay(date);
-  const weekday = new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    timeZone: "Asia/Jakarta",
-  }).format(date);
-  const weekdayIndex = [
-    "Sun",
-    "Mon",
-    "Tue",
-    "Wed",
-    "Thu",
-    "Fri",
-    "Sat",
-  ].indexOf(weekday);
-  const daysFromMonday = weekdayIndex === 0 ? 6 : weekdayIndex - 1;
-  return addDays(startOfDay, -daysFromMonday);
 }
 
 function addDays(date: Date, days: number) {

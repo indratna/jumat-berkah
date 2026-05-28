@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
+import { AdminSummaryFooter } from "@/components/admin/admin-summary-footer";
+import { AdminTopTabs } from "@/components/admin/admin-top-tabs";
 import { AutoSubmitSelect } from "../auto-submit-select";
 import { DonationStatus } from "@/generated/prisma/client";
 import {
@@ -41,6 +44,7 @@ export default async function AdminDonationsPage({
   };
   const donations = await getAdminDonations(filters);
   const pageQuery = buildPageQuery(resolvedSearchParams);
+  const statusTabs = buildStatusTabs(resolvedSearchParams, filters.status);
 
   return (
     <main className="mx-auto max-w-6xl space-y-6">
@@ -52,6 +56,8 @@ export default async function AdminDonationsPage({
           Daftar donasi dan status pembayaran.
         </h1>
       </div>
+
+      <AdminTopTabs tabs={statusTabs} />
 
       <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
         <TableToolbar filters={filters} />
@@ -88,9 +94,7 @@ export default async function AdminDonationsPage({
                       {formatRupiah(donation.amount)}
                     </td>
                     <td className="px-4 py-4">
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase text-slate-700">
-                        {donation.status}
-                      </span>
+                      <AdminStatusBadge status={donation.status} />
                     </td>
                     <td className="px-4 py-4 uppercase">
                       {donation.paymentMethod}
@@ -118,6 +122,17 @@ export default async function AdminDonationsPage({
             Belum ada donasi yang cocok dengan filter ini.
           </div>
         )}
+        <AdminSummaryFooter
+          items={[
+            { label: "Total cocok", value: String(donations.total) },
+            {
+              label: "Halaman",
+              value: `${donations.page}/${donations.totalPages}`,
+            },
+            { label: "Baris", value: String(filters.pageSize) },
+            { label: "Status", value: filters.status ?? "Semua" },
+          ]}
+        />
         <TableFooter
           page={donations.page}
           totalPages={donations.totalPages}
@@ -300,6 +315,49 @@ function PaginationLink({
       {children}
     </Link>
   );
+}
+
+function buildStatusTabs(
+  params: Record<string, string | string[] | undefined>,
+  activeStatus: string | null,
+) {
+  return [
+    {
+      href: buildStatusHref(params, null),
+      label: "Semua",
+      active: !activeStatus,
+    },
+    {
+      href: buildStatusHref(params, DonationStatus.pending),
+      label: "Pending",
+      active: activeStatus === DonationStatus.pending,
+    },
+    {
+      href: buildStatusHref(params, DonationStatus.settlement),
+      label: "Settlement",
+      active: activeStatus === DonationStatus.settlement,
+    },
+    {
+      href: buildStatusHref(params, DonationStatus.failure),
+      label: "Failed/Expired",
+      active:
+        activeStatus === DonationStatus.failure ||
+        activeStatus === DonationStatus.expire,
+    },
+  ];
+}
+
+function buildStatusHref(
+  params: Record<string, string | string[] | undefined>,
+  status: DonationStatus | null,
+) {
+  const query = buildPageQuery(params);
+  query.delete("status");
+  if (status) {
+    query.set("status", status);
+  }
+  const queryString = query.toString();
+  return queryString ? `?${queryString}` : "?";
 }
 
 function buildPageQuery(params: Record<string, string | string[] | undefined>) {

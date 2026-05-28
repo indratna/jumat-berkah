@@ -925,3 +925,135 @@ Acceptance criteria:
 - Import menolak row invalid tanpa membuat data parsial yang membingungkan.
 - Expense hasil import mempengaruhi saldo dengan benar.
 - Import tetap bukan inventory management atau accounting kompleks.
+
+### 21.12 v1.11 — Admin UX & Navigation Cleanup
+
+Tujuan: menyederhanakan navigasi admin agar fitur banyak tetap mudah ditemukan.
+
+Kebutuhan fungsional:
+
+- Sidebar/menu admin dikelompokkan berdasarkan workflow.
+- Label menu lebih pendek dan operasional.
+- Semua fitur lama tetap dapat diakses.
+- Navigasi mobile admin tetap jelas.
+
+Acceptance criteria:
+
+- Admin bisa menemukan area donasi, donor, pengeluaran, laporan, komunikasi, dan audit dalam 1–2 klik.
+- Tidak ada broken link admin.
+- Sidebar tidak terasa penuh atau membingungkan.
+
+### 21.13 v1.12 — Admin Donor Database
+
+Tujuan: memberi admin database donatur operasional tanpa membuka data privat ke publik.
+
+Kebutuhan fungsional:
+
+- Halaman `/admin/donatur`.
+- Daftar donatur dari akun donor dan transaksi guest.
+- Search/filter nama, email, nomor WhatsApp, dan aktivitas donasi.
+- Ringkasan total donasi berhasil, jumlah donasi, dan donasi terakhir.
+- Detail donatur dengan riwayat donasi terkait.
+
+Acceptance criteria:
+
+- Admin bisa mencari donatur by nama/email/phone.
+- Total hanya menghitung donasi `settlement`.
+- Email/phone hanya tampil di admin.
+- Donatur anonim tetap mengikuti aturan public display `Anonim` di area publik.
+
+### 21.14 v1.13 — Communication Consent Foundation
+
+Tujuan: menyiapkan izin komunikasi sebelum WhatsApp reminder dikirim.
+
+Kebutuhan fungsional:
+
+- Donatur dapat opt-in pengingat donasi via WhatsApp.
+- Consent tersimpan dengan waktu opt-in.
+- Donatur lama default tidak opt-in.
+- Admin dapat melihat status consent di database donatur.
+- Copy opt-out disiapkan untuk komunikasi WhatsApp.
+
+Acceptance criteria:
+
+- Tidak ada donor yang otomatis dianggap opt-in.
+- Consent hanya valid jika donor memberikan nomor WhatsApp.
+- Belum ada pengiriman WhatsApp pada fase ini.
+- Status consent terlihat admin.
+
+### 21.15 v1.14 — WhatsApp Donation Reminder
+
+Tujuan: mengirim pengingat donasi Jumat Berkah via WhatsApp kepada donor yang sudah opt-in.
+
+Kebutuhan fungsional:
+
+- Integrasi WhatsApp Cloud API resmi Meta sebagai default rekomendasi.
+- Reminder memakai template message yang disetujui provider.
+- Kirim hanya ke donor opt-in.
+- Admin dapat preview/dry-run sebelum live send.
+- Reminder bisa dijalankan manual admin dan/atau terjadwal.
+- Audit log untuk sent/skipped/failed.
+
+Acceptance criteria:
+
+- Tidak mengirim ke donor tanpa opt-in.
+- Token WhatsApp tidak pernah terekspos ke client.
+- Gagal kirim tidak menggagalkan seluruh batch/cron.
+- Semua hasil pengiriman tercatat.
+
+### 21.16 v1.15 — Report Print & Public Report Redesign
+
+Tujuan: membuat laporan publik dan hasil print/PDF lebih rapi, formal, dan mudah dibagikan.
+
+Kebutuhan fungsional:
+
+- Redesign halaman `/laporan`.
+- Print button untuk publik.
+- Layout print A4 yang rapi.
+- PDF/export report lebih informatif.
+- Sembunyikan tombol/filter/navigation saat print.
+- Tetap menampilkan ringkasan pemasukan, pengeluaran, saldo, target, dan cerita penyaluran bila ada.
+
+Acceptance criteria:
+
+- Donatur/umum dapat print laporan yang rapi.
+- Total print/PDF sama dengan public report.
+- Tidak ada email/phone donor di print/PDF.
+- Mobile report tetap nyaman dibaca.
+
+### 21.17 v1.16 — Documentation & Env Setup Guide
+
+Tujuan: membuat dokumentasi lengkap semua fitur dan semua environment variable.
+
+Kebutuhan fungsional:
+
+- Dokumentasi fitur publik, donor, admin, Telegram, WhatsApp, Midtrans, email, backup, audit, approval, dan export.
+- Dokumentasi semua env var: fungsi, wajib/opsional, contoh aman, dan cara mendapatkannya.
+- Panduan provider: Midtrans, Telegram, Resend/email, Better Auth/Google OAuth, WhatsApp Cloud API, database, cron, backup, dan deployment.
+- Production checklist dan smoke test per integrasi.
+
+Acceptance criteria:
+
+- Maintainer baru bisa setup local dan production dari docs.
+- `.env.example` konsisten dengan docs.
+- Tidak ada secret asli di dokumentasi.
+- Semua integrasi punya langkah smoke test.
+
+### 21.18 v1.17 — Final QA & Production Readiness Review
+
+Tujuan: memastikan aplikasi siap dipakai setelah review tambahan.
+
+Kebutuhan fungsional:
+
+- Full end-to-end smoke test.
+- Security/privacy review.
+- Broken link/navigation review.
+- Production env checklist review.
+- Dokumentasi blocker tersisa.
+
+Acceptance criteria:
+
+- Tidak ada critical bug yang diketahui.
+- Public view/export/print tidak menampilkan kontak donor.
+- Checklist production lengkap atau blocker eksplisit.
+- Status akhir mencerminkan kesiapan nyata.

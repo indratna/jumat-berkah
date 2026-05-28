@@ -6,6 +6,7 @@ type DonationInput = {
   donorName?: unknown;
   donorEmail?: unknown;
   donorPhone?: unknown;
+  whatsappReminderOptIn?: unknown;
   isAnonymous?: unknown;
   showNamePublicly?: unknown;
   amount?: unknown;
@@ -16,6 +17,8 @@ export type ValidDonationInput = {
   donorName: string | null;
   donorEmail: string | null;
   donorPhone: string | null;
+  whatsappReminderOptIn: boolean;
+  whatsappReminderOptInAt: Date | null;
   isAnonymous: boolean;
   showNamePublicly: boolean;
   amount: number;
@@ -26,13 +29,18 @@ export type DonationValidationResult =
   | { success: true; data: ValidDonationInput }
   | { success: false; errors: Record<string, string> };
 
-export function validateDonationInput(input: DonationInput): DonationValidationResult {
+export function validateDonationInput(
+  input: DonationInput,
+): DonationValidationResult {
   const errors: Record<string, string> = {};
   const isAnonymous = input.isAnonymous === true;
   const showNamePublicly = input.showNamePublicly !== false && !isAnonymous;
   const donorName = normalizeOptionalString(input.donorName);
   const donorEmail = normalizeOptionalString(input.donorEmail);
   const donorPhone = normalizeOptionalString(input.donorPhone);
+  const whatsappReminderOptIn =
+    input.whatsappReminderOptIn === true && Boolean(donorPhone);
+  const whatsappReminderOptInAt = whatsappReminderOptIn ? new Date() : null;
   const message = normalizeOptionalString(input.message);
   const amount = normalizeAmount(input.amount);
 
@@ -58,6 +66,8 @@ export function validateDonationInput(input: DonationInput): DonationValidationR
       donorName: isAnonymous ? null : donorName,
       donorEmail,
       donorPhone,
+      whatsappReminderOptIn,
+      whatsappReminderOptInAt,
       isAnonymous,
       showNamePublicly,
       amount,

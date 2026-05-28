@@ -18,12 +18,17 @@ type ErrorResponse = {
 
 const presetAmounts = [10_000, 25_000, 50_000, 100_000];
 
-export function DonationForm({ donor }: { donor?: { name: string | null; email: string } | null }) {
+export function DonationForm({
+  donor,
+}: {
+  donor?: { name: string | null; email: string } | null;
+}) {
   const [amount, setAmount] = useState("50000");
   const [donorName, setDonorName] = useState(donor?.name ?? "");
   const [donorEmail, setDonorEmail] = useState(donor?.email ?? "");
   const [donorPhone, setDonorPhone] = useState("");
   const [message, setMessage] = useState("");
+  const [whatsappReminderOptIn, setWhatsappReminderOptIn] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [showNamePublicly, setShowNamePublicly] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,6 +48,7 @@ export function DonationForm({ donor }: { donor?: { name: string | null; email: 
         donorName,
         donorEmail,
         donorPhone,
+        whatsappReminderOptIn,
         isAnonymous,
         showNamePublicly,
         amount: Number(amount),
@@ -51,7 +57,9 @@ export function DonationForm({ donor }: { donor?: { name: string | null; email: 
     });
 
     if (!response.ok) {
-      const errorBody = (await response.json().catch(() => ({}))) as ErrorResponse;
+      const errorBody = (await response
+        .json()
+        .catch(() => ({}))) as ErrorResponse;
       setErrors(errorBody.errors ?? { form: "Donasi belum bisa diproses." });
       setIsSubmitting(false);
       return;
@@ -69,14 +77,21 @@ export function DonationForm({ donor }: { donor?: { name: string | null; email: 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-emerald-100 sm:p-8">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-emerald-100 sm:p-8"
+    >
       {donor ? (
         <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
-          Masuk sebagai <strong>{donor.name ?? donor.email}</strong>. Donasi ini akan masuk ke riwayat akun Anda.
+          Masuk sebagai <strong>{donor.name ?? donor.email}</strong>. Donasi ini
+          akan masuk ke riwayat akun Anda.
         </div>
       ) : null}
       <div>
-        <label className="text-sm font-semibold text-emerald-950" htmlFor="amount">
+        <label
+          className="text-sm font-semibold text-emerald-950"
+          htmlFor="amount"
+        >
           Nominal donasi
         </label>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -100,7 +115,9 @@ export function DonationForm({ donor }: { donor?: { name: string | null; email: 
           className="mt-3 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
           required
         />
-        {errors.amount ? <p className="mt-2 text-sm text-red-600">{errors.amount}</p> : null}
+        {errors.amount ? (
+          <p className="mt-2 text-sm text-red-600">{errors.amount}</p>
+        ) : null}
       </div>
 
       <label className="flex items-center gap-3 rounded-2xl bg-emerald-50 p-4 text-sm font-medium text-emerald-900">
@@ -114,7 +131,10 @@ export function DonationForm({ donor }: { donor?: { name: string | null; email: 
       </label>
 
       <div>
-        <label className="text-sm font-semibold text-emerald-950" htmlFor="donorName">
+        <label
+          className="text-sm font-semibold text-emerald-950"
+          htmlFor="donorName"
+        >
           Nama donatur
         </label>
         <input
@@ -125,12 +145,17 @@ export function DonationForm({ donor }: { donor?: { name: string | null; email: 
           className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-100"
           placeholder="Nama Anda"
         />
-        {errors.donorName ? <p className="mt-2 text-sm text-red-600">{errors.donorName}</p> : null}
+        {errors.donorName ? (
+          <p className="mt-2 text-sm text-red-600">{errors.donorName}</p>
+        ) : null}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="text-sm font-semibold text-emerald-950" htmlFor="donorEmail">
+          <label
+            className="text-sm font-semibold text-emerald-950"
+            htmlFor="donorEmail"
+          >
             Email opsional
           </label>
           <input
@@ -141,10 +166,15 @@ export function DonationForm({ donor }: { donor?: { name: string | null; email: 
             className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
             placeholder="nama@email.com"
           />
-          {errors.donorEmail ? <p className="mt-2 text-sm text-red-600">{errors.donorEmail}</p> : null}
+          {errors.donorEmail ? (
+            <p className="mt-2 text-sm text-red-600">{errors.donorEmail}</p>
+          ) : null}
         </div>
         <div>
-          <label className="text-sm font-semibold text-emerald-950" htmlFor="donorPhone">
+          <label
+            className="text-sm font-semibold text-emerald-950"
+            htmlFor="donorPhone"
+          >
             WhatsApp opsional
           </label>
           <input
@@ -157,8 +187,26 @@ export function DonationForm({ donor }: { donor?: { name: string | null; email: 
         </div>
       </div>
 
+      <label className="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-medium text-emerald-950">
+        <input
+          type="checkbox"
+          checked={whatsappReminderOptIn}
+          onChange={(event) => setWhatsappReminderOptIn(event.target.checked)}
+          className="mt-1 size-4 accent-emerald-700"
+        />
+        <span>
+          Saya bersedia menerima pengingat donasi Jumat Berkah via WhatsApp.
+          Consent hanya disimpan jika nomor WhatsApp diisi. Untuk berhenti,
+          balas pesan WhatsApp dengan kata STOP saat fitur pengingat sudah
+          aktif.
+        </span>
+      </label>
+
       <div>
-        <label className="text-sm font-semibold text-emerald-950" htmlFor="message">
+        <label
+          className="text-sm font-semibold text-emerald-950"
+          htmlFor="message"
+        >
           Pesan atau doa opsional
         </label>
         <textarea
@@ -181,7 +229,9 @@ export function DonationForm({ donor }: { donor?: { name: string | null; email: 
         Tampilkan nama saya di laporan publik
       </label>
 
-      {errors.form ? <p className="text-sm text-red-600">{errors.form}</p> : null}
+      {errors.form ? (
+        <p className="text-sm text-red-600">{errors.form}</p>
+      ) : null}
 
       <button
         type="submit"
@@ -193,8 +243,10 @@ export function DonationForm({ donor }: { donor?: { name: string | null; email: 
 
       {result ? (
         <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
-          Donasi pending tersimpan dengan order ID <strong>{result.orderId}</strong> sebesar{" "}
-          <strong>{formatRupiah(result.amount)}</strong>. Jika halaman pembayaran tidak terbuka, cek status donasi dari halaman status.
+          Donasi pending tersimpan dengan order ID{" "}
+          <strong>{result.orderId}</strong> sebesar{" "}
+          <strong>{formatRupiah(result.amount)}</strong>. Jika halaman
+          pembayaran tidak terbuka, cek status donasi dari halaman status.
         </div>
       ) : null}
     </form>

@@ -957,3 +957,146 @@ Rules:
 - Bulk import must not create partial confusing data without clear report.
 - Imported expenses must go through same validation and audit rules as manual expenses.
 - This is not inventory management and must not grow into complex accounting without a new explicit phase.
+
+### 15.11 Admin UX & Navigation Cleanup
+
+Navigation rules:
+
+- Admin navigation must be grouped by workflow, not implementation detail.
+- Recommended groups: Dashboard, Donasi, Pengeluaran, Laporan, Komunikasi, Audit & Sistem.
+- Existing admin pages must remain reachable after regrouping.
+- Navigation must stay mobile-friendly and keyboard-accessible.
+- This phase must not change financial/business logic.
+
+### 15.12 Admin Donor Database
+
+Purpose:
+
+- Provide admin-only donor operational view from registered users and guest donation contact fields.
+
+Data rules:
+
+- Donor aggregation may match by normalized email first, then phone, then user id when available.
+- Settlement totals must count only donations with `status = settlement`.
+- Pending/failed donations may appear in donation history but not in successful totals.
+- Admin donor database may show donor email/phone only behind server-side admin guard.
+- Public APIs, public report, export, print, Telegram public commands, and notifications must not expose donor contact fields.
+- Anonymous/hidden donor display remains `Anonim` in public contexts.
+
+Recommended route/API:
+
+```txt
+/admin/donatur
+/api/admin/donors
+/api/admin/donors/[id]
+```
+
+### 15.13 Communication Consent Foundation
+
+Data model additions may include:
+
+| Field | Model | Type | Notes |
+|---|---|---|---|
+| whatsapp_reminder_opt_in | User/Donation-derived donor profile | boolean | Defaults false |
+| whatsapp_reminder_opt_in_at | User/Donation-derived donor profile | timestamp nullable | Set when donor explicitly opts in |
+| whatsapp_reminder_opt_out_at | User/Donation-derived donor profile | timestamp nullable | Optional unsubscribe tracking |
+
+Rules:
+
+- Existing donors must default to not opted-in.
+- Opt-in requires donor phone number.
+- Consent checkbox copy must be explicit and not pre-checked.
+- Consent status must be visible to admin but not public.
+- No WhatsApp send path may run in this phase.
+
+### 15.14 WhatsApp Donation Reminder
+
+Default provider:
+
+- WhatsApp Cloud API resmi Meta.
+
+Environment variables:
+
+```txt
+WHATSAPP_REMINDER_ENABLED=false
+WHATSAPP_CLOUD_ACCESS_TOKEN=
+WHATSAPP_CLOUD_PHONE_NUMBER_ID=
+WHATSAPP_REMINDER_TEMPLATE_NAME=
+WHATSAPP_REMINDER_TEMPLATE_LANGUAGE=id
+WHATSAPP_REMINDER_BATCH_LIMIT=20
+```
+
+Rules:
+
+- WhatsApp access token is server-only.
+- Send reminders only to donors with explicit WhatsApp reminder opt-in.
+- Reminder content must not include private data about other donors.
+- Batch sending must be rate-limited and failure-tolerant.
+- Failed send must not crash cron/manual trigger.
+- Every attempted send should write audit/log entry with sent/skipped/failed status.
+- Admin manual trigger must support dry-run before live send.
+- Unofficial WhatsApp Web scraping/session automation is out of scope.
+
+Recommended routes:
+
+```txt
+/api/admin/whatsapp-reminders
+/api/cron/whatsapp/reminders
+```
+
+### 15.15 Report Print & Public Report Redesign
+
+Rules:
+
+- `/laporan` must have print-friendly A4 layout.
+- Print/export/PDF totals must reuse centralized report calculation.
+- Print/export/PDF must never include donor email/phone.
+- Buttons, filters, nav, and interactive-only UI should be hidden in `@media print`.
+- Public report should remain mobile-first.
+- PDF generation can stay dependency-free unless a dependency is explicitly approved.
+
+Print content should include:
+
+- Program title and report period.
+- Income, expenses, period balance, running balance.
+- Weekly target progress if available.
+- Donation and expense tables.
+- Distribution story if published.
+- Privacy/transparency footer.
+
+### 15.16 Documentation & Env Setup Guide
+
+Required docs:
+
+```txt
+docs/FEATURES.md
+docs/ENV_SETUP.md
+docs/PRODUCTION_CHECKLIST.md
+```
+
+Rules:
+
+- Every env var in `.env.example` must be documented.
+- Docs must explain where to obtain provider credentials and how to smoke test them.
+- Docs must cover Midtrans, Telegram, WhatsApp, Resend/email, Better Auth/Google OAuth, database, cron, backup/restore, Cloudflare tunnel/deployment, and admin provisioning.
+- Docs must use safe placeholders only.
+- Never include real secrets.
+
+### 15.17 Final QA & Production Readiness Review
+
+Review areas:
+
+- Public donation flow and Midtrans webhook.
+- Admin donation/donor/expense/import/report/audit flows.
+- Public report print/export privacy.
+- Telegram configured flows.
+- WhatsApp dry-run/live test when env is configured.
+- Email notification smoke.
+- Backup/restore runbook check.
+- Broken links/navigation.
+- Production env checklist.
+
+Rules:
+
+- Any remaining blocker affecting payment, money, security, privacy, or messaging compliance must be documented before marking final readiness.
+- Final status must distinguish code-complete from production-ready.

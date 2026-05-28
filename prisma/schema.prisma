@@ -109,6 +109,8 @@ model User {
 
   donations Donation[]
   expenses  Expense[]
+  weeklyTargets WeeklyTarget[]
+  distributionReports DistributionReport[]
   auditLogs AuditLog[]
 
   @@index([role])
@@ -122,6 +124,9 @@ model Donation {
   donorName              String?        @map("donor_name")
   donorEmail             String?        @map("donor_email")
   donorPhone             String?        @map("donor_phone")
+  whatsappReminderOptIn  Boolean        @default(false) @map("whatsapp_reminder_opt_in")
+  whatsappReminderOptInAt DateTime?     @map("whatsapp_reminder_opt_in_at")
+  whatsappReminderOptOutAt DateTime?    @map("whatsapp_reminder_opt_out_at")
   isAnonymous            Boolean        @default(false) @map("is_anonymous")
   showNamePublicly       Boolean        @default(true) @map("show_name_publicly")
   amount                 Int
@@ -140,6 +145,7 @@ model Donation {
   @@index([createdAt])
   @@index([paidAt])
   @@index([userId])
+  @@index([whatsappReminderOptIn])
   @@map("donations")
 }
 
@@ -194,6 +200,44 @@ model MidtransWebhookLog {
   @@index([orderId])
   @@index([receivedAt])
   @@map("midtrans_webhook_logs")
+}
+
+model DistributionReport {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cycleStart      DateTime  @map("cycle_start") @db.Date
+  title           String
+  summary         String
+  packageCount    Int?      @map("package_count")
+  locationSummary String?   @map("location_summary")
+  photoUrls       Json      @default("[]") @map("photo_urls")
+  publishedAt     DateTime? @map("published_at")
+  createdBy       String    @map("created_by") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  creator User @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@unique([cycleStart])
+  @@index([cycleStart])
+  @@index([publishedAt])
+  @@map("distribution_reports")
+}
+
+model WeeklyTarget {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cycleStart   DateTime @map("cycle_start") @db.Date
+  cycleEnd     DateTime @map("cycle_end") @db.Date
+  targetAmount Int      @map("target_amount")
+  note         String?
+  createdBy    String   @map("created_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  creator User @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@unique([cycleStart])
+  @@index([cycleStart])
+  @@map("weekly_targets")
 }
 
 model AuditLog {

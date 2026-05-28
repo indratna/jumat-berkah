@@ -1,4 +1,6 @@
-import "dotenv/config";
+import { loadEnvConfig } from "@next/env";
+
+loadEnvConfig(process.cwd());
 
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, UserRole } from "../src/generated/prisma/client";

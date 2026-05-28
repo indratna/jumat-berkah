@@ -39,12 +39,12 @@ export function AutoSubmitSelect({
 
   return (
     <label className="flex items-center gap-2 text-slate-600">
-      <span>{label}</span>
+      <span className="text-sm font-medium">{label}</span>
       <select
         name={name}
         defaultValue={defaultValue}
         onChange={handleChange}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field min-w-40 text-sm"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

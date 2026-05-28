@@ -66,7 +66,7 @@ export function WeeklyTargetForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="rounded-2xl bg-emerald-50 p-3 text-xs text-emerald-900">
+      <div className="rounded-xl bg-green-50 p-3 text-xs text-slate-700">
         <p>
           Periode siklus: <strong>{cycleStart}</strong> sampai{" "}
           <strong>{cycleEnd}</strong>
@@ -79,7 +79,7 @@ export function WeeklyTargetForm({
           inputMode="numeric"
           value={targetAmount}
           onChange={(event) => setTargetAmount(event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+          className="field mt-2"
           placeholder="500000"
           required
         />
@@ -91,19 +91,19 @@ export function WeeklyTargetForm({
           onChange={(event) => setNote(event.target.value)}
           rows={2}
           maxLength={200}
-          className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+          className="field mt-2"
           placeholder="Contoh: target 100 nasi bungkus."
         />
       </label>
       <button
         type="submit"
         disabled={status === "saving"}
-        className="rounded-full bg-emerald-700 px-5 py-2 text-sm font-semibold text-white disabled:bg-emerald-300"
+        className="rounded-lg bg-green-700 px-5 py-2 text-sm font-semibold text-white disabled:bg-slate-300"
       >
-        {status === "saving" ? "Menyimpan..." : "Simpan target"}
+        {status === "saving" ? "Menyimpan…" : "Simpan target"}
       </button>
       {status === "saved" ? (
-        <p className="text-sm font-semibold text-emerald-700">
+        <p className="text-sm font-semibold text-green-700">
           Target tersimpan untuk siklus ini.
         </p>
       ) : null}

@@ -40,12 +40,12 @@ export default async function AdminDonorPage({
   const pageQuery = buildPageQuery(resolvedSearchParams);
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6">
-      <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-600">
+    <main className="mx-auto max-w-6xl space-y-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="kicker">
           Database Donatur
         </p>
-        <h1 className="mt-4 text-3xl font-bold">
+        <h1 className="mt-4 text-2xl font-bold">
           Kontak operasional donatur untuk admin.
         </h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
@@ -56,7 +56,7 @@ export default async function AdminDonorPage({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <section className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <TableToolbar filters={filters} />
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 text-sm text-slate-600">
             <span>Total {donors.total} donatur</span>
@@ -66,8 +66,8 @@ export default async function AdminDonorPage({
           </div>
           {donors.items.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="bg-slate-50 text-slate-600">
+              <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Donatur</th>
                     <th className="px-4 py-3 font-semibold">Kontak</th>
@@ -77,11 +77,11 @@ export default async function AdminDonorPage({
                     <th className="px-4 py-3 font-semibold">Detail</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100 bg-white">
                   {donors.items.map((donor) => (
                     <tr
                       key={donor.key}
-                      className="border-t border-slate-100 align-top"
+                      className="align-top"
                     >
                       <td className="px-4 py-4">
                         <p className="font-semibold text-slate-950">
@@ -118,7 +118,7 @@ export default async function AdminDonorPage({
                         <Link
                           href={`?${buildDetailHref(pageQuery, donor.key)}`}
                           scroll={false}
-                          className="rounded-full border border-slate-200 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
+                          className="btn-outline"
                         >
                           Lihat
                         </Link>
@@ -129,7 +129,7 @@ export default async function AdminDonorPage({
               </table>
             </div>
           ) : (
-            <div className="p-8 text-sm text-slate-500">
+            <div className="p-6 text-sm text-slate-500">
               Belum ada donatur yang cocok dengan filter ini.
             </div>
           )}
@@ -174,12 +174,12 @@ function TableToolbar({
         name="q"
         defaultValue={filters.q ?? ""}
         placeholder="Cari nama, email, WhatsApp"
-        className="rounded-xl border border-slate-200 px-3 py-2 lg:col-span-2"
+        className="field lg:col-span-2"
       />
       <select
         name="activity"
         defaultValue={filters.activity ?? ""}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       >
         <option value="">Semua aktivitas</option>
         <option value="settlement">Pernah settlement</option>
@@ -188,7 +188,7 @@ function TableToolbar({
       <select
         name="sort"
         defaultValue={filters.sort}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       >
         {donorSortOptions.map((option) => (
           <option key={option.value} value={option.value}>
@@ -199,7 +199,7 @@ function TableToolbar({
       <select
         name="direction"
         defaultValue={filters.direction}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       >
         <option value="desc">Terbesar/terbaru</option>
         <option value="asc">Terkecil/terlama</option>
@@ -207,7 +207,7 @@ function TableToolbar({
       <select
         name="pageSize"
         defaultValue={String(filters.pageSize)}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       >
         {[10, 25, 50, 100].map((size) => (
           <option key={size} value={size}>
@@ -215,7 +215,7 @@ function TableToolbar({
           </option>
         ))}
       </select>
-      <button className="rounded-full bg-slate-900 px-5 py-2 font-semibold text-white">
+      <button className="btn-primary">
         Filter
       </button>
     </form>
@@ -225,7 +225,7 @@ function TableToolbar({
 function DonorDetail({ donor }: { donor: AdminDonor | null }) {
   if (!donor) {
     return (
-      <aside className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+      <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <p className="text-sm font-semibold text-slate-900">Detail donatur</p>
         <p className="mt-3 text-sm leading-6 text-slate-500">
           Pilih donatur untuk melihat ringkasan kontak, total settlement, dan
@@ -236,8 +236,8 @@ function DonorDetail({ donor }: { donor: AdminDonor | null }) {
   }
 
   return (
-    <aside className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+    <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <p className="kicker">
         Detail Donatur
       </p>
       <h2 className="mt-3 text-2xl font-bold">{donor.name}</h2>
@@ -290,7 +290,7 @@ function DonorDetail({ donor }: { donor: AdminDonor | null }) {
       <div className="mt-6 space-y-2">
         <Link
           href={`/admin/donasi?q=${encodeURIComponent(donor.email ?? donor.phone ?? donor.name)}`}
-          className="block rounded-full bg-slate-900 px-5 py-3 text-center text-sm font-semibold text-white"
+          className="btn-primary w-full text-sm"
         >
           Buka riwayat donasi
         </Link>
@@ -311,12 +311,12 @@ function DonorDetail({ donor }: { donor: AdminDonor | null }) {
 function ConsentBadge({ donor }: { donor: AdminDonor }) {
   const label = formatConsentStatus(donor);
   const tone = donor.whatsappReminderOptIn
-    ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
+    ? "bg-green-50 text-green-700 ring-green-100"
     : "bg-slate-50 text-slate-600 ring-slate-200";
 
   return (
     <span
-      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${tone}`}
+      className={`inline-flex rounded-lg px-3 py-1 text-xs font-semibold ring-1 ${tone}`}
     >
       {label}
     </span>
@@ -384,7 +384,7 @@ function PaginationLink({
 }) {
   if (disabled) {
     return (
-      <span className="rounded-full border border-slate-200 px-4 py-2 font-semibold text-slate-300">
+      <span className="rounded-lg border border-slate-200 px-4 py-2 font-semibold text-slate-300">
         {children}
       </span>
     );
@@ -396,7 +396,7 @@ function PaginationLink({
     <Link
       href={`?${nextQuery.toString()}`}
       scroll={false}
-      className="rounded-full border border-slate-200 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
+      className="btn-outline"
     >
       {children}
     </Link>

@@ -57,7 +57,7 @@ export function ProfileForm({ initialName }: ProfileFormProps) {
       <div>
         <label
           htmlFor="name"
-          className="text-sm font-semibold text-emerald-950"
+          className="text-sm font-semibold text-slate-950"
         >
           Nama tampilan
         </label>
@@ -67,10 +67,10 @@ export function ProfileForm({ initialName }: ProfileFormProps) {
           value={name}
           onChange={(event) => setName(event.target.value)}
           maxLength={100}
-          className="mt-2 w-full rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm text-emerald-950 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+          className="field mt-2 text-sm"
           placeholder="Nama tampilan"
         />
-        <p className="mt-2 text-xs text-emerald-900/60">
+        <p className="mt-2 text-xs text-slate-500">
           Email tidak dapat diubah dari halaman ini agar akses admin/donor tetap
           aman.
         </p>
@@ -78,7 +78,7 @@ export function ProfileForm({ initialName }: ProfileFormProps) {
 
       {error ? <p className="text-sm font-semibold text-rose-700">{error}</p> : null}
       {status === "success" ? (
-        <p className="text-sm font-semibold text-emerald-700">
+        <p className="text-sm font-semibold text-green-700">
           Profil berhasil diperbarui.
         </p>
       ) : null}
@@ -86,9 +86,9 @@ export function ProfileForm({ initialName }: ProfileFormProps) {
       <button
         type="submit"
         disabled={status === "saving"}
-        className="rounded-full bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60"
+        className="btn-primary text-sm disabled:opacity-60"
       >
-        {status === "saving" ? "Menyimpan..." : "Simpan profil"}
+        {status === "saving" ? "Menyimpan…" : "Simpan profil"}
       </button>
     </form>
   );

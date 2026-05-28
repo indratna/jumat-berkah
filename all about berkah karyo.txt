@@ -49,11 +49,8 @@ CRON_SECRET=...
 TELEGRAM_NOTIFY_ENABLED=true
 TELEGRAM_BOT_TOKEN=...
 TELEGRAM_NOTIFY_CHAT_ID=...
-TELEGRAM_PUBLIC_CHANNEL_ID=...
+TELEGRAM_PUBLIC_CHANNEL_ID=1003532867938
 
 curl -H "X-Cron-Secret: 123456" http://localhost:3037/api/cron/telegram/weekly
 
-kirim broadcast wa donasi reminder
-belum ada database donatur
-halaman laporan bisa di print oleh donatur atau umum
-dokumentasi menjelaskan semua fitur, semua setup env cara mendapatkannya
+donatur terbanyak di dashabord dan detail donatur muncul sebagai popup saja, kalau donasi admin tidak autorefresh, tidak langsung muncul datanya di admin

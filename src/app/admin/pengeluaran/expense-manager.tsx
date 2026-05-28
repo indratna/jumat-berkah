@@ -195,10 +195,10 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
     <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200"
+        className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
       >
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-600">
+          <p className="kicker">
             Form Pengeluaran
           </p>
           <h2 className="mt-2 text-2xl font-bold">
@@ -207,7 +207,7 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
         </div>
         <FieldError message={errors.form} />
         {message ? (
-          <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <p className="rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
             {message}
           </p>
         ) : null}
@@ -227,7 +227,7 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
                     vendorName: template.vendorName,
                   })
                 }
-                className="rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-700"
               >
                 {template.label}
               </button>
@@ -243,7 +243,7 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
             onChange={(event) =>
               setForm({ ...form, expenseDate: event.target.value })
             }
-            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+            className="field mt-1"
           />
           <FieldError message={errors.expenseDate} />
         </label>
@@ -254,7 +254,7 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
             onChange={(event) =>
               setForm({ ...form, category: event.target.value })
             }
-            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+            className="field mt-1"
           >
             {EXPENSE_CATEGORIES.map((category) => (
               <option key={category} value={category}>
@@ -271,7 +271,7 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
             onChange={(event) =>
               setForm({ ...form, description: event.target.value })
             }
-            className="mt-1 min-h-24 w-full rounded-xl border border-slate-200 px-3 py-2"
+            className="field mt-1 min-h-24"
           />
           <FieldError message={errors.description} />
         </label>
@@ -283,7 +283,7 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
             onChange={(event) =>
               setForm({ ...form, amount: event.target.value })
             }
-            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+            className="field mt-1"
           />
           <FieldError message={errors.amount} />
         </label>
@@ -294,7 +294,7 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
             onChange={(event) =>
               setForm({ ...form, vendorName: event.target.value })
             }
-            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+            className="field mt-1"
           />
         </label>
         <label className="block text-sm font-medium text-slate-700">
@@ -304,13 +304,13 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
             onChange={(event) =>
               setForm({ ...form, receiptUrl: event.target.value })
             }
-            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+            className="field mt-1"
           />
         </label>
         <div className="flex gap-3">
           <button
             disabled={isPending}
-            className="rounded-full bg-slate-900 px-5 py-2 font-semibold text-white disabled:opacity-60"
+            className="btn-primary disabled:opacity-60"
           >
             {form.id ? "Simpan" : "Tambah"}
           </button>
@@ -318,7 +318,7 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
             <button
               type="button"
               onClick={() => setForm(emptyForm)}
-              className="rounded-full border border-slate-200 px-5 py-2 font-semibold text-slate-700"
+              className="rounded-lg border border-slate-200 px-5 py-2 font-semibold text-slate-700"
             >
               Batal
             </button>
@@ -326,9 +326,9 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
         </div>
       </form>
 
-      <div className="space-y-6">
-        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-600">
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="kicker">
             Import CSV
           </p>
           <h2 className="mt-2 text-xl font-bold">Preview sebelum import</h2>
@@ -339,11 +339,11 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
           <textarea
             value={csvText}
             onChange={(event) => setCsvText(event.target.value)}
-            className="mt-4 min-h-32 w-full rounded-xl border border-slate-200 px-3 py-2 font-mono text-xs"
+            className="field mt-4 min-h-32 font-mono text-xs"
           />
           <FieldError message={errors.import ?? errors.csv} />
           {importMessage ? (
-            <p className="mt-3 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <p className="mt-3 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
               {importMessage}
             </p>
           ) : null}
@@ -351,7 +351,7 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
             <button
               type="button"
               onClick={() => void handleImport("preview")}
-              className="rounded-full border border-slate-200 px-5 py-2 font-semibold text-slate-700"
+              className="rounded-lg border border-slate-200 px-5 py-2 font-semibold text-slate-700"
             >
               Preview CSV
             </button>
@@ -359,7 +359,7 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
               type="button"
               disabled={!importPreview || importPreview.hasErrors}
               onClick={() => void handleImport("import")}
-              className="rounded-full bg-slate-900 px-5 py-2 font-semibold text-white disabled:opacity-50"
+              className="btn-primary disabled:opacity-50"
             >
               Import baris valid
             </button>
@@ -369,11 +369,11 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
           ) : null}
         </div>
 
-        <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           {expenses.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="bg-slate-50 text-slate-600">
+              <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <tr>
                     <th className="px-4 py-3">Tanggal</th>
                     <th className="px-4 py-3">Kategori</th>
@@ -382,11 +382,11 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
                     <th className="px-4 py-3">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100 bg-white">
                   {expenses.map((expense) => (
                     <tr
                       key={expense.id}
-                      className="border-t border-slate-100 align-top"
+                      className="align-top"
                     >
                       <td className="px-4 py-4">{expense.displayDate}</td>
                       <td className="px-4 py-4">{expense.category}</td>
@@ -414,14 +414,14 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
                                 receiptUrl: expense.receiptUrl ?? "",
                               })
                             }
-                            className="rounded-full border border-slate-200 px-3 py-1 font-semibold"
+                            className="rounded-lg border border-slate-200 px-3 py-1 font-semibold"
                           >
                             Edit
                           </button>
                           <button
                             type="button"
                             onClick={() => void handleDelete(expense)}
-                            className="rounded-full bg-red-50 px-3 py-1 font-semibold text-red-700"
+                            className="rounded-lg bg-red-50 px-3 py-1 font-semibold text-red-700"
                           >
                             Hapus
                           </button>
@@ -433,7 +433,7 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
               </table>
             </div>
           ) : (
-            <div className="p-8 text-sm text-slate-500">
+            <div className="p-6 text-sm text-slate-500">
               Belum ada pengeluaran yang cocok dengan filter ini.
             </div>
           )}
@@ -446,8 +446,8 @@ export function ExpenseManager({ expenses }: { expenses: ExpenseRow[] }) {
 function ImportPreviewTable({ preview }: { preview: ImportPreview }) {
   return (
     <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-100">
-      <table className="min-w-full text-left text-xs">
-        <thead className="bg-slate-50 text-slate-600">
+      <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
+        <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
           <tr>
             <th className="px-3 py-2">Baris</th>
             <th className="px-3 py-2">Tanggal</th>
@@ -457,7 +457,7 @@ function ImportPreviewTable({ preview }: { preview: ImportPreview }) {
             <th className="px-3 py-2">Status</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-slate-100 bg-white">
           {preview.rows.map((row) => {
             const rowErrors = Object.values(row.errors);
             return (
@@ -473,7 +473,7 @@ function ImportPreviewTable({ preview }: { preview: ImportPreview }) {
                   {rowErrors.length > 0 ? (
                     <span className="text-red-700">{rowErrors.join(" ")}</span>
                   ) : (
-                    <span className="text-emerald-700">Valid</span>
+                    <span className="text-green-700">Valid</span>
                   )}
                 </td>
               </tr>

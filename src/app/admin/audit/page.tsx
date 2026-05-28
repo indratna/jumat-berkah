@@ -39,26 +39,26 @@ export default async function AdminAuditPage({
   const pageQuery = buildPageQuery(resolvedSearchParams);
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6">
-      <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-600">
+    <main className="mx-auto max-w-6xl space-y-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="kicker">
           Audit Admin
         </p>
-        <h1 className="mt-4 text-3xl font-bold">Jejak perubahan sistem.</h1>
+        <h1 className="mt-4 text-2xl font-bold">Jejak perubahan sistem.</h1>
         <p className="mt-3 leading-7 text-slate-700">
           Lihat aktivitas operasional penting secara read-only. Data audit tidak
           bisa diubah dari halaman ini.
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <AuditToolbar filters={filters} actions={logs.actions} entityTypes={logs.entityTypes} />
         <div className="border-b border-slate-100 px-5 py-4 text-sm text-slate-600">
           Total {logs.total} log audit. Halaman {logs.page} dari {logs.totalPages}.
         </div>
         <div className="divide-y divide-slate-100">
           {logs.items.length === 0 ? (
-            <div className="p-8 text-center text-slate-600">
+            <div className="p-6 text-center text-slate-600">
               Tidak ada audit log sesuai filter.
             </div>
           ) : (
@@ -127,26 +127,26 @@ function AuditToolbar({
 }) {
   return (
     <form className="grid gap-3 border-b border-slate-100 bg-white p-5 lg:grid-cols-6">
-      <select name="action" defaultValue={filters.action ?? ""} className="rounded-xl border border-slate-200 px-3 py-2">
+      <select name="action" defaultValue={filters.action ?? ""} className="field">
         <option value="">Semua aksi</option>
         {actions.map((action) => <option key={action} value={action}>{action}</option>)}
       </select>
-      <select name="entityType" defaultValue={filters.entityType ?? ""} className="rounded-xl border border-slate-200 px-3 py-2">
+      <select name="entityType" defaultValue={filters.entityType ?? ""} className="field">
         <option value="">Semua entitas</option>
         {entityTypes.map((entityType) => <option key={entityType} value={entityType}>{entityType}</option>)}
       </select>
-      <input name="actor" defaultValue={filters.actor ?? ""} placeholder="Cari aktor" className="rounded-xl border border-slate-200 px-3 py-2" />
-      <input name="from" type="date" defaultValue={filters.from ?? ""} className="rounded-xl border border-slate-200 px-3 py-2" />
-      <input name="to" type="date" defaultValue={filters.to ?? ""} className="rounded-xl border border-slate-200 px-3 py-2" />
-      <button className="rounded-full bg-slate-900 px-5 py-2 font-semibold text-white">Filter</button>
-      <select name="sort" defaultValue={filters.sort} className="rounded-xl border border-slate-200 px-3 py-2">
+      <input name="actor" defaultValue={filters.actor ?? ""} placeholder="Cari aktor" className="field" />
+      <input name="from" type="date" defaultValue={filters.from ?? ""} className="field" />
+      <input name="to" type="date" defaultValue={filters.to ?? ""} className="field" />
+      <button className="btn-primary">Filter</button>
+      <select name="sort" defaultValue={filters.sort} className="field">
         {auditSortOptions.map((option) => <option key={option.value} value={option.value}>Urut: {option.label}</option>)}
       </select>
-      <select name="direction" defaultValue={filters.direction} className="rounded-xl border border-slate-200 px-3 py-2">
+      <select name="direction" defaultValue={filters.direction} className="field">
         <option value="desc">Z-A/terbaru</option>
         <option value="asc">A-Z/terlama</option>
       </select>
-      <select name="pageSize" defaultValue={String(filters.pageSize)} className="rounded-xl border border-slate-200 px-3 py-2">
+      <select name="pageSize" defaultValue={String(filters.pageSize)} className="field">
         {[10, 25, 50, 100].map((size) => <option key={size} value={size}>{size} baris</option>)}
       </select>
     </form>
@@ -167,9 +167,9 @@ function AuditJson({ title, value }: { title: string; value: unknown }) {
 function TableFooter({ page, totalPages, query, pageSize }: { page: number; totalPages: number; query: URLSearchParams; pageSize: number }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-5 text-sm">
-      <Link aria-disabled={page <= 1} className={`rounded-full px-4 py-2 font-semibold ${page <= 1 ? "pointer-events-none bg-slate-100 text-slate-400" : "bg-slate-900 text-white"}`} href={`?${withPage(query, page - 1, pageSize)}`}>Sebelumnya</Link>
+      <Link aria-disabled={page <= 1} className={`rounded-lg px-4 py-2 font-semibold ${page <= 1 ? "pointer-events-none bg-slate-100 text-slate-500" : "bg-green-700 text-white hover:bg-green-800"}`} href={`?${withPage(query, page - 1, pageSize)}`}>Sebelumnya</Link>
       <span className="text-slate-600">Halaman {page} / {totalPages}</span>
-      <Link aria-disabled={page >= totalPages} className={`rounded-full px-4 py-2 font-semibold ${page >= totalPages ? "pointer-events-none bg-slate-100 text-slate-400" : "bg-slate-900 text-white"}`} href={`?${withPage(query, page + 1, pageSize)}`}>Berikutnya</Link>
+      <Link aria-disabled={page >= totalPages} className={`rounded-lg px-4 py-2 font-semibold ${page >= totalPages ? "pointer-events-none bg-slate-100 text-slate-500" : "bg-green-700 text-white hover:bg-green-800"}`} href={`?${withPage(query, page + 1, pageSize)}`}>Berikutnya</Link>
     </div>
   );
 }

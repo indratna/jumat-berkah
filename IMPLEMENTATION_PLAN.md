@@ -10,10 +10,10 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 
 ### Current Status
 
-Current Phase: Phase 38 — Final QA & Production Readiness Review  
+Current Phase: Phase 39 — InApp-Inspired UI Refresh  
 Overall Progress: 100%  
 Last Updated: 2026-05-28  
-Current Focus: Phase 38 completed. Code validation is green; production sign-off depends on live provider smoke for Midtrans, Telegram public channel, WhatsApp, and strong production auth secrets.
+Current Focus: Phase 39 completed. InApp-inspired frontend UI/UX refresh applied, automated validation is green, and local browser visual review passed for public/auth/admin routes with responsive checks at 375px, 768px, 1024px, and desktop.
 Blockers: Live provider smoke remains required: Telegram public channel broadcast needs `TELEGRAM_PUBLIC_CHANNEL_ID=-100...` plus bot admin/post permission; production `BETTER_AUTH_SECRET` must be high entropy; Midtrans live QRIS and WhatsApp live send need provider credentials/templates.
 
 ### Phase Progress
@@ -59,6 +59,7 @@ Blockers: Live provider smoke remains required: Telegram public channel broadcas
 | Phase 36 | Report Print & Public Report Redesign | Done | 100% |
 | Phase 37 | Documentation & Env Setup Guide | Done | 100% |
 | Phase 38 | Final QA & Production Readiness Review | Done | 100% |
+| Phase 39 | InApp-Inspired UI Refresh | Done | 100% |
 
 Status values:
 
@@ -72,6 +73,19 @@ Done
 ## 3. Work Log
 
 ### 2026-05-28
+
+- Completed pre-push cleanup and light refactor pass. Removed local development artifacts, hardened `.gitignore` for repeatable generated files, audited current tracked changes, applied only low-risk behavior-preserving cleanup, and kept auth/payment/webhook/database/financial/provider behavior unchanged. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`. Build still warns local `BETTER_AUTH_SECRET` is low entropy; production follow-up remains to set a strong secret.
+
+
+- Completed plan-aligned Phase 39 code pass and manual visual review. Reopened phase progress because previous completion claim was premature, then aligned global tokens/utilities to slate + green, added 44px `.field`/button utilities, normalized admin shared components/status badges/tabs, strengthened admin shell toward InApp fixed-sidebar/topbar/gray-workspace layout, standardized admin table wrappers/header/body classes and form controls, removed stale teal/backdrop/promotional patterns, and kept backend/auth/payment/database/API/business logic unchanged. Manual browser review used local dev server `http://127.0.0.1:3044`: checked `/`, `/donasi`, `/laporan`, `/login`, `/masuk`, `/lupa-password`, `/reset-password`, `/admin`, `/admin/donasi`, `/admin/pengeluaran`, `/admin/donatur`, `/admin/penyaluran`, `/admin/audit`, and `/admin/persetujuan`; fixed mobile admin nav height so 375px uses compact horizontal nav instead of pushing content too far down. Responsive checks covered 375px, 768px, 1024px, and desktop. Automated validation passed: `npm run lint`, `npm test` (98/98), `npm run build`. Build still warns local `BETTER_AUTH_SECRET` is low entropy; production follow-up remains to set a strong secret.
+
+- Strengthened Phase 39 admin UI after `/admin` still looked too close to the old dashboard. Root cause: previous refresh only softened visual tokens and cards, not enough InApp-inspired shell structure. Reworked admin layout into fixed white sidebar, sticky topbar, gray workspace, compact bordered dashboard panels, metric grid cells, denser quick actions, and nav icon blocks while preserving routes/business logic. Also aligned root checkout by adding `turbopack.root`, ignored `.worktrees/**` and generated Prisma output in ESLint, cleared stale `.next`, then revalidated. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`. Build still warns local `BETTER_AUTH_SECRET` is low entropy; production follow-up remains to set a strong secret.
+
+- Completed Phase 39 — InApp-Inspired UI Refresh in isolated worktree `D:\Project\JumatBerkah\.worktrees\inapp-ui-refresh`. Added approved design spec `docs/superpowers/specs/2026-05-28-inapp-inspired-ui-refresh-design.md` and implementation plan `docs/superpowers/plans/2026-05-28-inapp-inspired-ui-refresh.md`. Adapted InApp-inspired admin dashboard patterns into existing Tailwind UI: neutral admin shell/sidebar, compact office-dashboard admin page, calmer cards/tables/forms/buttons/badges, and warm green/amber public/account styling. No backend logic, routes, API, auth, database, payment, or business flow changed. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`. Build still warns local `BETTER_AUTH_SECRET` is low entropy; production follow-up remains to set a strong secret. Added explicit `turbopack.root` in `next.config.ts` so the nested worktree serves its own source instead of the parent checkout.
+
+- Completed corrective UI/UX cleanup after the previous polish pass made the app feel too promotional. Removed gradient-heavy/global effects, reduced oversize headings, normalized cards/buttons/forms/sidebar spacing, converted dark hero blocks back to neutral panels, and made public/admin/donor/account screens more consistent with a simple internal-office dashboard style. No backend logic, routes, API, auth, database, or business flow changed. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`. Build still warns local `BETTER_AUTH_SECRET` is low entropy; production follow-up remains to set a strong secret.
+
+- Completed post-release UI/UX polish pass for Jumat Berkah Karyo without changing backend logic, routes, API, auth, database, or business flow. Refined global visual tokens, landing page, donation page/form, public report shell/cards, admin sidebar/tabs/summary cards, and admin login styling. Accessibility polish included skip link, stronger focus-visible defaults, improved form attributes/placeholders, reduced-motion-safe transitions, and image dimensions. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`. Build still warns local `BETTER_AUTH_SECRET` is low entropy; production follow-up remains to set a strong secret.
 
 - Completed Phase 38 — Final QA & Production Readiness Review. Added `docs/FINAL_QA_REVIEW.md` with automated validation results, public/admin/provider smoke review, security/privacy review, navigation review, production env checklist review, and remaining live-provider blockers. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`. No code-level critical blocker found. Remaining production sign-off items: Telegram public channel `/broadcast_laporan`, strong production `BETTER_AUTH_SECRET`, Midtrans live QRIS smoke, and WhatsApp live template send.
 
@@ -2368,3 +2382,64 @@ npm test
 ```
 
 Manual: full end-to-end smoke checklist across public, donor, admin, Telegram, WhatsApp, and deployment docs.
+
+# Phase 39 — InApp-Inspired UI Refresh
+
+## Goal
+
+Adapt the downloaded InApp dashboard visual language into Jumat Berkah Karyo while preserving current product behavior and production readiness constraints.
+
+## Scope
+
+In-scope:
+
+- Frontend UI/UX only.
+- Global Tailwind/CSS visual tokens and reusable UI classes.
+- Public warm nonprofit styling for landing, donation, report, auth/account/status pages.
+- Admin neutral office-dashboard styling inspired by InApp sidebar, topbar/page header, cards, tables, badges, and form density.
+- Accessibility and responsive polish.
+- Progress tracker and work log updates.
+
+Out-of-scope:
+
+- Backend logic.
+- API routes/contracts.
+- Auth/session behavior.
+- Midtrans/payment/webhook behavior.
+- Database schema or migrations.
+- Report calculations and privacy/business rules.
+- New dependencies.
+
+## Tasks
+
+- [x] Create design spec from InApp reference.
+- [x] Create implementation plan.
+- [x] Run baseline validation.
+- [x] Refine global visual utilities.
+- [x] Rework admin shell and shared components.
+- [x] Apply InApp-inspired admin page styling.
+- [x] Apply warm nonprofit public page styling.
+- [x] Normalize auth, account, and status pages.
+- [x] Run responsive and accessibility review.
+- [x] Run final validation and update Work Log.
+
+## Acceptance Criteria
+
+- Public pages feel warm, trustworthy, and not flashy.
+- Admin pages feel neutral, compact, and data-first.
+- UI follows InApp-inspired structure without importing Bootstrap/Vite/template code.
+- Donation flow remains short and low friction.
+- Public report still never exposes donor email or phone.
+- Backend/auth/payment/database/API/business logic remain unchanged.
+- Important controls keep visible focus states and 44px target size.
+- Data-dependent pages keep loading, empty, and error states where relevant.
+
+## Validation
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+Manual: review `/`, `/donasi`, `/laporan`, `/login`, `/masuk`, `/admin`, `/admin/donasi`, `/admin/pengeluaran`, `/admin/donatur`, `/admin/penyaluran`, `/admin/audit`, `/admin/persetujuan`, `/akun/donasi`, `/akun/profil`, `/lupa-password`, and `/reset-password` at mobile/tablet/desktop widths.

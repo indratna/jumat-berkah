@@ -12,22 +12,21 @@ export default async function DonationPage() {
   const donor = legacyDonor ?? (await getBetterAuthDonorUser(await headers()));
 
   return (
-    <main className="min-h-screen bg-emerald-50 px-6 py-12 text-emerald-950 sm:py-16">
-      <section className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-        <div className="space-y-5 rounded-3xl bg-emerald-900 p-8 text-white shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-200">
-            Donasi Jumat Berkah
-          </p>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Isi nominal, pilih anonim bila perlu, lalu lanjut ke pembayaran.
+    <main id="main-content" className="page-shell text-slate-900">
+      <section className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+        <div className="panel p-6">
+          <p className="kicker">Donasi Jumat Berkah</p>
+          <h1 className="heading-balance mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+            Isi nominal dan lanjutkan ke pembayaran QRIS.
           </h1>
-          <p className="leading-7 text-emerald-50/80">
-            Fase ini menyimpan donasi awal dengan status pending. QRIS Midtrans
-            akan dihubungkan pada fase pembayaran berikutnya.
+          <p className="body-muted mt-3 text-sm">
+            Donasi dibuat sebagai pending, lalu status diperbarui otomatis
+            setelah pembayaran berhasil.
           </p>
-          <div className="rounded-2xl bg-white/10 p-4 text-sm text-emerald-50">
-            Minimal donasi Rp1.000. Email dan WhatsApp bersifat opsional dan
-            tidak akan ditampilkan pada laporan publik.
+          <div className="mt-5 space-y-2 border-t border-slate-200 pt-5 text-sm text-slate-600">
+            <p>Minimal donasi Rp1.000.</p>
+            <p>Email dan WhatsApp opsional.</p>
+            <p>Nama dapat disamarkan sebagai Anonim.</p>
           </div>
         </div>
 

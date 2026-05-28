@@ -9,9 +9,9 @@ export default async function DistributionReportPage() {
   const recent = await listDistributionReports(10);
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6">
-      <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
+    <main className="mx-auto max-w-5xl space-y-4">
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-green-700">
           Cerita Penyaluran Siklus Jumat
         </p>
         <h1 className="mt-3 text-2xl font-bold tracking-tight">
@@ -30,8 +30,8 @@ export default async function DistributionReportPage() {
         </div>
       </section>
 
-      <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-green-700">
           Riwayat Cerita
         </p>
         <p className="mt-2 text-sm text-slate-500">
@@ -46,12 +46,12 @@ export default async function DistributionReportPage() {
             recent.map((report) => (
               <div
                 key={report.id}
-                className="rounded-2xl border border-slate-200 p-4"
+                className="rounded-xl border border-slate-200 p-4"
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-3">
                   <p className="text-sm font-semibold">
                     {report.title}{" "}
-                    <span className="ml-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                    <span className="ml-1 rounded-lg bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
                       {report.publishedAt ? "Publik" : "Draft"}
                     </span>
                   </p>

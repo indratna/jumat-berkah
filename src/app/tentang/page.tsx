@@ -1,15 +1,15 @@
 export default function TentangPage() {
   return (
-    <main className="min-h-screen bg-emerald-50 px-6 py-12 text-emerald-950 sm:py-16">
+    <main className="page-shell text-slate-900">
       <section className="mx-auto max-w-5xl space-y-8">
-        <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-emerald-100">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+        <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-green-700">
             Tentang Program
           </p>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-5xl">
+          <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
             Jumat Berkah membantu penyaluran makanan dengan laporan terbuka.
           </h1>
-          <p className="mt-5 max-w-3xl leading-7 text-emerald-900/75">
+          <p className="mt-5 max-w-3xl leading-7 text-slate-600">
             Program ini mengumpulkan donasi untuk mendukung kegiatan berbagi
             makanan setiap Jumat. Aplikasi dipakai agar donasi, pengeluaran,
             target mingguan, dan cerita penyaluran dapat dilihat publik dengan
@@ -18,13 +18,13 @@ export default function TentangPage() {
           <div className="mt-6 flex flex-wrap gap-3">
             <a
               href="/donasi"
-              className="rounded-full bg-emerald-700 px-5 py-2 font-semibold text-white"
+              className="rounded-lg bg-green-700 px-5 py-2 font-semibold text-white"
             >
               Donasi Sekarang
             </a>
             <a
               href="/laporan?period=jumat"
-              className="rounded-full border border-emerald-700 px-5 py-2 font-semibold text-emerald-800"
+              className="rounded-lg border border-emerald-700 px-5 py-2 font-semibold text-green-700"
             >
               Lihat Laporan Jumat Ini
             </a>
@@ -50,14 +50,14 @@ export default function TentangPage() {
           />
         </div>
 
-        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-emerald-100">
+        <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
           <h2 className="text-xl font-bold">Pengelola dan Kontak</h2>
-          <p className="mt-3 leading-7 text-emerald-900/75">
+          <p className="mt-3 leading-7 text-slate-600">
             Program dikelola admin Jumat Berkah. Untuk pertanyaan donasi,
             laporan, atau koreksi data publik, hubungi pengelola melalui kontak
             resmi internal program.
           </p>
-          <p className="mt-4 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900/70">
+          <p className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
             Catatan: laporan publik bersifat ringkasan aman. Admin tetap menjaga
             data kontak donatur hanya untuk kebutuhan operasional.
           </p>
@@ -69,9 +69,9 @@ export default function TentangPage() {
 
 function InfoCard({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-emerald-100">
+    <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
       <h2 className="text-xl font-bold">{title}</h2>
-      <p className="mt-3 leading-7 text-emerald-900/75">{body}</p>
+      <p className="mt-3 leading-7 text-slate-600">{body}</p>
     </div>
   );
 }

@@ -77,19 +77,16 @@ export function DonationForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-emerald-100 sm:p-8"
-    >
+    <form onSubmit={handleSubmit} className="panel space-y-5 p-5 sm:p-6">
       {donor ? (
-        <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
+        <div className="rounded-xl border border-green-100 bg-green-50 p-3 text-sm text-green-900">
           Masuk sebagai <strong>{donor.name ?? donor.email}</strong>. Donasi ini
           akan masuk ke riwayat akun Anda.
         </div>
       ) : null}
       <div>
         <label
-          className="text-sm font-semibold text-emerald-950"
+          className="text-sm font-semibold text-slate-800"
           htmlFor="amount"
         >
           Nominal donasi
@@ -100,7 +97,7 @@ export function DonationForm({
               key={presetAmount}
               type="button"
               onClick={() => setAmount(String(presetAmount))}
-              className="rounded-2xl border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50"
+              className={`rounded-lg border px-3 py-2 text-sm font-semibold ${amount === String(presetAmount) ? "border-green-700 bg-green-700 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"}`}
             >
               {formatRupiah(presetAmount)}
             </button>
@@ -108,11 +105,12 @@ export function DonationForm({
         </div>
         <input
           id="amount"
+          name="amount"
           inputMode="numeric"
           min="1000"
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
-          className="mt-3 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+          className="field mt-3 numeric"
           required
         />
         {errors.amount ? (
@@ -120,30 +118,32 @@ export function DonationForm({
         ) : null}
       </div>
 
-      <label className="flex items-center gap-3 rounded-2xl bg-emerald-50 p-4 text-sm font-medium text-emerald-900">
+      <label className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-800">
         <input
           type="checkbox"
           checked={isAnonymous}
           onChange={(event) => setIsAnonymous(event.target.checked)}
-          className="size-4 accent-emerald-700"
+          className="size-4 accent-green-700"
         />
         Donasi sebagai Anonim
       </label>
 
       <div>
         <label
-          className="text-sm font-semibold text-emerald-950"
+          className="text-sm font-semibold text-slate-800"
           htmlFor="donorName"
         >
           Nama donatur
         </label>
         <input
           id="donorName"
+          name="donorName"
+          autoComplete="name"
           value={donorName}
           onChange={(event) => setDonorName(event.target.value)}
           disabled={isAnonymous}
-          className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-100"
-          placeholder="Nama Anda"
+          className="field mt-2 disabled:bg-slate-100"
+          placeholder="Nama Anda…"
         />
         {errors.donorName ? (
           <p className="mt-2 text-sm text-red-600">{errors.donorName}</p>
@@ -153,18 +153,21 @@ export function DonationForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label
-            className="text-sm font-semibold text-emerald-950"
+            className="text-sm font-semibold text-slate-800"
             htmlFor="donorEmail"
           >
             Email opsional
           </label>
           <input
             id="donorEmail"
+            name="donorEmail"
             type="email"
+            autoComplete="email"
+            spellCheck={false}
             value={donorEmail}
             onChange={(event) => setDonorEmail(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-            placeholder="nama@email.com"
+            className="field mt-2"
+            placeholder="nama@email.com…"
           />
           {errors.donorEmail ? (
             <p className="mt-2 text-sm text-red-600">{errors.donorEmail}</p>
@@ -172,27 +175,31 @@ export function DonationForm({
         </div>
         <div>
           <label
-            className="text-sm font-semibold text-emerald-950"
+            className="text-sm font-semibold text-slate-800"
             htmlFor="donorPhone"
           >
             WhatsApp opsional
           </label>
           <input
             id="donorPhone"
+            name="donorPhone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
             value={donorPhone}
             onChange={(event) => setDonorPhone(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-            placeholder="08123456789"
+            className="field mt-2"
+            placeholder="08123456789…"
           />
         </div>
       </div>
 
-      <label className="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-medium text-emerald-950">
+      <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-700">
         <input
           type="checkbox"
           checked={whatsappReminderOptIn}
           onChange={(event) => setWhatsappReminderOptIn(event.target.checked)}
-          className="mt-1 size-4 accent-emerald-700"
+          className="mt-1 size-4 accent-green-700"
         />
         <span>
           Saya bersedia menerima pengingat donasi Jumat Berkah via WhatsApp.
@@ -204,27 +211,29 @@ export function DonationForm({
 
       <div>
         <label
-          className="text-sm font-semibold text-emerald-950"
+          className="text-sm font-semibold text-slate-800"
           htmlFor="message"
         >
           Pesan atau doa opsional
         </label>
         <textarea
           id="message"
+          name="message"
+          autoComplete="off"
           value={message}
           onChange={(event) => setMessage(event.target.value)}
-          className="mt-2 min-h-28 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-          placeholder="Semoga berkah untuk semua."
+          className="field mt-2 min-h-28"
+          placeholder="Semoga berkah untuk semua…"
         />
       </div>
 
-      <label className="flex items-center gap-3 text-sm font-medium text-emerald-900">
+      <label className="flex items-center gap-3 text-sm font-medium text-slate-700">
         <input
           type="checkbox"
           checked={showNamePublicly}
           onChange={(event) => setShowNamePublicly(event.target.checked)}
           disabled={isAnonymous}
-          className="size-4 accent-emerald-700"
+          className="size-4 accent-green-700"
         />
         Tampilkan nama saya di laporan publik
       </label>
@@ -236,13 +245,13 @@ export function DonationForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-full bg-emerald-700 px-6 py-3 font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-emerald-300"
+        className="btn-primary w-full disabled:cursor-not-allowed disabled:bg-slate-300"
       >
-        {isSubmitting ? "Menyimpan donasi..." : "Lanjutkan Donasi"}
+        {isSubmitting ? "Menyimpan donasi…" : "Lanjutkan Donasi"}
       </button>
 
       {result ? (
-        <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
+        <div className="rounded-xl border border-green-100 bg-green-50 p-3 text-sm text-green-900">
           Donasi pending tersimpan dengan order ID{" "}
           <strong>{result.orderId}</strong> sebesar{" "}
           <strong>{formatRupiah(result.amount)}</strong>. Jika halaman

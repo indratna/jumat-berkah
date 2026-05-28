@@ -19,7 +19,7 @@ export const adminDonationStatusMeta: Record<
 
 const toneClasses: Record<StatusTone, string> = {
   pending: "bg-amber-50 text-amber-800 ring-amber-200",
-  settlement: "bg-emerald-50 text-emerald-800 ring-emerald-200",
+  settlement: "bg-green-50 text-green-700 ring-green-200",
   failed: "bg-rose-50 text-rose-800 ring-rose-200",
   neutral: "bg-slate-100 text-slate-700 ring-slate-200",
 };
@@ -29,7 +29,7 @@ export function AdminStatusBadge({ status }: { status: DonationStatus }) {
 
   return (
     <span
-      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1 ${toneClasses[meta.tone]}`}
+      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${toneClasses[meta.tone]}`}
     >
       {meta.label}
     </span>

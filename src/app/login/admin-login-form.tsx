@@ -66,23 +66,23 @@ export function AdminLoginForm() {
       <button
         type="button"
         onClick={handleGoogleLogin}
-        className="w-full rounded-full border border-emerald-200 bg-white px-6 py-3 font-semibold text-emerald-800 shadow-sm transition hover:bg-emerald-50"
+        className="btn-outline w-full"
       >
         Masuk dengan Google
       </button>
 
-      <div className="grid grid-cols-2 rounded-full bg-emerald-50 p-1 text-sm font-semibold text-emerald-900">
+      <div className="grid grid-cols-2 rounded-lg bg-slate-100 p-1 text-sm font-bold text-slate-700">
         <button
           type="button"
           onClick={() => setMethod("password")}
-          className={`rounded-full px-4 py-2 ${method === "password" ? "bg-white shadow-sm" : "text-emerald-700"}`}
+          className={`rounded-lg px-4 py-2 ${method === "password" ? "bg-white text-slate-950 shadow-sm" : "text-slate-600"}`}
         >
           Password
         </button>
         <button
           type="button"
           onClick={() => setMethod("legacy")}
-          className={`rounded-full px-4 py-2 ${method === "legacy" ? "bg-white shadow-sm" : "text-emerald-700"}`}
+          className={`rounded-lg px-4 py-2 ${method === "legacy" ? "bg-white text-slate-950 shadow-sm" : "text-slate-600"}`}
         >
           Kode Admin
         </button>
@@ -91,9 +91,9 @@ export function AdminLoginForm() {
       {method === "password" ? (
         <form
           onSubmit={handlePasswordLogin}
-          className="space-y-5 rounded-3xl border border-emerald-100 bg-emerald-50/50 p-4"
+          className="space-y-5 rounded-xl border border-slate-200 bg-slate-50/70 p-4"
         >
-          <p className="text-sm font-semibold text-emerald-900">
+          <p className="text-sm font-semibold text-slate-800">
             Masuk dengan email dan password
           </p>
           <div>
@@ -102,10 +102,13 @@ export function AdminLoginForm() {
             </label>
             <input
               id="email-password"
+              name="email"
               type="email"
+              autoComplete="email"
+              spellCheck={false}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+              className="field mt-2"
               required
             />
           </div>
@@ -115,23 +118,25 @@ export function AdminLoginForm() {
             </label>
             <input
               id="password"
+              name="password"
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+              className="field mt-2"
               required
             />
           </div>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-full bg-emerald-700 px-6 py-3 font-semibold text-white disabled:bg-emerald-300"
+            className="btn-primary w-full disabled:bg-slate-300"
           >
-            {isSubmitting ? "Masuk..." : "Masuk dengan Password"}
+            {isSubmitting ? "Masuk…" : "Masuk dengan Password"}
           </button>
           <a
             href="/lupa-password"
-            className="block text-center text-sm font-semibold text-emerald-800 hover:text-emerald-950"
+            className="block text-center text-sm font-semibold text-green-700 hover:text-slate-950"
           >
             Lupa password?
           </a>
@@ -139,7 +144,7 @@ export function AdminLoginForm() {
       ) : (
         <form
           onSubmit={handleLegacySubmit}
-          className="space-y-5 rounded-3xl border border-slate-200 bg-slate-50 p-4"
+          className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-4"
         >
           <p className="text-sm font-semibold text-slate-700">
             Fallback kode admin sementara
@@ -150,10 +155,13 @@ export function AdminLoginForm() {
             </label>
             <input
               id="email"
+              name="email"
               type="email"
+              autoComplete="email"
+              spellCheck={false}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+              className="field mt-2"
               required
             />
           </div>
@@ -163,19 +171,21 @@ export function AdminLoginForm() {
             </label>
             <input
               id="loginCode"
+              name="loginCode"
               type="password"
+              autoComplete="off"
               value={loginCode}
               onChange={(event) => setLoginCode(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+              className="field mt-2"
               required
             />
           </div>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-full bg-slate-800 px-6 py-3 font-semibold text-white disabled:bg-slate-300"
+            className="w-full rounded-lg bg-slate-700 px-6 py-3 font-semibold text-white disabled:bg-slate-300"
           >
-            {isSubmitting ? "Masuk..." : "Masuk dengan Kode Admin"}
+            {isSubmitting ? "Masuk…" : "Masuk dengan Kode Admin"}
           </button>
         </form>
       )}

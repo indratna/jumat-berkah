@@ -93,30 +93,30 @@ export function DonorLoginForm() {
       <button
         type="button"
         onClick={handleGoogleLogin}
-        className="w-full rounded-full border border-emerald-200 bg-white px-6 py-3 font-semibold text-emerald-800 shadow-sm transition hover:bg-emerald-50"
+        className="w-full rounded-lg border border-slate-300 bg-white px-6 py-3 font-semibold text-green-700 shadow-sm transition hover:bg-slate-50"
       >
         Masuk dengan Google
       </button>
 
-      <div className="grid grid-cols-3 rounded-full bg-emerald-50 p-1 text-xs font-semibold text-emerald-900 sm:text-sm">
+      <div className="grid grid-cols-3 rounded-lg bg-slate-50 p-1 text-xs font-semibold text-slate-700 sm:text-sm">
         <button
           type="button"
           onClick={() => setMethod("signin")}
-          className={`rounded-full px-3 py-2 ${method === "signin" ? "bg-white shadow-sm" : "text-emerald-700"}`}
+          className={`rounded-lg px-3 py-2 ${method === "signin" ? "bg-white shadow-sm" : "text-green-700"}`}
         >
           Masuk
         </button>
         <button
           type="button"
           onClick={() => setMethod("signup")}
-          className={`rounded-full px-3 py-2 ${method === "signup" ? "bg-white shadow-sm" : "text-emerald-700"}`}
+          className={`rounded-lg px-3 py-2 ${method === "signup" ? "bg-white shadow-sm" : "text-green-700"}`}
         >
           Daftar
         </button>
         <button
           type="button"
           onClick={() => setMethod("legacy")}
-          className={`rounded-full px-3 py-2 ${method === "legacy" ? "bg-white shadow-sm" : "text-emerald-700"}`}
+          className={`rounded-lg px-3 py-2 ${method === "legacy" ? "bg-white shadow-sm" : "text-green-700"}`}
         >
           Kode
         </button>
@@ -125,9 +125,9 @@ export function DonorLoginForm() {
       {method === "signin" ? (
         <form
           onSubmit={handlePasswordSignIn}
-          className="space-y-5 rounded-3xl border border-emerald-100 bg-emerald-50/50 p-4"
+          className="space-y-5 rounded-xl border border-slate-200 bg-slate-50/50 p-4"
         >
-          <p className="text-sm font-semibold text-emerald-900">
+          <p className="text-sm font-semibold text-slate-700">
             Masuk dengan email dan password
           </p>
           <div>
@@ -139,7 +139,7 @@ export function DonorLoginForm() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+              className="field mt-2"
               required
             />
           </div>
@@ -152,16 +152,16 @@ export function DonorLoginForm() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+              className="field mt-2"
               required
             />
           </div>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-full bg-emerald-700 px-6 py-3 font-semibold text-white disabled:bg-emerald-300"
+            className="w-full rounded-lg bg-green-700 px-6 py-3 font-semibold text-white disabled:bg-slate-300"
           >
-            {isSubmitting ? "Masuk..." : "Masuk"}
+            {isSubmitting ? "Masuk…" : "Masuk"}
           </button>
         </form>
       ) : null}
@@ -169,9 +169,9 @@ export function DonorLoginForm() {
       {method === "signup" ? (
         <form
           onSubmit={handlePasswordSignUp}
-          className="space-y-5 rounded-3xl border border-emerald-100 bg-white p-4"
+          className="space-y-5 rounded-xl border border-slate-200 bg-white p-4"
         >
-          <p className="text-sm font-semibold text-emerald-900">
+          <p className="text-sm font-semibold text-slate-700">
             Daftar akun donatur baru
           </p>
           <div>
@@ -182,7 +182,7 @@ export function DonorLoginForm() {
               id="name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+              className="field mt-2"
               required
             />
           </div>
@@ -195,7 +195,7 @@ export function DonorLoginForm() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+              className="field mt-2"
               required
             />
           </div>
@@ -208,7 +208,7 @@ export function DonorLoginForm() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+              className="field mt-2"
               minLength={8}
               required
             />
@@ -216,9 +216,9 @@ export function DonorLoginForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-full bg-emerald-700 px-6 py-3 font-semibold text-white disabled:bg-emerald-300"
+            className="w-full rounded-lg bg-green-700 px-6 py-3 font-semibold text-white disabled:bg-slate-300"
           >
-            {isSubmitting ? "Mendaftar..." : "Daftar Donatur"}
+            {isSubmitting ? "Mendaftar…" : "Daftar Donatur"}
           </button>
         </form>
       ) : null}
@@ -226,7 +226,7 @@ export function DonorLoginForm() {
       {method === "legacy" ? (
         <form
           onSubmit={handleLegacySubmit}
-          className="space-y-5 rounded-3xl border border-slate-200 bg-slate-50 p-4"
+          className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-4"
         >
           <p className="text-sm font-semibold text-slate-700">
             Fallback kode donatur sementara
@@ -239,7 +239,7 @@ export function DonorLoginForm() {
               id="legacy-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+              className="field mt-2"
               required
             />
           </div>
@@ -252,7 +252,7 @@ export function DonorLoginForm() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+              className="field mt-2"
               required
             />
           </div>
@@ -265,16 +265,16 @@ export function DonorLoginForm() {
               type="password"
               value={loginCode}
               onChange={(event) => setLoginCode(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+              className="field mt-2"
               required
             />
           </div>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-full bg-slate-800 px-6 py-3 font-semibold text-white disabled:bg-slate-300"
+            className="w-full rounded-lg bg-slate-800 px-6 py-3 font-semibold text-white disabled:bg-slate-300"
           >
-            {isSubmitting ? "Masuk..." : "Masuk dengan Kode Donatur"}
+            {isSubmitting ? "Masuk…" : "Masuk dengan Kode Donatur"}
           </button>
         </form>
       ) : null}

@@ -17,18 +17,18 @@ export default async function AccountProfilePage() {
   const roleLabel = user.role === "admin" ? "Admin" : "Donatur";
 
   return (
-    <main className="min-h-screen bg-emerald-50 px-6 py-16 text-emerald-950">
+    <main className="page-shell text-slate-900">
       <section className="mx-auto max-w-3xl space-y-6">
         <Link
           href={dashboardHref}
-          className="inline-flex text-sm font-semibold text-emerald-800 hover:text-emerald-950"
+          className="inline-flex text-sm font-semibold text-green-700 hover:text-slate-950"
         >
           ← Kembali
         </Link>
 
-        <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-emerald-100">
+        <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <div className="grid size-20 place-items-center overflow-hidden rounded-3xl bg-emerald-100 text-2xl font-black text-emerald-800">
+            <div className="grid size-20 place-items-center overflow-hidden rounded-xl bg-slate-100 text-2xl font-bold text-green-700">
               {user.image ? (
                 <Image
                   src={user.image}
@@ -42,28 +42,28 @@ export default async function AccountProfilePage() {
               )}
             </div>
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+              <p className="text-sm font-semibold uppercase tracking-[0.08em] text-green-700">
                 Profil Akun
               </p>
-              <h1 className="mt-3 text-3xl font-bold">
+              <h1 className="mt-3 text-2xl font-bold">
                 Kelola identitas akun.
               </h1>
-              <p className="mt-2 text-sm text-emerald-900/70">
+              <p className="mt-2 text-sm text-slate-600">
                 {roleLabel} · {user.email}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-emerald-100">
+        <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
           <h2 className="text-xl font-bold">Data profil</h2>
-          <div className="mt-5 grid gap-4 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900/75">
+          <div className="mt-5 grid gap-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
             <div>
-              <p className="font-semibold text-emerald-950">Email</p>
+              <p className="font-semibold text-slate-950">Email</p>
               <p className="mt-1">{user.email}</p>
             </div>
             <div>
-              <p className="font-semibold text-emerald-950">Peran</p>
+              <p className="font-semibold text-slate-950">Peran</p>
               <p className="mt-1">{roleLabel}</p>
             </div>
           </div>
@@ -72,7 +72,7 @@ export default async function AccountProfilePage() {
           </div>
         </div>
 
-        <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+        <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
           <h2 className="text-xl font-bold text-slate-950">Keamanan akun</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             Ubah password hanya untuk akun email/password. Setelah berhasil,

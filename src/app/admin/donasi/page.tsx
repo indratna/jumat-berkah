@@ -47,19 +47,19 @@ export default async function AdminDonationsPage({
   const statusTabs = buildStatusTabs(resolvedSearchParams, filters.status);
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6">
-      <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-600">
+    <main className="mx-auto max-w-6xl space-y-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="kicker">
           Donasi Admin
         </p>
-        <h1 className="mt-4 text-3xl font-bold">
+        <h1 className="mt-4 text-2xl font-bold">
           Daftar donasi dan status pembayaran.
         </h1>
       </div>
 
       <AdminTopTabs tabs={statusTabs} />
 
-      <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <TableToolbar filters={filters} />
         <TableMeta
           total={donations.total}
@@ -68,8 +68,8 @@ export default async function AdminDonationsPage({
         />
         {donations.items.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-600">
+            <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+              <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Order ID</th>
                   <th className="px-4 py-3 font-semibold">Donatur</th>
@@ -80,11 +80,11 @@ export default async function AdminDonationsPage({
                   <th className="px-4 py-3 font-semibold">Detail</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {donations.items.map((donation) => (
                   <tr
                     key={donation.id}
-                    className="border-t border-slate-100 align-top"
+                    className="align-top"
                   >
                     <td className="px-4 py-4 font-medium">
                       {donation.orderId}
@@ -118,7 +118,7 @@ export default async function AdminDonationsPage({
             </table>
           </div>
         ) : (
-          <div className="p-8 text-sm text-slate-500">
+          <div className="p-6 text-sm text-slate-500">
             Belum ada donasi yang cocok dengan filter ini.
           </div>
         )}
@@ -163,12 +163,12 @@ function TableToolbar({
         name="q"
         defaultValue={filters.q ?? ""}
         placeholder="Cari order ID atau nama"
-        className="rounded-xl border border-slate-200 px-3 py-2 lg:col-span-2"
+        className="field lg:col-span-2"
       />
       <select
         name="status"
         defaultValue={filters.status ?? ""}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       >
         <option value="">Semua status</option>
         {Object.values(DonationStatus).map((status) => (
@@ -181,21 +181,21 @@ function TableToolbar({
         name="from"
         type="date"
         defaultValue={filters.from ?? ""}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       />
       <input
         name="to"
         type="date"
         defaultValue={filters.to ?? ""}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       />
-      <button className="rounded-full bg-slate-900 px-5 py-2 font-semibold text-white">
+      <button className="btn-primary">
         Filter
       </button>
       <select
         name="sort"
         defaultValue={filters.sort}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       >
         {donationSortOptions.map((option) => (
           <option key={option.value} value={option.value}>
@@ -206,7 +206,7 @@ function TableToolbar({
       <select
         name="direction"
         defaultValue={filters.direction}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       >
         <option value="desc">Terbesar/terbaru</option>
         <option value="asc">Terkecil/terlama</option>
@@ -214,7 +214,7 @@ function TableToolbar({
       <select
         name="pageSize"
         defaultValue={String(filters.pageSize)}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       >
         {[10, 25, 50, 100].map((size) => (
           <option key={size} value={size}>
@@ -300,7 +300,7 @@ function PaginationLink({
 }) {
   if (disabled) {
     return (
-      <span className="rounded-full border border-slate-200 px-4 py-2 font-semibold text-slate-300">
+      <span className="rounded-lg border border-slate-200 px-4 py-2 font-semibold text-slate-300">
         {children}
       </span>
     );
@@ -310,7 +310,7 @@ function PaginationLink({
     <Link
       href={`?${buildPageHref(query, page)}`}
       scroll={false}
-      className="rounded-full border border-slate-200 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
+      className="btn-outline"
     >
       {children}
     </Link>

@@ -91,7 +91,7 @@ export function DistributionReportForm({ cycleStart, initial }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="rounded-2xl bg-emerald-50 p-3 text-xs text-emerald-900">
+      <div className="rounded-xl bg-green-50 p-3 text-xs text-slate-700">
         <p className="font-semibold">Panduan privasi penerima manfaat</p>
         <ul className="mt-2 list-disc pl-5 space-y-1">
           <li>Hindari menampilkan wajah penerima manfaat tanpa izin.</li>
@@ -113,7 +113,7 @@ export function DistributionReportForm({ cycleStart, initial }: Props) {
           value={title}
           maxLength={120}
           onChange={(event) => setTitle(event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+          className="field mt-2"
           required
         />
       </label>
@@ -125,7 +125,7 @@ export function DistributionReportForm({ cycleStart, initial }: Props) {
           maxLength={1500}
           rows={6}
           onChange={(event) => setSummary(event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+          className="field mt-2"
           required
         />
       </label>
@@ -138,7 +138,7 @@ export function DistributionReportForm({ cycleStart, initial }: Props) {
             inputMode="numeric"
             value={packageCount}
             onChange={(event) => setPackageCount(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+            className="field mt-2"
           />
         </label>
 
@@ -149,7 +149,7 @@ export function DistributionReportForm({ cycleStart, initial }: Props) {
             value={locationSummary}
             maxLength={200}
             onChange={(event) => setLocationSummary(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+            className="field mt-2"
             placeholder="Mis: Masjid belakang kantor"
           />
         </label>
@@ -161,7 +161,7 @@ export function DistributionReportForm({ cycleStart, initial }: Props) {
           value={photoUrlsText}
           rows={4}
           onChange={(event) => setPhotoUrlsText(event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700 font-mono text-xs"
+          className="field mt-2 font-mono text-xs"
           placeholder="https://contoh.com/foto1.jpg"
         />
       </label>
@@ -179,12 +179,12 @@ export function DistributionReportForm({ cycleStart, initial }: Props) {
       <button
         type="submit"
         disabled={status === "saving"}
-        className="rounded-full bg-emerald-700 px-5 py-2 text-sm font-semibold text-white disabled:bg-emerald-300"
+        className="rounded-lg bg-green-700 px-5 py-2 text-sm font-semibold text-white disabled:bg-slate-300"
       >
-        {status === "saving" ? "Menyimpan..." : "Simpan cerita"}
+        {status === "saving" ? "Menyimpan…" : "Simpan cerita"}
       </button>
       {status === "saved" ? (
-        <p className="text-sm font-semibold text-emerald-700">
+        <p className="text-sm font-semibold text-green-700">
           Cerita tersimpan untuk siklus ini.
         </p>
       ) : null}

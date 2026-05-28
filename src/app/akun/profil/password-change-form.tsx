@@ -76,7 +76,7 @@ export function PasswordChangeForm() {
         <p className="text-sm font-semibold text-rose-700">{errors.auth}</p>
       ) : null}
       {status === "success" ? (
-        <p className="text-sm font-semibold text-emerald-700">
+        <p className="text-sm font-semibold text-green-700">
           Password berhasil diperbarui. Sesi lain sudah dicabut.
         </p>
       ) : null}
@@ -84,9 +84,9 @@ export function PasswordChangeForm() {
       <button
         type="submit"
         disabled={status === "saving"}
-        className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60"
+        className="btn-primary text-sm disabled:opacity-60"
       >
-        {status === "saving" ? "Menyimpan..." : "Ubah password"}
+        {status === "saving" ? "Menyimpan…" : "Ubah password"}
       </button>
     </form>
   );
@@ -109,7 +109,7 @@ function PasswordField(input: {
         type="password"
         value={input.value}
         onChange={(event) => input.onChange(event.target.value)}
-        className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
+        className="field mt-2 text-sm"
         autoComplete="off"
       />
       {input.error ? (

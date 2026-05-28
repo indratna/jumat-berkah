@@ -40,4 +40,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# local agent worktrees
+/.worktrees/
+
+# Local development artifacts
+.playwright-mcp/
+dev-server*.log
+*.err.log
+ui-mockup-*.html
+
 /src/generated/prisma

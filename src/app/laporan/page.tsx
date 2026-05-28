@@ -30,34 +30,35 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
     period === "jumat" ? "Siklus Jumat berjalan" : "Periode pilihan";
 
   return (
-    <main className="min-h-screen bg-emerald-50 px-6 py-12 text-emerald-950 sm:py-16 print:bg-white print:px-0 print:py-0">
+    <main
+      id="main-content"
+      className="page-shell text-slate-950 print:bg-white print:px-0 print:py-0"
+    >
       <section className="mx-auto max-w-6xl space-y-8 print:max-w-none print:space-y-5">
-        <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-emerald-100 print:rounded-none print:p-0 print:shadow-none print:ring-0">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
-            Laporan Publik
-          </p>
+        <div className="panel p-7 sm:p-8 print:rounded-none print:border-0 print:bg-white print:p-0 print:shadow-none print:ring-0">
+          <p className="kicker">Laporan Publik</p>
           <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_0.85fr] lg:items-end print:block">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
+              <h1 className="heading-balance text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
                 Transparansi pemasukan dan pengeluaran Jumat Berkah.
               </h1>
-              <p className="mt-4 max-w-2xl leading-7 text-emerald-900/75">
+              <p className="body-muted mt-4 max-w-2xl">
                 Hanya donasi berhasil yang dihitung sebagai pemasukan. Email dan
                 nomor WhatsApp donatur tidak ditampilkan pada laporan publik.
               </p>
-              <p className="mt-4 hidden text-sm font-semibold text-emerald-900 print:block">
+              <p className="mt-4 hidden text-sm font-semibold text-slate-700 print:block">
                 {periodLabel} • Dicetak dari halaman laporan publik Jumat
                 Berkah.
               </p>
             </div>
-            <form className="print-hide grid gap-3 rounded-2xl bg-emerald-50 p-4 sm:grid-cols-2">
+            <form className="print-hide grid gap-3 rounded-2xl bg-slate-50 p-4 sm:grid-cols-2">
               <label className="text-sm font-semibold">
                 Dari tanggal
                 <input
                   name="from"
                   type="date"
                   defaultValue={from ?? ""}
-                  className="mt-2 w-full rounded-xl border border-emerald-200 px-3 py-2"
+                  className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2"
                 />
               </label>
               <label className="text-sm font-semibold">
@@ -66,15 +67,15 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
                   name="to"
                   type="date"
                   defaultValue={to ?? ""}
-                  className="mt-2 w-full rounded-xl border border-emerald-200 px-3 py-2"
+                  className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2"
                 />
               </label>
-              <button className="rounded-full bg-emerald-700 px-5 py-2 font-semibold text-white sm:col-span-2">
+              <button className="btn-primary sm:col-span-2">
                 Terapkan Filter
               </button>
               <a
                 href="/laporan?period=jumat"
-                className="rounded-full border border-emerald-700 px-5 py-2 text-center font-semibold text-emerald-800 sm:col-span-2"
+                className="btn-outline text-center sm:col-span-2"
               >
                 Lihat Siklus Jumat Ini
               </a>
@@ -82,18 +83,18 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
                 <PrintButton />
                 <a
                   href="/api/reports/public/export?format=pdf"
-                  className="rounded-full bg-emerald-800 px-5 py-2 text-center font-semibold text-white"
+                  className="btn-primary text-center"
                 >
                   Unduh PDF Siklus Jumat
                 </a>
                 <a
                   href="/api/reports/public/export?format=csv"
-                  className="rounded-full border border-emerald-700 px-5 py-2 text-center font-semibold text-emerald-800"
+                  className="btn-outline text-center"
                 >
                   Unduh CSV Siklus Jumat
                 </a>
               </div>
-              <p className="text-xs leading-5 text-emerald-900/65 sm:col-span-2">
+              <p className="text-xs leading-5 text-slate-500 sm:col-span-2">
                 Gunakan tombol cetak untuk laporan A4 ringkas. Tombol dan filter
                 otomatis disembunyikan saat dicetak.
               </p>
@@ -102,14 +103,14 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
         </div>
 
         {distribution.report ? (
-          <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-emerald-100">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+          <div className="panel p-6">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-green-700">
               Cerita Penyaluran Jumat
             </p>
             <h2 className="mt-3 text-2xl font-bold tracking-tight">
               {distribution.report.title}
             </h2>
-            <p className="mt-2 text-sm text-emerald-900/70">
+            <p className="mt-2 text-sm text-slate-500">
               Periode {distribution.cycle.label}
               {distribution.report.locationSummary
                 ? ` • ${distribution.report.locationSummary}`
@@ -118,7 +119,7 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
                 ? ` • ${distribution.report.packageCount} paket`
                 : null}
             </p>
-            <p className="mt-4 whitespace-pre-line text-sm leading-6 text-emerald-900/85">
+            <p className="mt-4 whitespace-pre-line text-sm leading-6 text-slate-700">
               {distribution.report.summary}
             </p>
             {distribution.report.photoUrls.length > 0 ? (
@@ -129,12 +130,14 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-50"
+                    className="block overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={url}
                       alt="Foto kegiatan penyaluran"
+                      width={640}
+                      height={360}
                       className="h-40 w-full object-cover"
                       loading="lazy"
                     />
@@ -146,8 +149,8 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
         ) : null}
 
         {fridayProgress.target ? (
-          <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-emerald-100">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+          <div className="panel p-6">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-green-700">
               Target Siklus Jumat
             </p>
             <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
@@ -155,25 +158,25 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
                 <p className="text-2xl font-bold tracking-tight">
                   {formatRupiah(fridayProgress.target.targetAmount)}
                 </p>
-                <p className="mt-1 text-sm text-emerald-900/70">
+                <p className="mt-1 text-sm text-slate-500">
                   Periode {fridayProgress.cycle.label}
                 </p>
               </div>
-              <p className="text-sm font-semibold text-emerald-800">
+              <p className="text-sm font-semibold text-green-700">
                 Terkumpul {formatRupiah(fridayProgress.collected)} (
                 {Math.round(fridayProgress.progressRatio * 100)}%)
               </p>
             </div>
-            <div className="mt-4 h-3 overflow-hidden rounded-full bg-emerald-50">
+            <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full rounded-full bg-emerald-600 transition-all"
+                className="h-full rounded-full bg-green-700 transition-[width] duration-300 ease-out"
                 style={{
                   width: `${Math.round(fridayProgress.progressRatio * 100)}%`,
                 }}
               />
             </div>
             {fridayProgress.target.note ? (
-              <p className="mt-3 text-sm text-emerald-900/75">
+              <p className="mt-3 text-sm text-slate-600">
                 {fridayProgress.target.note}
               </p>
             ) : null}
@@ -208,16 +211,16 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
             {report.donations.map((donation) => (
               <div
                 key={`${donation.date}-${donation.amount}-${donation.donorName}`}
-                className="border-b border-emerald-100 py-4 last:border-0"
+                className="border-b border-slate-200 py-4 last:border-0"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-semibold">{donation.donorName}</p>
-                    <p className="mt-1 text-sm text-emerald-900/65">
+                    <p className="mt-1 text-sm text-slate-500">
                       {donation.date}
                     </p>
                     {donation.message ? (
-                      <p className="mt-2 text-sm text-emerald-900/75">
+                      <p className="mt-2 text-sm text-slate-600">
                         {donation.message}
                       </p>
                     ) : null}
@@ -238,15 +241,15 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
             {report.expenses.map((expense) => (
               <div
                 key={`${expense.date}-${expense.category}-${expense.description}`}
-                className="border-b border-emerald-100 py-4 last:border-0"
+                className="border-b border-slate-200 py-4 last:border-0"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-semibold">{expense.category}</p>
-                    <p className="mt-1 text-sm text-emerald-900/65">
+                    <p className="mt-1 text-sm text-slate-500">
                       {expense.date}
                     </p>
-                    <p className="mt-2 text-sm text-emerald-900/75">
+                    <p className="mt-2 text-sm text-slate-600">
                       {expense.description}
                     </p>
                   </div>
@@ -277,13 +280,13 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
                     <span className="font-semibold">{category.category}</span>
                     <span>{formatRupiah(category.amount)}</span>
                   </div>
-                  <div className="mt-2 h-3 overflow-hidden rounded-full bg-emerald-50">
+                  <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className="h-full rounded-full bg-emerald-600"
+                      className="h-full rounded-full bg-green-700"
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
-                  <p className="mt-1 text-xs text-emerald-900/60">
+                  <p className="mt-1 text-xs text-slate-500">
                     {percentage}% dari pengeluaran periode.
                   </p>
                 </div>
@@ -301,11 +304,11 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
             {report.timeline.map((item) => (
               <div
                 key={`${item.type}-${item.date}-${item.title}-${item.amount ?? "story"}`}
-                className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4"
+                className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-green-700">
                       {getTimelineTypeLabel(item.type)} • {item.date}
                     </p>
                     <h3 className="mt-2 font-semibold">{item.title}</h3>
@@ -314,11 +317,11 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
                     <p className="font-semibold">{formatRupiah(item.amount)}</p>
                   ) : null}
                 </div>
-                <p className="mt-2 text-sm leading-6 text-emerald-900/75">
+                <p className="mt-2 text-sm leading-6 text-slate-600">
                   {item.description}
                 </p>
                 {item.meta ? (
-                  <p className="mt-2 text-xs font-medium text-emerald-900/60">
+                  <p className="mt-2 text-xs font-medium text-slate-500">
                     {item.meta}
                   </p>
                 ) : null}
@@ -333,9 +336,9 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-emerald-100 print:break-inside-avoid print:rounded-xl print:border print:border-emerald-100 print:p-4 print:shadow-none print:ring-0">
-      <p className="text-sm font-medium text-emerald-900/65">{label}</p>
-      <p className="mt-3 text-2xl font-bold tracking-tight print:text-lg">
+    <div className="panel p-6 print:break-inside-avoid print:rounded-xl print:border print:border-slate-200 print:p-4 print:shadow-none print:ring-0">
+      <p className="text-sm font-medium text-slate-500">{label}</p>
+      <p className="numeric mt-2 text-2xl font-bold tracking-tight print:text-lg">
         {value}
       </p>
     </div>
@@ -354,13 +357,15 @@ function ReportPanel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-emerald-100 print:break-inside-avoid print:rounded-xl print:border print:border-emerald-100 print:p-4 print:shadow-none print:ring-0">
-      <h2 className="text-xl font-bold print:text-base">{title}</h2>
+    <div className="panel p-6 print:break-inside-avoid print:rounded-xl print:border print:border-slate-200 print:p-4 print:shadow-none print:ring-0">
+      <h2 className="text-lg font-bold print:text-base">{title}</h2>
       <div className="mt-4">
         {hasItems ? (
           children
         ) : (
-          <p className="text-sm text-emerald-900/65">{emptyText}</p>
+          <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">
+            {emptyText}
+          </p>
         )}
       </div>
     </div>

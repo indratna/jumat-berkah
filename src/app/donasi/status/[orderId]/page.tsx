@@ -28,15 +28,15 @@ export default async function DonationStatusPage({
 
   if (!donation) {
     return (
-      <main className="min-h-screen bg-emerald-50 px-6 py-16 text-emerald-950">
-        <section className="mx-auto max-w-2xl rounded-3xl bg-white p-8 shadow-sm ring-1 ring-emerald-100">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-red-700">
+      <main className="page-shell text-slate-900">
+        <section className="mx-auto max-w-2xl rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-red-700">
             Tidak ditemukan
           </p>
           <h1 className="mt-4 text-3xl font-bold">Donasi tidak ditemukan.</h1>
           <Link
             href="/donasi"
-            className="mt-6 inline-flex rounded-full bg-emerald-700 px-5 py-3 font-semibold text-white"
+            className="mt-6 inline-flex rounded-lg bg-green-700 px-5 py-3 font-semibold text-white"
           >
             Kembali Donasi
           </Link>
@@ -48,45 +48,45 @@ export default async function DonationStatusPage({
   const content = getStatusContent(donation.status);
 
   return (
-    <main className="min-h-screen bg-emerald-50 px-6 py-16 text-emerald-950">
-      <section className="mx-auto max-w-2xl rounded-3xl bg-white p-8 shadow-sm ring-1 ring-emerald-100">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700">
+    <main className="page-shell text-slate-900">
+      <section className="mx-auto max-w-2xl rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+        <p className="text-sm font-semibold uppercase tracking-[0.08em] text-green-700">
           Status Donasi
         </p>
         <h1 className="mt-4 text-3xl font-bold">{content.title}</h1>
-        <p className="mt-3 leading-7 text-emerald-900/75">
+        <p className="mt-3 leading-7 text-slate-600">
           {content.description}
         </p>
 
-        <div className="mt-8 space-y-3 rounded-2xl bg-emerald-50 p-5 text-sm">
+        <div className="mt-8 space-y-3 rounded-xl bg-slate-50 p-5 text-sm">
           <div className="flex justify-between gap-4">
-            <span className="text-emerald-900/70">Order ID</span>
+            <span className="text-slate-600">Order ID</span>
             <strong className="text-right">{donation.orderId}</strong>
           </div>
           <div className="flex justify-between gap-4">
-            <span className="text-emerald-900/70">Nominal</span>
+            <span className="text-slate-600">Nominal</span>
             <strong>{formatRupiah(donation.amount)}</strong>
           </div>
           <div className="flex justify-between gap-4">
-            <span className="text-emerald-900/70">Status</span>
+            <span className="text-slate-600">Status</span>
             <strong>{donation.status}</strong>
           </div>
         </div>
 
         {donation.status === "settlement" ? (
-          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">
+          <div className="mt-6 rounded-xl border border-slate-300 bg-slate-50 p-5">
+            <p className="text-sm font-semibold uppercase tracking-[0.08em] text-green-700">
               Badge Terima Kasih
             </p>
             <p className="mt-3 text-lg font-bold">
               🌿 Terima kasih, {getReceiptDonorName(donation)}
             </p>
-            <p className="mt-2 text-sm leading-6 text-emerald-900/75">
+            <p className="mt-2 text-sm leading-6 text-slate-600">
               Donasi {formatRupiah(donation.amount)} untuk Jumat Berkah sudah
               diterima. Order {donation.orderId} aman dibagikan sebagai bukti
               tanpa data kontak pribadi.
             </p>
-            <div className="mt-4 rounded-xl bg-white p-4 text-sm text-emerald-950 ring-1 ring-emerald-100">
+            <div className="mt-4 rounded-xl bg-white p-4 text-sm text-slate-950 ring-1 ring-slate-200">
               {buildShareText(donation.orderId, donation.amount)}
             </div>
           </div>
@@ -95,13 +95,13 @@ export default async function DonationStatusPage({
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <Link
             href="/donasi"
-            className="rounded-full bg-emerald-700 px-5 py-3 text-center font-semibold text-white"
+            className="rounded-lg bg-green-700 px-5 py-3 text-center font-semibold text-white"
           >
             Donasi Lagi
           </Link>
           <Link
             href="/laporan"
-            className="rounded-full border border-emerald-200 px-5 py-3 text-center font-semibold text-emerald-800"
+            className="rounded-lg border border-slate-300 px-5 py-3 text-center font-semibold text-green-700"
           >
             Lihat Laporan
           </Link>

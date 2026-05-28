@@ -62,7 +62,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           type="password"
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+          className="field mt-2"
           required
         />
       </div>
@@ -75,19 +75,19 @@ export function ResetPasswordForm({ token }: { token: string }) {
           type="password"
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-emerald-200 px-4 py-3 outline-none focus:border-emerald-700"
+          className="field mt-2"
           required
         />
       </div>
       <button
         type="submit"
         disabled={status === "saving" || !token}
-        className="w-full rounded-full bg-emerald-700 px-6 py-3 font-semibold text-white disabled:bg-emerald-300"
+        className="btn-primary w-full disabled:bg-slate-300"
       >
         {status === "saving" ? "Menyimpan..." : "Simpan password baru"}
       </button>
       {status === "success" ? (
-        <p className="text-sm font-semibold text-emerald-700">
+        <p className="text-sm font-semibold text-green-700">
           Password berhasil direset. Silakan masuk dengan password baru.
         </p>
       ) : null}

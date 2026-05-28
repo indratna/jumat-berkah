@@ -48,12 +48,12 @@ export default async function AdminExpensesPage({
   );
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6">
-      <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-600">
+    <main className="mx-auto max-w-6xl space-y-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="kicker">
           Pengeluaran Admin
         </p>
-        <h1 className="mt-4 text-3xl font-bold">Kelola pengeluaran program.</h1>
+        <h1 className="mt-4 text-2xl font-bold">Kelola pengeluaran program.</h1>
         <p className="mt-3 leading-7 text-slate-700">
           Catat bahan makanan, beras, gas, kemasan, transportasi, dan
           operasional lain. Semua perubahan masuk audit log dan langsung
@@ -63,7 +63,7 @@ export default async function AdminExpensesPage({
 
       <AdminTopTabs tabs={categoryTabs} />
 
-      <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <TableToolbar filters={filters} />
         <TableMeta
           total={expenses.total}
@@ -125,12 +125,12 @@ function TableToolbar({
         name="q"
         defaultValue={filters.q ?? ""}
         placeholder="Cari deskripsi atau vendor"
-        className="rounded-xl border border-slate-200 px-3 py-2 lg:col-span-2"
+        className="field lg:col-span-2"
       />
       <select
         name="category"
         defaultValue={filters.category ?? ""}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       >
         <option value="">Semua kategori</option>
         {EXPENSE_CATEGORIES.map((category) => (
@@ -143,21 +143,21 @@ function TableToolbar({
         name="from"
         type="date"
         defaultValue={filters.from ?? ""}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       />
       <input
         name="to"
         type="date"
         defaultValue={filters.to ?? ""}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       />
-      <button className="rounded-full bg-slate-900 px-5 py-2 font-semibold text-white">
+      <button className="btn-primary">
         Filter
       </button>
       <select
         name="sort"
         defaultValue={filters.sort}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       >
         {expenseSortOptions.map((option) => (
           <option key={option.value} value={option.value}>
@@ -168,7 +168,7 @@ function TableToolbar({
       <select
         name="direction"
         defaultValue={filters.direction}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       >
         <option value="desc">Terbesar/terbaru</option>
         <option value="asc">Terkecil/terlama</option>
@@ -176,7 +176,7 @@ function TableToolbar({
       <select
         name="pageSize"
         defaultValue={String(filters.pageSize)}
-        className="rounded-xl border border-slate-200 px-3 py-2"
+        className="field"
       >
         {[10, 25, 50, 100].map((size) => (
           <option key={size} value={size}>
@@ -262,7 +262,7 @@ function PaginationLink({
 }) {
   if (disabled)
     return (
-      <span className="rounded-full border border-slate-200 px-4 py-2 font-semibold text-slate-300">
+      <span className="rounded-lg border border-slate-200 px-4 py-2 font-semibold text-slate-300">
         {children}
       </span>
     );
@@ -270,7 +270,7 @@ function PaginationLink({
     <Link
       href={`?${buildPageHref(query, page)}`}
       scroll={false}
-      className="rounded-full border border-slate-200 px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50"
+      className="btn-outline"
     >
       {children}
     </Link>

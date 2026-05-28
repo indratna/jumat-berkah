@@ -79,6 +79,8 @@ Done
 
 ### 2026-05-28
 
+- Corrected Phase 40 audit handoff wording to comply with `AGENTS.md` phase order. `docs/MVP_LAUNCH_READINESS_AUDIT.md` now requires Phase 41 next and queues Phase 42 findings until Phase 41 acceptance criteria and validation pass, unless `IMPLEMENTATION_PLAN.md` is explicitly updated to reorder phases. No application code changed.
+
 - Completed Phase 40 — MVP Launch Readiness Audit. Added `docs/MVP_LAUNCH_READINESS_AUDIT.md` with security, privacy, Midtrans/payment, financial, Telegram/cron, WhatsApp, ops, and provider readiness findings. No critical code-level blocker was found, but stable MVP launch remains blocked by live provider and production environment checks: Midtrans live QRIS smoke, strong production `BETTER_AUTH_SECRET`, Telegram public channel broadcast smoke, WhatsApp live template smoke, and production backup/restore evidence. No application code, routes, API behavior, auth/payment/webhook/database logic, financial calculations, provider integrations, or UI layout changed. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
 
 - Added pre-launch roadmap for Phase 40–44 after the `v2026.05.28` internal checkpoint. Chose audit-first execution before dashboard layout polish, security fixes, targeted refactor, and stable MVP launch validation. No application code, routes, API behavior, auth/payment/webhook/database logic, financial calculations, provider integrations, or UI layout changed in this planning pass.
@@ -559,7 +561,8 @@ Done
 | 2026-05-27 | Use Resend HTTP API for Phase 24 email notifications | Avoid adding SMTP dependencies, keep server-only transactional email simple, and allow safe opt-in via env |
 | 2026-05-28 | Phase 26 admin form only manages target for the current Jumat cycle; multi-cycle/historical target editing is treated as future enhancement | Keeps scope aligned with PRD §21.6 and AGENTS §5 (one phase, one goal); avoids progress-vs-period mismatch with public reports |
 | 2026-05-28 | Keep Phase 30 Excel support as documented CSV-only until export dependency is approved | CSV opens in Excel/LibreOffice and avoids adding unreviewed runtime dependency; PDF export is generated without new packages |
-| 2026-05-28 | Use Phase 40 audit findings to decide next pre-launch work instead of jumping directly into UI or refactor | Audit found no critical code-level blocker, but stable launch depends on production/provider checks; next phase should be chosen based on whether provider access or UI polish is ready |
+| 2026-05-28 | Follow `IMPLEMENTATION_PLAN.md` phase order after Phase 40 audit; Phase 41 must run before Phase 42 unless the plan is explicitly reordered | `AGENTS.md` requires working only on the current phase and not starting the next phase until current acceptance criteria pass; audit findings are inputs for later phases, not permission to skip Phase 41 |
+| 2026-05-28 | Use Phase 40 audit findings to constrain Phase 41 and feed Phase 42–44 | Audit found no critical code-level blocker, but stable launch depends on production/provider checks; Phase 41 must stay dashboard UI-only, Phase 42 handles security/blockers, and Phase 44 handles live smoke |
 
 ## 6. Execution Rules
 

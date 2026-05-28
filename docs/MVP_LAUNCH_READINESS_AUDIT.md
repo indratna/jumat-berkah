@@ -97,14 +97,16 @@ No critical code-level blocker was found during this audit. Do not mark MVP stab
 
 Current status: **No-Go for stable MVP launch** until live provider and production environment checks pass.
 
-Recommended next phase: **Phase 42 — Security & Launch Blocker Fixes** if you want to address auth/secret/operator-risk items first, or **Phase 41 — Dashboard Layout Final Polish** if UI polish is desired while live provider access is still pending.
+Required next phase: **Phase 41 — Dashboard Layout Final Polish**.
 
-For highest launch safety, recommended order remains:
+Phase 42 findings remain queued and must not be executed until Phase 41 acceptance criteria and validation pass, unless `IMPLEMENTATION_PLAN.md` is explicitly updated to reorder phases.
 
-1. Phase 42 for production secret/legacy login/operator safety decisions.
-2. Phase 41 dashboard layout polish if still needed.
-3. Phase 43 targeted refactor after blockers are controlled.
-4. Phase 44 stable launch validation with live provider smoke.
+Audit findings feed later phases in this order:
+
+1. Phase 41 uses this audit as a safety boundary for dashboard-only polish: no auth, payment, webhook, database, financial, provider, or API behavior changes.
+2. Phase 42 addresses security and launch blockers from this audit after Phase 41 is complete.
+3. Phase 43 uses audit and blocker-fix notes to choose targeted behavior-preserving refactors.
+4. Phase 44 uses the audit findings as final Go/No-Go checklist for live provider smoke and stable MVP launch.
 
 ## Phase 40 Completion Notes
 

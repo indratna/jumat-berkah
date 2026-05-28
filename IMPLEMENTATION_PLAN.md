@@ -10,10 +10,10 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 
 ### Current Status
 
-Current Phase: Phase 39 — InApp-Inspired UI Refresh  
+Current Phase: Phase 40 — MVP Launch Readiness Audit  
 Overall Progress: 100%  
 Last Updated: 2026-05-28  
-Current Focus: Phase 39 completed. InApp-inspired frontend UI/UX refresh applied, automated validation is green, and local browser visual review passed for public/auth/admin routes with responsive checks at 375px, 768px, 1024px, and desktop.
+Current Focus: Phase 40 starts the stable MVP launch path with an audit-first pass across security, privacy, production configuration, provider readiness, operational safety, and launch blockers before any dashboard polish or refactor work.
 Blockers: Live provider smoke remains required: Telegram public channel broadcast needs `TELEGRAM_PUBLIC_CHANNEL_ID=-100...` plus bot admin/post permission; production `BETTER_AUTH_SECRET` must be high entropy; Midtrans live QRIS and WhatsApp live send need provider credentials/templates.
 
 ### Phase Progress
@@ -60,6 +60,11 @@ Blockers: Live provider smoke remains required: Telegram public channel broadcas
 | Phase 37 | Documentation & Env Setup Guide | Done | 100% |
 | Phase 38 | Final QA & Production Readiness Review | Done | 100% |
 | Phase 39 | InApp-Inspired UI Refresh | Done | 100% |
+| Phase 40 | MVP Launch Readiness Audit | In Progress | 0% |
+| Phase 41 | Dashboard Layout Final Polish | Not Started | 0% |
+| Phase 42 | Security & Launch Blocker Fixes | Not Started | 0% |
+| Phase 43 | Targeted Refactor | Not Started | 0% |
+| Phase 44 | Stable MVP Launch Validation | Not Started | 0% |
 
 Status values:
 
@@ -73,6 +78,8 @@ Done
 ## 3. Work Log
 
 ### 2026-05-28
+
+- Added pre-launch roadmap for Phase 40–44 after the `v2026.05.28` internal checkpoint. Chose audit-first execution before dashboard layout polish, security fixes, targeted refactor, and stable MVP launch validation. No application code, routes, API behavior, auth/payment/webhook/database logic, financial calculations, provider integrations, or UI layout changed in this planning pass.
 
 - Completed pre-push cleanup and light refactor pass. Removed local development artifacts, hardened `.gitignore` for repeatable generated files, audited current tracked changes, applied only low-risk behavior-preserving cleanup, and kept auth/payment/webhook/database/financial/provider behavior unchanged. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`. Build still warns local `BETTER_AUTH_SECRET` is low entropy; production follow-up remains to set a strong secret.
 
@@ -2443,3 +2450,249 @@ npm run build
 ```
 
 Manual: review `/`, `/donasi`, `/laporan`, `/login`, `/masuk`, `/admin`, `/admin/donasi`, `/admin/pengeluaran`, `/admin/donatur`, `/admin/penyaluran`, `/admin/audit`, `/admin/persetujuan`, `/akun/donasi`, `/akun/profil`, `/lupa-password`, and `/reset-password` at mobile/tablet/desktop widths.
+
+# Phase 40 — MVP Launch Readiness Audit
+
+## Goal
+
+Audit Jumat Berkah before stable MVP launch so remaining risks are explicit before dashboard layout polish, security fixes, targeted refactor, or live launch validation.
+
+## Scope
+
+In-scope:
+
+- Security review for secrets, auth guards, admin APIs, webhook signatures, cron protection, and provider callbacks.
+- Privacy review for donor email/phone exposure, anonymous donor display, public report payloads, exports, Telegram/WhatsApp/email notifications, and admin-only operational contact data.
+- Financial safety review for integer Rupiah storage, settlement-only income, expense audit logs, webhook idempotency, and report total consistency.
+- Production configuration review for `.env.example`, docs, deployment checklist, backup/restore readiness, cron setup, and provider credentials.
+- Provider readiness review for Midtrans live QRIS, Telegram public channel broadcast, WhatsApp live template send, and email production configuration.
+- Documentation of launch blockers, impact, attempted checks, and recommended next phase.
+
+Out-of-scope:
+
+- Dashboard UI changes.
+- Code refactoring.
+- Database schema changes.
+- Payment/auth/webhook behavior changes.
+- New product features.
+
+## Tasks
+
+- [ ] Review security-sensitive env and documentation placeholders.
+- [ ] Review admin/auth guard coverage for admin pages and APIs.
+- [ ] Review Midtrans webhook signature and idempotency path.
+- [ ] Review cron and Telegram webhook protection.
+- [ ] Review public privacy boundaries for reports, exports, donor names, and notifications.
+- [ ] Review financial calculation and audit-log rules against `TECHNICAL_SPEC.md`.
+- [ ] Review production runbooks, backup/restore docs, and provider smoke prerequisites.
+- [ ] Create launch readiness audit document under `docs/`.
+- [ ] Update Blockers, Decision Log, and Work Log with audit findings.
+
+## Acceptance Criteria
+
+- Audit document lists security, privacy, operations, provider, and launch-readiness findings.
+- Every critical/high launch blocker has impact and recommended resolution.
+- Known live provider smoke requirements remain tracked until verified.
+- No application behavior changes are made in this phase unless a separate fix phase is approved.
+- Next phase recommendation is explicit: dashboard polish, security fixes, refactor, or launch validation.
+
+## Validation
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+Manual review: inspect `docs/FINAL_QA_REVIEW.md`, `docs/PRODUCTION_CHECKLIST.md`, `docs/ENV_SETUP.md`, `docs/DEPLOYMENT_OPS_RUNBOOK.md`, `docs/BACKUP_RESTORE_RUNBOOK.md`, `.env.example`, `TECHNICAL_SPEC.md`, and relevant auth/payment/report source paths for audit evidence.
+
+# Phase 41 — Dashboard Layout Final Polish
+
+## Goal
+
+Apply final small admin dashboard layout improvements after Phase 40 audit clarifies launch risks.
+
+## Scope
+
+In-scope:
+
+- Admin dashboard layout and visual hierarchy refinements.
+- Reusable admin UI component polish when directly needed for dashboard clarity.
+- Mobile/tablet/desktop dashboard review.
+
+Out-of-scope:
+
+- Backend logic changes.
+- API route or database changes.
+- Auth/payment/webhook/provider changes.
+- Public donation flow changes unless required by an approved audit finding.
+
+## Tasks
+
+- [ ] Identify dashboard layout changes from Phase 40 findings and user review.
+- [ ] Update dashboard UI with minimal component changes.
+- [ ] Preserve existing route, API, and data behavior.
+- [ ] Run automated validation.
+- [ ] Manually review admin dashboard responsiveness.
+- [ ] Update Work Log.
+
+## Acceptance Criteria
+
+- Dashboard is clearer for admin monitoring before launch.
+- No API, auth, payment, webhook, database, report calculation, or provider behavior changes occur.
+- UI remains mobile-first and accessible.
+
+## Validation
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+Manual: review `/admin` at mobile, tablet, laptop, and desktop widths.
+
+# Phase 42 — Security & Launch Blocker Fixes
+
+## Goal
+
+Fix critical and high-priority launch blockers found during Phase 40.
+
+## Scope
+
+In-scope:
+
+- Production secret/env hardening.
+- Admin guard, webhook, cron, privacy, payment-safety, and financial audit-log fixes when identified by Phase 40.
+- Tests and documentation for each fixed blocker.
+
+Out-of-scope:
+
+- Cosmetic UI polish unrelated to blockers.
+- Deep refactor not required to fix a blocker.
+- New product features.
+
+## Tasks
+
+- [ ] Prioritize Phase 40 blockers by launch impact.
+- [ ] Fix only critical/high blockers approved for this phase.
+- [ ] Add or update tests for fixed security/privacy/payment behavior.
+- [ ] Update docs and `.env.example` if configuration behavior changes.
+- [ ] Run automated validation.
+- [ ] Update Blockers, Decision Log, and Work Log.
+
+## Acceptance Criteria
+
+- Critical/high launch blockers from Phase 40 are fixed or explicitly documented as external/live-provider dependencies.
+- Security/privacy/payment fixes have tests or documented manual verification.
+- No unrelated refactor or feature scope enters this phase.
+
+## Validation
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+Manual: verify each fixed blocker using the reproduction or audit check documented in Phase 40.
+
+# Phase 43 — Targeted Refactor
+
+## Goal
+
+Refactor high-value code paths after launch blockers are known and addressed, keeping behavior unchanged.
+
+## Scope
+
+In-scope:
+
+- Split large files that are actively risky for launch maintenance.
+- Centralize duplicate admin UI components or server utilities.
+- Improve type clarity and test coverage around refactored behavior.
+
+Out-of-scope:
+
+- Deep architecture rewrite.
+- Database schema changes unless separately approved.
+- Payment/auth/report behavior changes.
+- New features.
+
+## Tasks
+
+- [ ] Identify refactor candidates from Phase 40 and Phase 42 notes.
+- [ ] Prioritize small refactors with clear validation.
+- [ ] Add or preserve tests for behavior before moving code.
+- [ ] Refactor one bounded area at a time.
+- [ ] Run targeted and full validation.
+- [ ] Update Work Log.
+
+## Acceptance Criteria
+
+- Refactored code keeps behavior equivalent.
+- Tests cover moved or centralized logic.
+- Files become easier to understand without broad churn.
+- No launch blocker is reintroduced.
+
+## Validation
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+Manual: review changed flows based on refactored area.
+
+# Phase 44 — Stable MVP Launch Validation
+
+## Goal
+
+Run final validation and live-provider smoke tests before marking the MVP stable.
+
+## Scope
+
+In-scope:
+
+- Final automated validation.
+- Production env readiness check.
+- Midtrans live QRIS smoke.
+- Telegram public channel broadcast smoke.
+- WhatsApp live template smoke.
+- Backup/restore readiness confirmation.
+- Stable release notes and launch tag decision.
+
+Out-of-scope:
+
+- New product features.
+- Non-blocking UI experiments.
+- Deep refactor.
+
+## Tasks
+
+- [ ] Confirm production env values are real and safe without exposing secrets.
+- [ ] Run final `npm run lint`, `npm test`, and `npm run build`.
+- [ ] Run Midtrans live QRIS smoke and verify webhook settlement.
+- [ ] Run Telegram public channel smoke.
+- [ ] Run WhatsApp live template smoke.
+- [ ] Confirm backup/restore readiness.
+- [ ] Create stable MVP release notes.
+- [ ] Decide and create stable launch tag.
+- [ ] Update Work Log and Blockers.
+
+## Acceptance Criteria
+
+- Automated validation passes.
+- Live provider smoke tests pass or blockers are explicitly documented with owner and impact.
+- No critical/high unresolved security, privacy, payment, or financial blocker remains for MVP launch.
+- Stable release notes and tag decision are recorded.
+
+## Validation
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+Manual/live: Midtrans QRIS payment, Midtrans webhook settlement, Telegram public channel broadcast, WhatsApp template send, production env checklist, and backup/restore readiness check.

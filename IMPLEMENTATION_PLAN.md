@@ -10,10 +10,10 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 
 ### Current Status
 
-Current Phase: Phase 42 — Donation Checkout UX Enhancement  
+Current Phase: Phase 43 — Donor Auth & Session Hygiene  
 Overall Progress: 100%  
 Last Updated: 2026-05-30  
-Current Focus: Phase 42 done and manually verified on local sandbox (Snap popup happy path, popup close, and fallback redirect all pass; webhook source-of-truth confirmed by `pending` status surviving client callbacks). Next planned phase: Phase 43 — Donor Auth & Session Hygiene.
+Current Focus: Phase 43 implemented for optional donor auth banner, signup/check-email flow, verified-email guest donation linking, status-page signup CTA, and admin-safe `/donasi` session hygiene. Automated validation passed; manual browser smoke still needs interactive confirmation.
 Blockers: Live provider smoke remains required: Telegram public channel broadcast needs `TELEGRAM_PUBLIC_CHANNEL_ID=-100...` plus bot admin/post permission; production `BETTER_AUTH_SECRET` must be high entropy; Midtrans live QRIS and WhatsApp live send need provider credentials/templates; backup/restore production evidence remains required before stable launch.
 
 ### Phase Progress
@@ -63,7 +63,7 @@ Blockers: Live provider smoke remains required: Telegram public channel broadcas
 | Phase 40 | MVP Launch Readiness Audit | Done | 100% |
 | Phase 41 | Dashboard Layout Final Polish | Done | 100% |
 | Phase 42 | Donation Checkout UX Enhancement | Done | 100% |
-| Phase 43 | Donor Auth & Session Hygiene | Not Started | 0% |
+| Phase 43 | Donor Auth & Session Hygiene | Done | 100% |
 | Phase 44 | Targeted Refactor | Not Started | 0% |
 | Phase 45 | Stable MVP Launch Validation | Not Started | 0% |
 
@@ -79,6 +79,8 @@ Done
 ## 3. Work Log
 
 ### 2026-05-30
+
+- Completed Phase 43 — Donor Auth & Session Hygiene. Added `/donasi` donor auth banner with anonymous, logged-in donor, and admin-hidden variants; admin resolution now runs before donor resolution so admin sessions do not receive donor banner or donor prefill. Added `/daftar` donor signup page, `/cek-email` verification handoff page, `/masuk?email=&next=` support, Better Auth required email verification, Indonesian verification email template, verified-email guest donation linking, and `/donasi/status/[orderId]` signup CTA that never exposes donor phone. Payment, webhook, and financial status rules were not changed. Validation passed: `npm run lint`, `npm test` (109/109), and `npm run build` after starting local `jumat-berkah-postgres`; build still warns local `BETTER_AUTH_SECRET` is low entropy. Manual browser smoke not completed in this non-browser session and remains recommended for anonymous/donor/admin `/donasi`, `/daftar`, `/cek-email`, email verification flow, status CTA, account history linking, and unchanged Snap popup/redirect flow.
 
 - Approved and planned Phase 43 — Donor Auth & Session Hygiene. Scope moves the donor-auth banner, donor signup page, email verification, post-donation signup CTA, verified-email donation linking, and admin-safe `/donasi` session handling into Phase 43. Detailed design lives in `docs/superpowers/specs/2026-05-30-donor-auth-on-donation-page-design.md`; implementation plan lives in `docs/superpowers/plans/2026-05-30-donor-auth-on-donation-page.md`. No application code for this feature has been changed yet.
 

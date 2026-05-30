@@ -1145,14 +1145,14 @@ Technical rules:
 
 ### 15.19 Donor Auth & Session Hygiene
 
-Planned direction:
+Implemented behavior:
 
 - `/donasi` shows a non-blocking donor auth banner for anonymous visitors: links to `/masuk?next=/donasi` and `/daftar?next=/donasi`.
 - Logged-in donors see account context, `/akun/donasi` shortcut, and logout action on `/donasi`.
 - Admin sessions suppress donor banner and donor prefill on `/donasi`.
 - `/daftar` supports Google signup and email/password signup.
 - Email/password signup requires email verification before login.
-- `/cek-email` explains verification and exposes resend/login actions.
+- `/cek-email` explains verification and links donor back to `/masuk` with email and next intent.
 - `/donasi/status/[orderId]` shows a signup CTA only when the current visitor is not a donor and the donation has a donor email.
 - Signup from status page pre-fills donor name/email using safe donation fields; donor phone is never exposed in CTA.
 - Verified donor account linking updates orphan guest donations (`user_id IS NULL`) only when `donor_email` matches the verified account email.

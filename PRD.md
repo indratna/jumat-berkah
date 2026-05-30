@@ -259,11 +259,11 @@ Donatur dapat login atau daftar untuk melihat riwayat donasi pribadi, mengurangi
 - Donatur dapat masuk via Google atau email/password.
 - Donatur dapat daftar via Google atau email/password.
 - Signup email/password wajib verifikasi email sebelum akun dapat dipakai login.
-- Setelah donasi dibuat, halaman status dapat menawarkan CTA untuk menyimpan donasi ke akun jika donasi guest punya email.
+- Setelah donasi dibuat, halaman status menawarkan CTA untuk menyimpan donasi ke akun jika donasi guest punya email dan pengunjung belum login sebagai donor.
 - Donasi guest hanya otomatis terhubung ke akun setelah donor membuktikan kepemilikan email yang sama.
 - Profil donatur berisi nama dan email.
 - Riwayat donasi pribadi tersedia di akun donatur.
-- Admin yang sedang login tidak diperlakukan sebagai donor pada `/donasi`.
+- Admin yang sedang login tidak diperlakukan sebagai donor pada `/donasi`; banner donor dan prefill donor disembunyikan.
 
 ### Acceptance Criteria
 

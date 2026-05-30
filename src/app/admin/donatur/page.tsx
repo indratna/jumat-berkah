@@ -42,9 +42,7 @@ export default async function AdminDonorPage({
   return (
     <main className="mx-auto max-w-6xl space-y-4">
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="kicker">
-          Database Donatur
-        </p>
+        <p className="kicker">Database Donatur</p>
         <h1 className="mt-4 text-2xl font-bold">
           Kontak operasional donatur untuk admin.
         </h1>
@@ -55,104 +53,99 @@ export default async function AdminDonorPage({
         </p>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <TableToolbar filters={filters} />
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 text-sm text-slate-600">
-            <span>Total {donors.total} donatur</span>
-            <span>
-              Halaman {donors.page} dari {donors.totalPages}
-            </span>
-          </div>
-          {donors.items.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold">Donatur</th>
-                    <th className="px-4 py-3 font-semibold">Kontak</th>
-                    <th className="px-4 py-3 font-semibold">Settlement</th>
-                    <th className="px-4 py-3 font-semibold">Consent WA</th>
-                    <th className="px-4 py-3 font-semibold">Aktivitas</th>
-                    <th className="px-4 py-3 font-semibold">Detail</th>
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <TableToolbar filters={filters} />
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 text-sm text-slate-600">
+          <span>Total {donors.total} donatur</span>
+          <span>
+            Halaman {donors.page} dari {donors.totalPages}
+          </span>
+        </div>
+        {donors.items.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+              <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Donatur</th>
+                  <th className="px-4 py-3 font-semibold">Kontak</th>
+                  <th className="px-4 py-3 font-semibold">Settlement</th>
+                  <th className="px-4 py-3 font-semibold">Consent WA</th>
+                  <th className="px-4 py-3 font-semibold">Aktivitas</th>
+                  <th className="px-4 py-3 font-semibold">Detail</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {donors.items.map((donor) => (
+                  <tr key={donor.key} className="align-top">
+                    <td className="px-4 py-4">
+                      <p className="font-semibold text-slate-950">
+                        {donor.name}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {donor.userId ? "Akun terdaftar" : "Donatur tamu"}
+                      </p>
+                    </td>
+                    <td className="px-4 py-4 text-slate-700">
+                      <p>{donor.email ?? "Email kosong"}</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {donor.phone ?? "WhatsApp kosong"}
+                      </p>
+                    </td>
+                    <td className="px-4 py-4">
+                      <p className="font-semibold">
+                        {formatRupiah(donor.totalSettlementAmount)}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {donor.settlementCount} settlement dari{" "}
+                        {donor.donationCount} donasi
+                      </p>
+                    </td>
+                    <td className="px-4 py-4 text-slate-700">
+                      <ConsentBadge donor={donor} />
+                    </td>
+                    <td className="px-4 py-4 text-slate-700">
+                      {donor.lastDonationAt
+                        ? formatAdminDate(donor.lastDonationAt)
+                        : "Belum ada donasi"}
+                    </td>
+                    <td className="px-4 py-4">
+                      <Link
+                        href={`?${buildDetailHref(pageQuery, donor.key)}`}
+                        scroll={false}
+                        className="btn-outline"
+                      >
+                        Lihat
+                      </Link>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
-                  {donors.items.map((donor) => (
-                    <tr
-                      key={donor.key}
-                      className="align-top"
-                    >
-                      <td className="px-4 py-4">
-                        <p className="font-semibold text-slate-950">
-                          {donor.name}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {donor.userId ? "Akun terdaftar" : "Donatur tamu"}
-                        </p>
-                      </td>
-                      <td className="px-4 py-4 text-slate-700">
-                        <p>{donor.email ?? "Email kosong"}</p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {donor.phone ?? "WhatsApp kosong"}
-                        </p>
-                      </td>
-                      <td className="px-4 py-4">
-                        <p className="font-semibold">
-                          {formatRupiah(donor.totalSettlementAmount)}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {donor.settlementCount} settlement dari{" "}
-                          {donor.donationCount} donasi
-                        </p>
-                      </td>
-                      <td className="px-4 py-4 text-slate-700">
-                        <ConsentBadge donor={donor} />
-                      </td>
-                      <td className="px-4 py-4 text-slate-700">
-                        {donor.lastDonationAt
-                          ? formatAdminDate(donor.lastDonationAt)
-                          : "Belum ada donasi"}
-                      </td>
-                      <td className="px-4 py-4">
-                        <Link
-                          href={`?${buildDetailHref(pageQuery, donor.key)}`}
-                          scroll={false}
-                          className="btn-outline"
-                        >
-                          Lihat
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="p-6 text-sm text-slate-500">
-              Belum ada donatur yang cocok dengan filter ini.
-            </div>
-          )}
-          <AdminSummaryFooter
-            items={[
-              { label: "Total cocok", value: String(donors.total) },
-              {
-                label: "Halaman",
-                value: `${donors.page}/${donors.totalPages}`,
-              },
-              { label: "Baris", value: String(filters.pageSize) },
-              { label: "Aktivitas", value: filters.activity ?? "Semua" },
-            ]}
-          />
-          <TableFooter
-            page={donors.page}
-            totalPages={donors.totalPages}
-            query={pageQuery}
-          />
-        </section>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="p-6 text-sm text-slate-500">
+            Belum ada donatur yang cocok dengan filter ini.
+          </div>
+        )}
+        <AdminSummaryFooter
+          items={[
+            { label: "Total cocok", value: String(donors.total) },
+            {
+              label: "Halaman",
+              value: `${donors.page}/${donors.totalPages}`,
+            },
+            { label: "Baris", value: String(filters.pageSize) },
+            { label: "Aktivitas", value: filters.activity ?? "Semua" },
+          ]}
+        />
+        <TableFooter
+          page={donors.page}
+          totalPages={donors.totalPages}
+          query={pageQuery}
+        />
+      </section>
 
-        <DonorDetail donor={donors.selectedDonor} />
-      </div>
+      <DonorDetail donor={donors.selectedDonor} query={pageQuery} />
     </main>
   );
 }
@@ -185,11 +178,7 @@ function TableToolbar({
         <option value="settlement">Pernah settlement</option>
         <option value="no_settlement">Belum settlement</option>
       </select>
-      <select
-        name="sort"
-        defaultValue={filters.sort}
-        className="field"
-      >
+      <select name="sort" defaultValue={filters.sort} className="field">
         {donorSortOptions.map((option) => (
           <option key={option.value} value={option.value}>
             Urut: {option.label}
@@ -215,96 +204,106 @@ function TableToolbar({
           </option>
         ))}
       </select>
-      <button className="btn-primary">
-        Filter
-      </button>
+      <button className="btn-primary">Filter</button>
     </form>
   );
 }
 
-function DonorDetail({ donor }: { donor: AdminDonor | null }) {
+function DonorDetail({
+  donor,
+  query,
+}: {
+  donor: AdminDonor | null;
+  query: URLSearchParams;
+}) {
   if (!donor) {
-    return (
-      <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm font-semibold text-slate-900">Detail donatur</p>
-        <p className="mt-3 text-sm leading-6 text-slate-500">
-          Pilih donatur untuk melihat ringkasan kontak, total settlement, dan
-          tautan riwayat donasi yang cocok.
-        </p>
-      </aside>
-    );
+    return null;
   }
 
+  const closeQuery = new URLSearchParams(query);
+  closeQuery.delete("donor");
+
   return (
-    <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="kicker">
-        Detail Donatur
-      </p>
-      <h2 className="mt-3 text-2xl font-bold">{donor.name}</h2>
-      <dl className="mt-5 space-y-4 text-sm">
-        <DetailRow label="Email" value={donor.email ?? "Tidak ada"} />
-        <DetailRow label="WhatsApp" value={donor.phone ?? "Tidak ada"} />
-        <DetailRow label="Consent WA" value={formatConsentStatus(donor)} />
-        <DetailRow
-          label="Opt-in WA"
-          value={
-            donor.whatsappReminderOptInAt
-              ? formatAdminDate(donor.whatsappReminderOptInAt)
-              : "Belum pernah"
-          }
-        />
-        <DetailRow
-          label="Instruksi opt-out"
-          value="Balas STOP saat fitur pengingat WhatsApp aktif."
-        />
-        <DetailRow
-          label="Tipe"
-          value={donor.userId ? "Akun terdaftar" : "Tamu"}
-        />
-        <DetailRow
-          label="Total settlement"
-          value={formatRupiah(donor.totalSettlementAmount)}
-        />
-        <DetailRow
-          label="Jumlah settlement"
-          value={String(donor.settlementCount)}
-        />
-        <DetailRow label="Total donasi" value={String(donor.donationCount)} />
-        <DetailRow
-          label="Donasi pertama"
-          value={
-            donor.firstDonationAt
-              ? formatAdminDate(donor.firstDonationAt)
-              : "Belum ada"
-          }
-        />
-        <DetailRow
-          label="Donasi terakhir"
-          value={
-            donor.lastDonationAt
-              ? formatAdminDate(donor.lastDonationAt)
-              : "Belum ada"
-          }
-        />
-      </dl>
-      <div className="mt-6 space-y-2">
-        <Link
-          href={`/admin/donasi?q=${encodeURIComponent(donor.email ?? donor.phone ?? donor.name)}`}
-          className="btn-primary w-full text-sm"
-        >
-          Buka riwayat donasi
-        </Link>
-        {donor.donationOrderIds.slice(0, 5).map((orderId) => (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4">
+      <aside className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="kicker">Detail Donatur</p>
+            <h2 className="mt-3 text-2xl font-bold">{donor.name}</h2>
+          </div>
           <Link
-            key={orderId}
-            href={`/admin/donasi?q=${encodeURIComponent(orderId)}`}
-            className="block rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            href={`?${closeQuery.toString()}`}
+            scroll={false}
+            className="btn-outline"
           >
-            {orderId}
+            Tutup
           </Link>
-        ))}
-      </div>
-    </aside>
+        </div>
+        <dl className="mt-5 space-y-4 text-sm">
+          <DetailRow label="Email" value={donor.email ?? "Tidak ada"} />
+          <DetailRow label="WhatsApp" value={donor.phone ?? "Tidak ada"} />
+          <DetailRow label="Consent WA" value={formatConsentStatus(donor)} />
+          <DetailRow
+            label="Opt-in WA"
+            value={
+              donor.whatsappReminderOptInAt
+                ? formatAdminDate(donor.whatsappReminderOptInAt)
+                : "Belum pernah"
+            }
+          />
+          <DetailRow
+            label="Instruksi opt-out"
+            value="Balas STOP saat fitur pengingat WhatsApp aktif."
+          />
+          <DetailRow
+            label="Tipe"
+            value={donor.userId ? "Akun terdaftar" : "Tamu"}
+          />
+          <DetailRow
+            label="Total settlement"
+            value={formatRupiah(donor.totalSettlementAmount)}
+          />
+          <DetailRow
+            label="Jumlah settlement"
+            value={String(donor.settlementCount)}
+          />
+          <DetailRow label="Total donasi" value={String(donor.donationCount)} />
+          <DetailRow
+            label="Donasi pertama"
+            value={
+              donor.firstDonationAt
+                ? formatAdminDate(donor.firstDonationAt)
+                : "Belum ada"
+            }
+          />
+          <DetailRow
+            label="Donasi terakhir"
+            value={
+              donor.lastDonationAt
+                ? formatAdminDate(donor.lastDonationAt)
+                : "Belum ada"
+            }
+          />
+        </dl>
+        <div className="mt-6 space-y-2">
+          <Link
+            href={`/admin/donasi?q=${encodeURIComponent(donor.email ?? donor.phone ?? donor.name)}`}
+            className="btn-primary w-full text-sm"
+          >
+            Buka riwayat donasi
+          </Link>
+          {donor.donationOrderIds.slice(0, 5).map((orderId) => (
+            <Link
+              key={orderId}
+              href={`/admin/donasi?q=${encodeURIComponent(orderId)}`}
+              className="block rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              {orderId}
+            </Link>
+          ))}
+        </div>
+      </aside>
+    </div>
   );
 }
 

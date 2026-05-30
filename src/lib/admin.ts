@@ -21,6 +21,16 @@ export type DonorSortField =
   | "settlementCount"
   | "name";
 
+export type AdminTopDonor = {
+  key: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  totalAmount: number;
+  settlementCount: number;
+  lastPaidAt: Date | null;
+};
+
 export type AdminDonor = {
   key: string;
   name: string;
@@ -90,18 +100,55 @@ export type PaginatedResult<T> = {
   totalPages: number;
 };
 
-export async function getAdminDashboardSummary() {
+export async function getAdminDashboardSummary(filters?: {
+  from: string | null;
+  to: string | null;
+}) {
   const prisma = getPrisma();
+  const from = parseDateStart(filters?.from ?? null);
+  const to = parseDateEnd(filters?.to ?? null);
+  const donationDateWhere =
+    from || to
+      ? {
+          createdAt: {
+            ...(from ? { gte: from } : {}),
+            ...(to ? { lte: to } : {}),
+          },
+        }
+      : {};
+  const paidDateWhere =
+    from || to
+      ? {
+          paidAt: {
+            ...(from ? { gte: from } : {}),
+            ...(to ? { lte: to } : {}),
+          },
+        }
+      : {};
+  const expenseDateWhere =
+    from || to
+      ? {
+          expenseDate: {
+            ...(from ? { gte: from } : {}),
+            ...(to ? { lte: to } : {}),
+          },
+        }
+      : {};
   const [income, expenses, pendingDonations] = await Promise.all([
     prisma.donation.aggregate({
-      where: { status: DonationStatus.settlement },
+      where: { status: DonationStatus.settlement, ...paidDateWhere },
       _sum: { amount: true },
     }),
     prisma.expense.aggregate({
-      where: { approvalStatus: ExpenseApprovalStatus.approved },
+      where: {
+        approvalStatus: ExpenseApprovalStatus.approved,
+        ...expenseDateWhere,
+      },
       _sum: { amount: true },
     }),
-    prisma.donation.count({ where: { status: DonationStatus.pending } }),
+    prisma.donation.count({
+      where: { status: DonationStatus.pending, ...donationDateWhere },
+    }),
   ]);
 
   const totalIncome = income._sum.amount ?? 0;
@@ -113,6 +160,83 @@ export async function getAdminDashboardSummary() {
     balance: totalIncome - totalExpenses,
     pendingDonations,
   };
+}
+
+export async function getAdminTopDonors(filters: {
+  from: string | null;
+  to: string | null;
+  limit?: number;
+}) {
+  const prisma = getPrisma();
+  const from = parseDateStart(filters.from);
+  const to = parseDateEnd(filters.to);
+  const donations = await prisma.donation.findMany({
+    where: {
+      status: DonationStatus.settlement,
+      ...(from || to
+        ? {
+            paidAt: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
+        : {}),
+    },
+    orderBy: { paidAt: "desc" },
+    select: {
+      userId: true,
+      donorName: true,
+      donorEmail: true,
+      donorPhone: true,
+      isAnonymous: true,
+      amount: true,
+      paidAt: true,
+      createdAt: true,
+    },
+  });
+
+  const donors = new Map<string, AdminTopDonor>();
+  for (const donation of donations) {
+    const key = buildAdminDonorKey({
+      userId: donation.userId,
+      email: donation.donorEmail,
+      phone: donation.donorPhone,
+      name: donation.donorName,
+    });
+    const current = donors.get(key) ?? {
+      key,
+      name: getOperationalDonorName({
+        donorName: donation.donorName,
+        isAnonymous: donation.isAnonymous,
+      }),
+      email: normalizeContact(donation.donorEmail),
+      phone: normalizeContact(donation.donorPhone),
+      totalAmount: 0,
+      settlementCount: 0,
+      lastPaidAt: null,
+    };
+
+    current.name = preferExisting(current.name, donation.donorName);
+    current.email = current.email ?? normalizeContact(donation.donorEmail);
+    current.phone = current.phone ?? normalizeContact(donation.donorPhone);
+    current.totalAmount += donation.amount;
+    current.settlementCount += 1;
+    current.lastPaidAt = latestDate(
+      current.lastPaidAt,
+      donation.paidAt ?? donation.createdAt,
+    );
+    donors.set(key, current);
+  }
+
+  return Array.from(donors.values())
+    .sort((left, right) => {
+      const amountDiff = right.totalAmount - left.totalAmount;
+      if (amountDiff !== 0) {
+        return amountDiff;
+      }
+      return dateValue(right.lastPaidAt) - dateValue(left.lastPaidAt);
+    })
+    .slice(0, filters.limit ?? 5);
 }
 
 export async function getAdminDonations(filters: DonationFilterParams) {

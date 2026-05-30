@@ -1,93 +1,96 @@
 import Link from "next/link";
 
-const steps = [
-  "Isi data donasi.",
-  "Bayar melalui QRIS Midtrans.",
-  "Status diperbarui otomatis.",
-  "Laporan publik ikut terbarui.",
-];
+import { LandingFaq } from "@/components/landing/landing-faq";
+import { LandingFooter } from "@/components/landing/landing-footer";
+import { LandingHero } from "@/components/landing/landing-hero";
+import { LandingHowItWorks } from "@/components/landing/landing-how-it-works";
+import { LandingStories } from "@/components/landing/landing-stories";
+import { LandingTargetProgress } from "@/components/landing/landing-target-progress";
+import { LandingTransparency } from "@/components/landing/landing-transparency";
+import {
+  getLandingMetrics,
+  getLandingProgress,
+  getLandingStories,
+} from "@/lib/landing";
 
-const highlights = [
-  ["Donasi cepat", "Tanpa wajib login untuk donatur publik."],
-  ["Privasi aman", "Email dan WhatsApp tidak tampil di laporan publik."],
-  ["Laporan jelas", "Pemasukan, pengeluaran, dan saldo bisa dicek."],
-];
+export default async function Home() {
+  const [metrics, progress, stories] = await Promise.all([
+    getLandingMetrics(),
+    getLandingProgress(),
+    getLandingStories(3),
+  ]);
 
-export default function Home() {
+  const collectedPercent = Math.round(progress.progressRatio * 100);
+
   return (
-    <main id="main-content" className="page-shell text-slate-900">
-      <section className="mx-auto max-w-6xl space-y-4">
-        <nav
-          aria-label="Navigasi utama"
-          className="panel flex items-center justify-between gap-4 px-4 py-3"
-        >
-          <Link href="/" className="flex min-w-0 items-center gap-3 font-bold">
-            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-green-700 text-sm text-white">
+    <div className="landing-craft landing-noise min-h-screen">
+      <main
+        id="main-content"
+        className="mx-auto flex max-w-6xl flex-col gap-16 px-4 pb-32 pt-6 sm:px-6 sm:pb-20 lg:px-8 lg:py-12"
+      >
+        <header className="flex items-center justify-between gap-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-3 text-base font-extrabold tracking-tight text-[color:var(--craft-ink)]"
+            aria-label="Beranda Jumat Berkah Karyo"
+          >
+            <span className="grid size-10 place-items-center rounded-2xl bg-[color:var(--craft-leaf)] text-sm font-bold text-[color:var(--craft-cream)]">
               JB
             </span>
-            <span className="truncate">Jumat Berkah Karyo</span>
+            <span>Jumat Berkah Karyo</span>
           </Link>
-          <div className="flex items-center gap-2 text-sm">
+          <nav
+            aria-label="Navigasi utama"
+            className="flex items-center gap-2 text-sm"
+          >
             <Link
               href="/laporan"
-              className="btn-outline hidden px-3 py-2 sm:inline-flex"
+              className="hidden min-h-11 items-center rounded-full px-4 font-semibold text-[color:var(--craft-ink)] hover:text-[color:var(--craft-leaf)] sm:inline-flex"
             >
               Laporan
             </Link>
-            <Link href="/donasi" className="btn-primary px-3 py-2">
+            <Link
+              href="/tentang"
+              className="hidden min-h-11 items-center rounded-full px-4 font-semibold text-[color:var(--craft-ink)] hover:text-[color:var(--craft-leaf)] sm:inline-flex"
+            >
+              Tentang
+            </Link>
+            <Link
+              href="/donasi"
+              className="inline-flex min-h-11 items-center rounded-full bg-[color:var(--craft-leaf)] px-5 font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)]"
+            >
               Donasi
             </Link>
-          </div>
-        </nav>
+          </nav>
+        </header>
 
-        <div className="panel p-6 sm:p-8">
-          <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
-            <div>
-              <p className="kicker">Program Sosial Internal</p>
-              <h1 className="heading-balance mt-4 max-w-3xl text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-                Donasi Jumat Berkah dengan pencatatan yang rapi dan transparan.
-              </h1>
-              <p className="body-muted mt-4 max-w-2xl text-base">
-                Aplikasi ini membantu donatur berdonasi lewat QRIS dan membantu
-                admin memantau pemasukan, pengeluaran, serta saldo program.
-              </p>
-              <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-                <Link href="/donasi" className="btn-primary text-center">
-                  Donasi Sekarang
-                </Link>
-                <Link href="/laporan" className="btn-outline text-center">
-                  Lihat Laporan
-                </Link>
-              </div>
-            </div>
+        <LandingHero metrics={metrics} collectedPercent={collectedPercent} />
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-sm font-bold text-slate-900">Alur Singkat</p>
-              <div className="mt-4 space-y-3">
-                {steps.map((item, index) => (
-                  <div key={item} className="flex gap-3 text-sm text-slate-700">
-                    <span className="grid size-7 shrink-0 place-items-center rounded-md border border-slate-200 bg-white font-bold text-slate-600">
-                      {index + 1}
-                    </span>
-                    <p className="pt-1">{item}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <LandingTargetProgress
+          progress={progress}
+          metrics={metrics}
+          collectedPercent={collectedPercent}
+        />
 
-        <div className="grid gap-3 sm:grid-cols-3">
-          {highlights.map(([title, description]) => (
-            <div key={title} className="panel p-5">
-              <p className="font-bold text-slate-950">{title}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-    </main>
+        <LandingStories stories={stories} />
+
+        <LandingHowItWorks />
+
+        <LandingTransparency />
+
+        <LandingFaq />
+
+        <LandingFooter />
+      </main>
+
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--craft-line-strong)] bg-[color:var(--craft-leaf)] p-3 md:hidden">
+        <Link
+          href="/donasi"
+          className="flex min-h-11 w-full items-center justify-center rounded-full bg-[color:var(--craft-leaf-strong)] px-4 text-sm font-bold text-[color:var(--craft-cream)]"
+        >
+          Donasi Sekarang
+        </Link>
+      </div>
+    </div>
   );
 }

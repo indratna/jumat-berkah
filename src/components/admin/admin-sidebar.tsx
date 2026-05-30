@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 import { LogoutButton } from "@/app/admin/logout-button";
 
@@ -11,19 +14,22 @@ export type AdminNavItem = {
 
 type AdminNavGroup = {
   label: string;
+  icon: string;
   items: AdminNavItem[];
+};
+
+export const dashboardNavItem: AdminNavItem = {
+  href: "/admin",
+  label: "Dashboard",
+  description: "Ringkasan dana",
+  icon: "⌂",
 };
 
 export const adminNavGroups: AdminNavGroup[] = [
   {
-    label: "Utama",
+    label: "Masuk",
+    icon: "↗",
     items: [
-      {
-        href: "/admin",
-        label: "Dashboard",
-        description: "Ringkasan dana",
-        icon: "⌂",
-      },
       {
         href: "/admin/donasi",
         label: "Donasi",
@@ -36,51 +42,36 @@ export const adminNavGroups: AdminNavGroup[] = [
         description: "Database kontak",
         icon: "◌",
       },
+    ],
+  },
+  {
+    label: "Keluar",
+    icon: "↘",
+    items: [
       {
         href: "/admin/pengeluaran",
         label: "Biaya",
         description: "Pengeluaran program",
         icon: "↘",
       },
-    ],
-  },
-  {
-    label: "Operasional",
-    items: [
       {
         href: "/admin/penyaluran",
         label: "Penyaluran",
         description: "Cerita Jumat",
         icon: "▣",
       },
+    ],
+  },
+  {
+    label: "Pengaturan",
+    icon: "⚙",
+    items: [
       {
         href: "/admin/persetujuan",
         label: "Approval",
         description: "Biaya besar",
         icon: "✓",
       },
-    ],
-  },
-  {
-    label: "Laporan",
-    items: [
-      {
-        href: "/laporan",
-        label: "Laporan Publik",
-        description: "Pratinjau web",
-        icon: "◫",
-      },
-      {
-        href: "/api/admin/reports/export",
-        label: "Export CSV",
-        description: "Rekonsiliasi",
-        icon: "↓",
-      },
-    ],
-  },
-  {
-    label: "Sistem",
-    items: [
       {
         href: "/admin/audit",
         label: "Audit Log",
@@ -88,7 +79,13 @@ export const adminNavGroups: AdminNavGroup[] = [
         icon: "≣",
       },
       {
-        href: "/akun/profil",
+        href: "/admin/pengaturan/sistem",
+        label: "Status Sistem",
+        description: "Konfigurasi env",
+        icon: "⚙",
+      },
+      {
+        href: "/admin/profil",
         label: "Profil Admin",
         description: "Akun & sandi",
         icon: "◎",
@@ -97,15 +94,25 @@ export const adminNavGroups: AdminNavGroup[] = [
   },
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar({ expanded }: { expanded: boolean }) {
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    Masuk: true,
+    Keluar: true,
+    Pengaturan: false,
+  });
+
   return (
-    <aside className="border-b border-slate-200 bg-white lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:w-[252px] lg:border-b-0 lg:border-r">
+    <aside
+      className={`border-b border-slate-200 bg-white transition-[width] duration-200 lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:border-b-0 lg:border-r ${
+        expanded ? "lg:w-63" : "lg:w-21"
+      }`}
+    >
       <div className="flex h-full flex-col">
-        <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
+        <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-4">
           <div className="grid size-9 shrink-0 place-items-center rounded-md bg-green-700 text-sm font-bold text-white shadow-sm">
             JB
           </div>
-          <div className="min-w-0">
+          <div className={`min-w-0 ${expanded ? "" : "lg:hidden"}`}>
             <p className="truncate text-[0.95rem] font-bold leading-5 text-slate-950">
               Jumat Berkah
             </p>
@@ -117,54 +124,84 @@ export function AdminSidebar() {
 
         <nav
           aria-label="Navigasi admin"
-          className="px-3 py-3 lg:flex-1 lg:overflow-y-auto lg:py-4"
+          className="px-3 py-3 lg:flex-1 lg:py-4"
         >
-          <div className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-5 lg:overflow-visible lg:pb-0">
-            {adminNavGroups.map((group) => (
-              <section
-                key={group.label}
-                aria-labelledby={`admin-nav-${group.label}`}
-                className="shrink-0"
-              >
-                <h3
-                  id={`admin-nav-${group.label}`}
-                  className="hidden px-2 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-slate-500 lg:block"
-                >
-                  {group.label}
-                </h3>
-                <div className="flex gap-1 lg:mt-2 lg:grid lg:grid-cols-1">
-                  {group.items.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="group flex min-w-max items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-slate-600 hover:bg-slate-50 hover:text-slate-950 lg:grid lg:min-w-0 lg:grid-cols-[2rem_1fr] lg:border-transparent lg:bg-transparent lg:px-2 lg:py-2.5"
+          <div className="flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-2 lg:overflow-visible lg:pb-0">
+            <Link
+              href={dashboardNavItem.href}
+              title={dashboardNavItem.description}
+              className="group/link flex min-h-11 min-w-max shrink-0 items-center gap-2 rounded-md px-2 text-slate-700 hover:bg-slate-50 hover:text-slate-950 lg:min-w-0"
+            >
+              <span className="grid size-8 shrink-0 place-items-center rounded-md bg-slate-100 text-xs font-bold text-slate-500 ring-1 ring-slate-200 group-hover/link:bg-green-50 group-hover/link:text-green-700">
+                {dashboardNavItem.icon}
+              </span>
+              <span className={`min-w-0 ${expanded ? "" : "lg:hidden"}`}>
+                <span className="block truncate text-sm font-bold leading-5">
+                  {dashboardNavItem.label}
+                </span>
+                <span className="sr-only">{dashboardNavItem.description}</span>
+              </span>
+            </Link>
+
+            {adminNavGroups.map((group) => {
+              const isOpen = openGroups[group.label] ?? true;
+              return (
+                <section key={group.label} className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOpenGroups((current) => ({
+                        ...current,
+                        [group.label]: !isOpen,
+                      }))
+                    }
+                    className="group flex min-h-11 w-full min-w-max items-center gap-2 rounded-md px-2 text-sm font-bold text-slate-700 hover:bg-slate-50 lg:min-w-0"
+                    title={group.label}
+                    aria-expanded={isOpen}
+                  >
+                    <span className="grid size-8 shrink-0 place-items-center rounded-md bg-slate-100 text-xs text-slate-500 group-hover:bg-green-50 group-hover:text-green-700">
+                      {group.icon}
+                    </span>
+                    <span
+                      className={`min-w-0 flex-1 truncate text-left ${
+                        expanded ? "" : "lg:hidden"
+                      }`}
                     >
-                      <span className="hidden size-8 place-items-center rounded-md bg-slate-100 text-xs font-bold text-slate-500 group-hover:bg-green-50 group-hover:text-green-700 lg:grid">
-                        {item.icon}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold leading-5">
-                          {item.label}
-                        </span>
-                        <span className="hidden truncate text-xs leading-4 text-slate-500 group-hover:text-slate-500 lg:block">
-                          {item.description}
-                        </span>
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            ))}
+                      {group.label}
+                    </span>
+                  </button>
+                  {isOpen ? (
+                    <div className="mt-1 flex gap-1 lg:grid lg:grid-cols-1">
+                      {group.items.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          title={item.description}
+                          className="group/link flex min-h-10 min-w-max items-center gap-2 rounded-md px-2 text-slate-600 hover:bg-slate-50 hover:text-slate-950 lg:min-w-0"
+                        >
+                          <span className="grid size-8 shrink-0 place-items-center rounded-md bg-white text-xs font-bold text-slate-400 ring-1 ring-slate-200 group-hover/link:bg-green-50 group-hover/link:text-green-700">
+                            {item.icon}
+                          </span>
+                          <span
+                            className={`min-w-0 ${expanded ? "" : "lg:hidden"}`}
+                          >
+                            <span className="block truncate text-sm font-semibold leading-5">
+                              {item.label}
+                            </span>
+                            <span className="sr-only">{item.description}</span>
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : null}
+                </section>
+              );
+            })}
           </div>
         </nav>
 
         <div className="hidden border-t border-slate-200 p-4 lg:block">
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
-            Kontak donatur hanya untuk operasional admin.
-          </div>
-          <div className="mt-3">
-            <LogoutButton />
-          </div>
+          <LogoutButton />
         </div>
       </div>
     </aside>

@@ -14,6 +14,7 @@ import {
   safeSendTelegramMessage,
 } from "@/lib/telegram";
 import { NextResponse } from "next/server";
+import { createDonationSettlementNotification } from "@/lib/admin-notifications";
 
 export async function POST(request: Request) {
   const payload: unknown = await request.json().catch(() => null);
@@ -74,6 +75,8 @@ export async function POST(request: Request) {
         midtransTransactionId: true,
         amount: true,
         donorName: true,
+        donorEmail: true,
+        donorPhone: true,
         isAnonymous: true,
         showNamePublicly: true,
         message: true,
@@ -168,6 +171,16 @@ export async function POST(request: Request) {
       paidAt: result.updatedDonation.paidAt ?? new Date(),
     };
 
+    await createDonationSettlementNotification({
+      donationId: result.donation.id,
+      orderId: result.donation.orderId,
+      amount: result.donation.amount,
+      donorName: result.donation.donorName,
+      donorEmail: result.donation.donorEmail,
+      donorPhone: result.donation.donorPhone,
+      isAnonymous: result.donation.isAnonymous,
+      showNamePublicly: result.donation.showNamePublicly,
+    });
     await maybeSendSettlementNotification(notificationInput);
     await safeSendAdminSettlementEmail(notificationInput);
   }

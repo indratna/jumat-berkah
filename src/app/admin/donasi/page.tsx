@@ -4,6 +4,7 @@ import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { AdminSummaryFooter } from "@/components/admin/admin-summary-footer";
 import { AdminTopTabs } from "@/components/admin/admin-top-tabs";
 import { AutoSubmitSelect } from "../auto-submit-select";
+import { DonationAutoRefresh } from "./donation-auto-refresh";
 import { DonationStatus } from "@/generated/prisma/client";
 import {
   type AdminSortDirection,
@@ -48,13 +49,17 @@ export default async function AdminDonationsPage({
 
   return (
     <main className="mx-auto max-w-6xl space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="kicker">
-          Donasi Admin
-        </p>
-        <h1 className="mt-4 text-2xl font-bold">
-          Daftar donasi dan status pembayaran.
-        </h1>
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="kicker">Donasi Admin</p>
+          <h1 className="mt-4 text-2xl font-bold">
+            Daftar donasi dan status pembayaran.
+          </h1>
+          <p className="mt-2 text-sm text-slate-500">
+            Data otomatis disegarkan tiap 10 detik saat halaman terbuka.
+          </p>
+        </div>
+        <DonationAutoRefresh />
       </div>
 
       <AdminTopTabs tabs={statusTabs} />
@@ -82,10 +87,7 @@ export default async function AdminDonationsPage({
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {donations.items.map((donation) => (
-                  <tr
-                    key={donation.id}
-                    className="align-top"
-                  >
+                  <tr key={donation.id} className="align-top">
                     <td className="px-4 py-4 font-medium">
                       {donation.orderId}
                     </td>
@@ -189,14 +191,8 @@ function TableToolbar({
         defaultValue={filters.to ?? ""}
         className="field"
       />
-      <button className="btn-primary">
-        Filter
-      </button>
-      <select
-        name="sort"
-        defaultValue={filters.sort}
-        className="field"
-      >
+      <button className="btn-primary">Filter</button>
+      <select name="sort" defaultValue={filters.sort} className="field">
         {donationSortOptions.map((option) => (
           <option key={option.value} value={option.value}>
             Urut: {option.label}

@@ -13,6 +13,7 @@ import {
   createMidtransSnapTransaction,
   MidtransConfigurationError,
 } from "@/lib/midtrans";
+import { createDonationCreatedNotification } from "@/lib/admin-notifications";
 
 export async function POST(request: Request) {
   const payload: unknown = await request.json().catch(() => null);
@@ -56,13 +57,27 @@ export async function POST(request: Request) {
       status: getInitialDonationStatus(),
     },
     select: {
+      id: true,
       orderId: true,
       amount: true,
       donorName: true,
       donorEmail: true,
       donorPhone: true,
+      isAnonymous: true,
+      showNamePublicly: true,
       status: true,
     },
+  });
+
+  await createDonationCreatedNotification({
+    donationId: donation.id,
+    orderId: donation.orderId,
+    amount: donation.amount,
+    donorName: donation.donorName,
+    donorEmail: donation.donorEmail,
+    donorPhone: donation.donorPhone,
+    isAnonymous: donation.isAnonymous,
+    showNamePublicly: donation.showNamePublicly,
   });
 
   try {

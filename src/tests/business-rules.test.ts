@@ -17,7 +17,10 @@ import {
   validateWeeklyTargetInput,
 } from "@/lib/weekly-target";
 import { shouldSendLowTargetProgressAlert } from "@/lib/telegram-cron";
-import { adminNavGroups } from "@/components/admin/admin-sidebar";
+import {
+  adminNavGroups,
+  dashboardNavItem,
+} from "@/components/admin/admin-sidebar";
 import { adminDonationStatusMeta } from "@/components/admin/admin-status-badge";
 import { validateDistributionReportInput } from "@/lib/distribution-report";
 import {
@@ -50,9 +53,10 @@ import {
 } from "@/lib/whatsapp-reminders";
 
 test("admin navigation keeps every current admin route reachable", () => {
-  const navigationHrefs = new Set(
-    adminNavGroups.flatMap((group) => group.items.map((item) => item.href)),
-  );
+  const navigationHrefs = new Set([
+    dashboardNavItem.href,
+    ...adminNavGroups.flatMap((group) => group.items.map((item) => item.href)),
+  ]);
   const expectedReachableRoutes = [
     "/admin",
     "/admin/donasi",
@@ -61,14 +65,14 @@ test("admin navigation keeps every current admin route reachable", () => {
     "/admin/penyaluran",
     "/admin/persetujuan",
     "/admin/audit",
-    "/laporan",
-    "/api/admin/reports/export",
-    "/akun/profil",
+    "/admin/pengaturan/sistem",
+    "/admin/profil",
   ];
 
+  assert.equal(dashboardNavItem.label, "Dashboard");
   assert.deepEqual(
     adminNavGroups.map((group) => group.label),
-    ["Utama", "Operasional", "Laporan", "Sistem"],
+    ["Masuk", "Keluar", "Pengaturan"],
   );
 
   for (const route of expectedReachableRoutes) {

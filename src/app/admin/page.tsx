@@ -1,18 +1,35 @@
 import Link from "next/link";
 
-import { formatRupiah, getAdminDashboardSummary } from "@/lib/admin";
+import {
+  formatAdminDate,
+  formatRupiah,
+  getAdminDashboardSummary,
+  getAdminTopDonors,
+} from "@/lib/admin";
 import { getWeeklyTargetProgress } from "@/lib/weekly-target";
+import { DashboardDateRange } from "./dashboard-date-range";
 import { WeeklyTargetForm } from "./weekly-target-form";
 
-export default async function AdminPage() {
-  const summary = await getAdminDashboardSummary();
-  const progress = await getWeeklyTargetProgress();
+type AdminPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const from = getStringParam(resolvedSearchParams.from);
+  const to = getStringParam(resolvedSearchParams.to);
+  const [summary, progress, topDonors] = await Promise.all([
+    getAdminDashboardSummary({ from, to }),
+    getWeeklyTargetProgress(),
+    getAdminTopDonors({ from, to, limit: 5 }),
+  ]);
   const progressPercent = Math.round(progress.progressRatio * 100);
+  const progressBarPercent = Math.min(progressPercent, 100);
 
   return (
-    <main id="main-content" className="mx-auto max-w-[1180px] space-y-5">
-      <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-slate-200 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+    <main id="main-content" className="mx-auto max-w-295 space-y-6">
+      <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="grid gap-5 border-b border-slate-200 px-5 py-5 xl:grid-cols-[1fr_auto] xl:items-start">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-green-700">
               Dashboard Admin
@@ -20,25 +37,26 @@ export default async function AdminPage() {
             <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
               Ringkasan operasional Jumat Berkah
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 max-w-2xl text-sm text-slate-500">
               Monitor saldo, settlement, pengeluaran, dan target siklus dalam
-              satu layar.
+              satu layar sesuai periode dashboard.
             </p>
+            <div className="mt-4 grid grid-cols-2 gap-2 text-sm sm:flex sm:items-center">
+              <Link
+                href="/admin/donasi"
+                className="min-h-11 rounded-md border border-slate-200 bg-white px-3 py-2.5 text-center font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700"
+              >
+                Lihat Donasi
+              </Link>
+              <Link
+                href="/admin/pengeluaran"
+                className="min-h-11 rounded-md bg-green-700 px-3 py-2.5 text-center font-semibold text-white hover:bg-green-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700"
+              >
+                Catat Biaya
+              </Link>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-sm sm:flex sm:items-center">
-            <Link
-              href="/admin/donasi"
-              className="rounded-md border border-slate-200 bg-white px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Lihat Donasi
-            </Link>
-            <Link
-              href="/admin/pengeluaran"
-              className="rounded-md bg-green-700 px-3 py-2 font-semibold text-white hover:bg-green-800"
-            >
-              Catat Biaya
-            </Link>
-          </div>
+          <DashboardDateRange from={from} to={to} />
         </div>
         <div className="grid gap-px bg-slate-200 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCell
@@ -68,8 +86,52 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
-        <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm xl:col-span-2">
+          <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-sm font-bold text-slate-950">
+                Ranking Donatur Terbanyak
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Mengikuti periode dashboard di atas.
+              </p>
+            </div>
+          </div>
+          {topDonors.length > 0 ? (
+            <div className="divide-y divide-slate-100">
+              {topDonors.map((donor, index) => (
+                <div
+                  key={donor.key}
+                  className="grid gap-3 px-5 py-4 sm:grid-cols-[3rem_1fr_auto] sm:items-center"
+                >
+                  <div className="grid size-10 place-items-center rounded-full bg-green-50 text-sm font-bold text-green-700 ring-1 ring-green-100">
+                    #{index + 1}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate font-bold text-slate-950">
+                      {donor.name}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {donor.settlementCount} settlement
+                      {donor.lastPaidAt
+                        ? ` · terakhir ${formatAdminDate(donor.lastPaidAt)}`
+                        : ""}
+                    </p>
+                  </div>
+                  <p className="numeric text-lg font-bold text-green-700">
+                    {formatRupiah(donor.totalAmount)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-5 text-sm text-slate-500">
+              Belum ada donatur settlement pada periode ini.
+            </div>
+          )}
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
             <div>
               <p className="text-sm font-bold text-slate-950">
@@ -100,7 +162,7 @@ export default async function AdminPage() {
                 <div className="h-3 overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200">
                   <div
                     className="h-full rounded-full bg-green-700 transition-[width] duration-300 ease-out"
-                    style={{ width: `${progressPercent}%` }}
+                    style={{ width: `${progressBarPercent}%` }}
                   />
                 </div>
                 <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
@@ -129,7 +191,7 @@ export default async function AdminPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-5 py-4">
             <p className="text-sm font-bold text-slate-950">
               Atur Target Siklus
@@ -149,11 +211,16 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-5 py-4">
-          <p className="text-sm font-bold text-slate-950">Akses Cepat</p>
-          <p className="mt-1 text-xs text-slate-500">
-            Aksi operasional paling sering dipakai.
+      <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-2 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-bold text-slate-950">Akses Cepat</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Aksi operasional paling sering dipakai.
+            </p>
+          </div>
+          <p className="text-xs font-medium text-slate-500">
+            Gunakan dashboard untuk pantau, halaman detail untuk koreksi data.
           </p>
         </div>
         <div className="grid gap-px bg-slate-200 lg:grid-cols-3">
@@ -193,7 +260,7 @@ function MetricCell({
   tone: string;
 }) {
   return (
-    <div className="bg-white p-5">
+    <div className="bg-white p-5 sm:p-6">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-medium text-slate-500">{label}</p>
         <span className="size-2 rounded-full bg-current text-slate-300" />
@@ -204,6 +271,10 @@ function MetricCell({
       <p className="mt-2 text-xs text-slate-500">{helper}</p>
     </div>
   );
+}
+
+function getStringParam(value: string | string[] | undefined) {
+  return typeof value === "string" ? value : null;
 }
 
 function QuickLink({
@@ -218,7 +289,10 @@ function QuickLink({
   description: string;
 }) {
   return (
-    <Link href={href} className="block bg-white p-5 hover:bg-slate-50">
+    <Link
+      href={href}
+      className="block bg-white p-5 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-green-700 sm:p-6"
+    >
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-green-700">
         {eyebrow}
       </p>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminSummaryFooter } from "@/components/admin/admin-summary-footer";
+import { DonorManagementForm } from "@/app/admin/donatur/donor-management-form";
 import {
   type AdminDonor,
   type AdminSortDirection,
@@ -35,6 +36,7 @@ export default async function AdminDonorPage({
     sort: getDonorSort(getStringParam(resolvedSearchParams.sort)),
     direction: getSortDirection(getStringParam(resolvedSearchParams.direction)),
     selectedKey: getStringParam(resolvedSearchParams.donor),
+    label: getStringParam(resolvedSearchParams.label),
   };
   const donors = await getAdminDonors(filters);
   const pageQuery = buildPageQuery(resolvedSearchParams);
@@ -69,6 +71,7 @@ export default async function AdminDonorPage({
                   <th className="px-4 py-3 font-semibold">Donatur</th>
                   <th className="px-4 py-3 font-semibold">Kontak</th>
                   <th className="px-4 py-3 font-semibold">Settlement</th>
+                  <th className="px-4 py-3 font-semibold">Label</th>
                   <th className="px-4 py-3 font-semibold">Consent WA</th>
                   <th className="px-4 py-3 font-semibold">Aktivitas</th>
                   <th className="px-4 py-3 font-semibold">Detail</th>
@@ -99,6 +102,14 @@ export default async function AdminDonorPage({
                         {donor.settlementCount} settlement dari{" "}
                         {donor.donationCount} donasi
                       </p>
+                    </td>
+                    <td className="px-4 py-4 text-slate-700">
+                      <LabelList labels={donor.labels} />
+                      {donor.internalNote ? (
+                        <p className="mt-2 text-xs font-semibold text-amber-700">
+                          Ada catatan
+                        </p>
+                      ) : null}
                     </td>
                     <td className="px-4 py-4 text-slate-700">
                       <ConsentBadge donor={donor} />
@@ -159,10 +170,17 @@ function TableToolbar({
     pageSize: number;
     sort: DonorSortField;
     direction: AdminSortDirection;
+    label: string | null;
   };
 }) {
+  const exportQuery = new URLSearchParams();
+  if (filters.q) exportQuery.set("q", filters.q);
+  if (filters.activity) exportQuery.set("activity", filters.activity);
+  if (filters.label) exportQuery.set("label", filters.label);
+  exportQuery.set("sort", filters.sort);
+  exportQuery.set("direction", filters.direction);
   return (
-    <form className="grid gap-3 border-b border-slate-100 bg-white p-5 lg:grid-cols-6">
+    <form className="grid gap-3 border-b border-slate-100 bg-white p-5 lg:grid-cols-7">
       <input
         name="q"
         defaultValue={filters.q ?? ""}
@@ -178,6 +196,12 @@ function TableToolbar({
         <option value="settlement">Pernah settlement</option>
         <option value="no_settlement">Belum settlement</option>
       </select>
+      <input
+        name="label"
+        defaultValue={filters.label ?? ""}
+        placeholder="Filter label"
+        className="field"
+      />
       <select name="sort" defaultValue={filters.sort} className="field">
         {donorSortOptions.map((option) => (
           <option key={option.value} value={option.value}>
@@ -205,6 +229,12 @@ function TableToolbar({
         ))}
       </select>
       <button className="btn-primary">Filter</button>
+      <Link
+        href={`/api/admin/donors/export?${exportQuery.toString()}`}
+        className="btn-outline text-center"
+      >
+        Export CSV
+      </Link>
     </form>
   );
 }
@@ -243,6 +273,16 @@ function DonorDetail({
           <DetailRow label="Email" value={donor.email ?? "Tidak ada"} />
           <DetailRow label="WhatsApp" value={donor.phone ?? "Tidak ada"} />
           <DetailRow label="Consent WA" value={formatConsentStatus(donor)} />
+          <DetailRow
+            label="Label"
+            value={
+              donor.labels.length > 0 ? donor.labels.join(", ") : "Tidak ada"
+            }
+          />
+          <DetailRow
+            label="Catatan internal"
+            value={donor.internalNote ?? "Tidak ada"}
+          />
           <DetailRow
             label="Opt-in WA"
             value={
@@ -285,6 +325,7 @@ function DonorDetail({
             }
           />
         </dl>
+        <DonorManagementForm donor={donor} />
         <div className="mt-6 space-y-2">
           <Link
             href={`/admin/donasi?q=${encodeURIComponent(donor.email ?? donor.phone ?? donor.name)}`}
@@ -303,6 +344,30 @@ function DonorDetail({
           ))}
         </div>
       </aside>
+    </div>
+  );
+}
+
+function LabelList({ labels }: { labels: string[] }) {
+  if (labels.length === 0) {
+    return <span className="text-xs text-slate-400">Tanpa label</span>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {labels.slice(0, 3).map((label) => (
+        <span
+          key={label}
+          className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100"
+        >
+          {label}
+        </span>
+      ))}
+      {labels.length > 3 ? (
+        <span className="rounded-full bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-500 ring-1 ring-slate-200">
+          +{labels.length - 3}
+        </span>
+      ) : null}
     </div>
   );
 }

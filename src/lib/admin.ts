@@ -1,6 +1,7 @@
 import {
   DonationStatus,
   ExpenseApprovalStatus,
+  type Prisma,
 } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/db";
 import { getPublicDonorName } from "@/lib/reports";
@@ -46,6 +47,10 @@ export type AdminDonor = {
   lastDonationAt: Date | null;
   firstDonationAt: Date | null;
   donationOrderIds: string[];
+  profileId: string | null;
+  internalNote: string | null;
+  labels: string[];
+  mergedIntoId: string | null;
 };
 
 export type DonorFilterParams = {
@@ -56,6 +61,7 @@ export type DonorFilterParams = {
   sort: DonorSortField;
   direction: AdminSortDirection;
   selectedKey: string | null;
+  label: string | null;
 };
 
 export type AuditLogFilterParams = {
@@ -316,7 +322,7 @@ export async function getAdminAuditLogs(filters: AuditLogFilterParams) {
 
 export async function getAdminDonors(filters: DonorFilterParams) {
   const prisma = getPrisma();
-  const [donorUsers, donations] = await Promise.all([
+  const [donorUsers, donations, donorProfiles] = await Promise.all([
     prisma.user.findMany({
       where: { role: "donor" },
       select: { id: true, name: true, email: true },
@@ -340,6 +346,7 @@ export async function getAdminDonors(filters: DonorFilterParams) {
         paidAt: true,
       },
     }),
+    prisma.donorProfile.findMany({ where: { mergedIntoId: null } }),
   ]);
 
   const donors = new Map<string, AdminDonor>();
@@ -361,6 +368,10 @@ export async function getAdminDonors(filters: DonorFilterParams) {
       lastDonationAt: null,
       firstDonationAt: null,
       donationOrderIds: [],
+      profileId: null,
+      internalNote: null,
+      labels: [],
+      mergedIntoId: null,
     });
   }
 
@@ -389,6 +400,10 @@ export async function getAdminDonors(filters: DonorFilterParams) {
       lastDonationAt: null,
       firstDonationAt: null,
       donationOrderIds: [],
+      profileId: null,
+      internalNote: null,
+      labels: [],
+      mergedIntoId: null,
     };
 
     donor.name = preferExisting(donor.name, donation.donorName);
@@ -420,9 +435,25 @@ export async function getAdminDonors(filters: DonorFilterParams) {
     donors.set(key, donor);
   }
 
+  for (const profile of donorProfiles) {
+    const current = donors.get(profile.donorKey);
+    if (!current) continue;
+    current.profileId = profile.id;
+    current.name = profile.displayName ?? current.name;
+    current.email = profile.email ?? current.email;
+    current.phone = profile.phone ?? current.phone;
+    current.whatsappReminderOptIn = profile.whatsappReminderOptIn;
+    current.whatsappReminderOptInAt = profile.whatsappReminderOptInAt;
+    current.whatsappReminderOptOutAt = profile.whatsappReminderOptOutAt;
+    current.internalNote = profile.internalNote;
+    current.labels = parseLabels(profile.labels);
+    current.mergedIntoId = profile.mergedIntoId;
+  }
+
   const filtered = Array.from(donors.values())
     .filter((donor) => matchesDonorSearch(donor, filters.q))
     .filter((donor) => matchesDonorActivity(donor, filters.activity))
+    .filter((donor) => matchesDonorLabel(donor, filters.label))
     .sort((left, right) =>
       compareDonors(left, right, filters.sort, filters.direction),
     );
@@ -703,6 +734,14 @@ function matchesDonorSearch(donor: AdminDonor, query: string | null) {
     .some((value) => value.toLowerCase().includes(normalizedQuery));
 }
 
+function parseLabels(value: Prisma.JsonValue) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((label): label is string => typeof label === "string");
+}
+
 function matchesDonorActivity(donor: AdminDonor, activity: string | null) {
   if (activity === "settlement") {
     return donor.settlementCount > 0;
@@ -713,6 +752,17 @@ function matchesDonorActivity(donor: AdminDonor, activity: string | null) {
   }
 
   return true;
+}
+
+function matchesDonorLabel(donor: AdminDonor, label: string | null) {
+  if (!label) {
+    return true;
+  }
+
+  const labelKey = label.toLowerCase();
+  return donor.labels.some(
+    (donorLabel) => donorLabel.toLowerCase() === labelKey,
+  );
 }
 
 function compareDonors(

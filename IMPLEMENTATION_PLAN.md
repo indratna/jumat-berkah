@@ -80,6 +80,8 @@ Done
 
 ### 2026-05-30
 
+- Implemented Admin Donor Management Phase 1 — Donor CRM Basics. Added `DonorProfile` metadata model/migration separate from `Donation`, donor profile validation/label normalization tests, admin donor profile edit API/UI, WhatsApp consent editing, internal notes, labels, label filtering, filtered CSV export, and audit logs for profile writes/export. Donation amount/status/order ID/Midtrans fields, payment flow, webhook behavior, and public report privacy were not changed. Validation passed: `npm run lint`, `npm test` (120/120), `npm run build`.
+
 - Unified public landing-family headers for `/`, `/tentang`, `/laporan`, and `/donasi` with shared `PublicHeader`, consistent `Laporan`/`Tentang`/`Donasi Sekarang` navigation, and animated desktop active-pill styling. Added TDD coverage for public nav active-state helper. Validation passed: `npm run lint`, `npm test` (117/117), `npm run build`. Manual smoke covered all four pages, active states, CTA links, and mobile header stability.
 
 - Refined `/admin/profil` to match current admin shell instead of donor craft styling. Reused shared initials helper, upgraded hero/summary layout, and kept existing profile update plus password change behavior unchanged. Validation passed: `npm run lint`, `npm test` (116/116), `npm run build`.

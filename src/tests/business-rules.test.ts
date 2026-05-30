@@ -41,6 +41,10 @@ import {
 } from "@/lib/reports";
 import { buildAdminDonorKey } from "@/lib/admin";
 import {
+  normalizeDonorLabels,
+  validateDonorProfilePayload,
+} from "@/lib/admin-donor-profile";
+import {
   buildFridayCycleReportPdf,
   buildPublicReportCsv,
   buildReportTextLines,
@@ -95,6 +99,51 @@ test("admin donor aggregation keys prefer stable contact identity", () => {
     "email:budi@example.com",
   );
   assert.equal(buildAdminDonorKey({ phone: "0812-3456" }), "phone:08123456");
+});
+
+test("donor profile validation accepts contact note and labels", () => {
+  const result = validateDonorProfilePayload({
+    displayName: "  Budi  ",
+    email: " Budi@Example.Com ",
+    phone: "0812-3456-7890",
+    whatsappReminderOptIn: true,
+    internalNote: " Donatur rutin Jumat pertama. ",
+    labels: ["Rutin", " follow-up ", "rutin"],
+  });
+
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.deepEqual(result.data, {
+      displayName: "Budi",
+      email: "budi@example.com",
+      phone: "081234567890",
+      whatsappReminderOptIn: true,
+      internalNote: "Donatur rutin Jumat pertama.",
+      labels: ["Rutin", "follow-up"],
+    });
+  }
+});
+
+test("donor profile validation rejects consent without phone", () => {
+  const result = validateDonorProfilePayload({
+    displayName: "Budi",
+    whatsappReminderOptIn: true,
+  });
+
+  assert.equal(result.success, false);
+  if (!result.success) {
+    assert.equal(
+      result.errors.phone,
+      "Nomor WhatsApp wajib untuk opt-in pengingat.",
+    );
+  }
+});
+
+test("donor labels normalize and limit values", () => {
+  assert.deepEqual(normalizeDonorLabels([" VIP ", "vip", "Rutin"]), [
+    "VIP",
+    "Rutin",
+  ]);
 });
 
 test("admin donor settlement summary excludes pending donations", () => {

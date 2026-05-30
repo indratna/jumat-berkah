@@ -112,6 +112,7 @@ model User {
   weeklyTargets WeeklyTarget[]
   distributionReports DistributionReport[]
   auditLogs AuditLog[]
+  donorProfiles DonorProfile[]
 
   @@index([role])
   @@map("users")
@@ -147,6 +148,33 @@ model Donation {
   @@index([userId])
   @@index([whatsappReminderOptIn])
   @@map("donations")
+}
+
+model DonorProfile {
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  donorKey                String    @unique @map("donor_key")
+  userId                  String?   @map("user_id") @db.Uuid
+  displayName             String?   @map("display_name")
+  email                   String?
+  phone                   String?
+  whatsappReminderOptIn   Boolean   @default(false) @map("whatsapp_reminder_opt_in")
+  whatsappReminderOptInAt DateTime? @map("whatsapp_reminder_opt_in_at")
+  whatsappReminderOptOutAt DateTime? @map("whatsapp_reminder_opt_out_at")
+  internalNote            String?   @map("internal_note")
+  labels                  Json      @default("[]")
+  mergedIntoId            String?   @map("merged_into_id") @db.Uuid
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+
+  user       User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  mergedInto DonorProfile?  @relation("DonorProfileMerge", fields: [mergedIntoId], references: [id], onDelete: SetNull)
+  mergedFrom DonorProfile[] @relation("DonorProfileMerge")
+
+  @@index([userId])
+  @@index([email])
+  @@index([phone])
+  @@index([mergedIntoId])
+  @@map("donor_profiles")
 }
 
 model Expense {

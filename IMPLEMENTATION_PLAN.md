@@ -80,6 +80,8 @@ Done
 
 ### 2026-05-30
 
+- Fixed `/admin/donasi` sticky table header overlap and action button sizing after manual review. The page still uses a single vertical scrollbar, table header stickiness is applied per header cell to avoid row overlap, and auto-refresh now matches the PDF/CSV export button size with a sync icon plus green/red active state. Donation/payment/webhook/status/financial fields were not changed. Validation passed: `npm run lint`, `npm test` (121/121), `npm run build`.
+
 - Added single-scroll sticky controls and admin donation exports on `/admin/donasi`. The page keeps one vertical scrollbar, makes the page title/action bar sticky under the admin header, keeps the table header sticky below it, and adds icon-style PDF/CSV export links that use a new admin-guarded `/api/admin/donations/export` endpoint with audit logging. Donation/payment/webhook/status/financial fields were not changed. Validation passed: `npm run lint`, `npm test` (121/121), `npm run build`.
 
 - Removed nested vertical scrolling from `/admin/donasi` after manual UI review. Reverted the table body scroll container to horizontal overflow only, keeping a single page scrollbar while preserving the sticky table header for page scroll. No API, payment, webhook, database, donation status, or financial logic changed. Validation passed: `npm run lint`, `npm test` (121/121), `npm run build`.

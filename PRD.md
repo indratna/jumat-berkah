@@ -250,20 +250,30 @@ Halaman hasil setelah donatur membuat pembayaran.
 
 ### Deskripsi
 
-Donatur dapat login untuk melihat riwayat donasi pribadi. Login tidak boleh menjadi hambatan untuk berdonasi.
+Donatur dapat login atau daftar untuk melihat riwayat donasi pribadi, mengurangi input berulang, dan menerima opsi engagement lanjutan. Login tidak boleh menjadi hambatan untuk berdonasi.
 
 ### Kebutuhan Fungsional
 
-- Login via email magic link atau OAuth Google.
-- Profil donatur berisi nama dan email.
-- Riwayat donasi pribadi.
 - Donasi tanpa login tetap tersedia.
+- Halaman `/donasi` menampilkan pilihan non-blocking untuk masuk atau daftar akun donatur.
+- Donatur dapat masuk via Google atau email/password.
+- Donatur dapat daftar via Google atau email/password.
+- Signup email/password wajib verifikasi email sebelum akun dapat dipakai login.
+- Setelah donasi dibuat, halaman status dapat menawarkan CTA untuk menyimpan donasi ke akun jika donasi guest punya email.
+- Donasi guest hanya otomatis terhubung ke akun setelah donor membuktikan kepemilikan email yang sama.
+- Profil donatur berisi nama dan email.
+- Riwayat donasi pribadi tersedia di akun donatur.
+- Admin yang sedang login tidak diperlakukan sebagai donor pada `/donasi`.
 
 ### Acceptance Criteria
 
 - Donatur dapat berdonasi tanpa akun.
+- Donatur anonim melihat pilihan masuk/daftar tanpa harus login.
 - Donatur login dapat melihat donasi yang terhubung ke akunnya.
+- Donasi guest dengan email yang sama dapat muncul di riwayat setelah email akun diverifikasi.
+- Signup email/password tidak bisa dipakai login sebelum verifikasi email selesai.
 - Donasi anonim tidak menampilkan identitas publik.
+- Admin session tidak memunculkan prefill atau banner akun donatur di `/donasi`.
 
 ## 8.7 Dashboard Admin
 
@@ -1077,3 +1087,26 @@ Acceptance criteria:
 - Donatur tetap dapat melihat halaman status donasi terbaru dengan order id yang benar.
 - Tidak ada data donor privat yang terekspos pada popup handoff atau status publik.
 - Implementasi dijaga oleh helper terpusat (`snap-checkout.ts`) dengan unit test untuk popup vs fallback decision.
+
+### 21.20 v1.19 — Donor Auth & Session Hygiene
+
+Tujuan: membuat pilihan akun donatur terlihat di perjalanan donasi tanpa mewajibkan login, sekaligus memperbaiki pemisahan sesi admin dan donor di `/donasi`.
+
+Kebutuhan fungsional:
+
+- `/donasi` menampilkan banner non-blocking untuk masuk atau daftar akun donatur.
+- Donatur login melihat sapaan akun, link riwayat donasi, dan aksi logout di `/donasi`.
+- Admin session tidak menampilkan banner/prefill donor di `/donasi`.
+- `/daftar` mendukung signup Google dan email/password.
+- Signup email/password wajib verifikasi email sebelum login.
+- `/donasi/status/[orderId]` menawarkan CTA daftar akun jika guest donation memiliki email.
+- Guest donation otomatis terhubung ke akun hanya setelah kepemilikan email yang sama terverifikasi.
+
+Acceptance criteria:
+
+- Donasi tanpa login tetap bisa dilakukan.
+- Login/signup tidak menambah langkah wajib sebelum checkout.
+- Donor terverifikasi dapat melihat riwayat donasi yang terhubung ke akunnya.
+- Admin session tidak pernah diperlakukan sebagai donor session pada `/donasi`.
+- Donor phone tidak ditampilkan pada CTA signup atau permukaan publik.
+- Payment, webhook, dan status finansial tidak berubah.

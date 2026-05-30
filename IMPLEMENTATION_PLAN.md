@@ -13,7 +13,7 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 Current Phase: Phase 42 — Donation Checkout UX Enhancement  
 Overall Progress: 100%  
 Last Updated: 2026-05-30  
-Current Focus: Phase 42 done and manually verified on local sandbox (Snap popup happy path, popup close, and fallback redirect all pass; webhook source-of-truth confirmed by `pending` status surviving client callbacks). Next planned phase: Phase 43 — Security & Launch Blocker Fixes.
+Current Focus: Phase 42 done and manually verified on local sandbox (Snap popup happy path, popup close, and fallback redirect all pass; webhook source-of-truth confirmed by `pending` status surviving client callbacks). Next planned phase: Phase 43 — Donor Auth & Session Hygiene.
 Blockers: Live provider smoke remains required: Telegram public channel broadcast needs `TELEGRAM_PUBLIC_CHANNEL_ID=-100...` plus bot admin/post permission; production `BETTER_AUTH_SECRET` must be high entropy; Midtrans live QRIS and WhatsApp live send need provider credentials/templates; backup/restore production evidence remains required before stable launch.
 
 ### Phase Progress
@@ -63,7 +63,7 @@ Blockers: Live provider smoke remains required: Telegram public channel broadcas
 | Phase 40 | MVP Launch Readiness Audit | Done | 100% |
 | Phase 41 | Dashboard Layout Final Polish | Done | 100% |
 | Phase 42 | Donation Checkout UX Enhancement | Done | 100% |
-| Phase 43 | Security & Launch Blocker Fixes | Not Started | 0% |
+| Phase 43 | Donor Auth & Session Hygiene | Not Started | 0% |
 | Phase 44 | Targeted Refactor | Not Started | 0% |
 | Phase 45 | Stable MVP Launch Validation | Not Started | 0% |
 
@@ -79,6 +79,8 @@ Done
 ## 3. Work Log
 
 ### 2026-05-30
+
+- Approved and planned Phase 43 — Donor Auth & Session Hygiene. Scope moves the donor-auth banner, donor signup page, email verification, post-donation signup CTA, verified-email donation linking, and admin-safe `/donasi` session handling into Phase 43. Detailed design lives in `docs/superpowers/specs/2026-05-30-donor-auth-on-donation-page-design.md`; implementation plan lives in `docs/superpowers/plans/2026-05-30-donor-auth-on-donation-page.md`. No application code for this feature has been changed yet.
 
 - Manual sandbox Snap popup smoke for Phase 42 completed on `localhost:3037`. Tes 1 popup happy path: popup Midtrans muncul inline tanpa redirect, simulator QRIS sandbox membayar order `JB-20260530-E2FCD17D`, browser navigate ke `/donasi/status/JB-20260530-E2FCD17D`, status tetap `pending` karena webhook tidak menjangkau localhost (perilaku benar; client callback tidak boleh memutuskan settlement). Tes 2 popup close tanpa bayar: order `JB-20260530-9BC9495F`, popup ditutup, browser navigate ke status page, status `pending`. Tes 3 fallback redirect: `snap.js` di-block dari DevTools, submit form mengarahkan donor ke `https://app.sandbox.midtrans.com/snap/v4/redirection/...` lewat `redirectUrl`. Tes 4 server key tidak bocor: pencarian `Mid-server-...` dan `Mid-client-...` di `.next/static` dan `.next/server/app` keduanya kosong; jaminan Next.js bahwa env tanpa prefix `NEXT_PUBLIC_` tidak masuk client bundle dikonfirmasi. Tambahan: `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` ditambahkan ke `.env.local` setempat dengan value mirror dari `MIDTRANS_CLIENT_KEY`. Phase 42 acceptance criteria semuanya lulus.
 
@@ -624,6 +626,7 @@ Done
 | 2026-05-28 | Use Phase 40 audit findings to constrain Phase 41 and feed Phase 42–44 | Audit found no critical code-level blocker, but stable launch depends on production/provider checks; Phase 41 must stay dashboard UI-only, Phase 42 handles security/blockers, and Phase 44 handles live smoke |
 | 2026-05-30 | Phase 42 handoff uses Midtrans Snap popup with mandatory redirect fallback; popup callbacks navigate only and never mutate donation status | Improves checkout UX without touching webhook source-of-truth, donor privacy, or financial rules. Fallback to `redirectUrl` keeps flow safe when client key or Snap script is unavailable. Centralized helpers in `src/app/donasi/snap-checkout.ts` are unit-tested so popup vs redirect decisions cannot drift |
 | 2026-05-30 | Introduce browser-readable `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` while keeping `MIDTRANS_IS_PRODUCTION` server-only | Snap popup script needs a public client key on the browser, but production-mode flag should not be browser-exposed; resolved by reading `MIDTRANS_IS_PRODUCTION` in the `/donasi` server component and passing it as a prop to the client `MidtransSnapScript` loader |
+| 2026-05-30 | Run donor login/signup donation journey as Phase 43 — Donor Auth & Session Hygiene | Phase 42 smoke found admin/donor session ambiguity on `/donasi`; adding optional donor signup there also requires email verification, donor-owned donation linking, and admin-safe auth precedence. Keeping this in Phase 43 preserves launch-readiness focus while avoiding mandatory login or payment scope changes |
 
 ## 6. Execution Rules
 
@@ -2667,41 +2670,59 @@ npm run build
 
 Manual: verify popup open, popup close, fallback redirect, pending flow, and status-page handoff.
 
-# Phase 43 — Security & Launch Blocker Fixes
+# Phase 43 — Donor Auth & Session Hygiene
 
 ## Goal
 
-Fix critical and high-priority launch blockers found during Phase 40.
+Add optional donor login/signup entry points to the donation journey while fixing `/donasi` session hygiene so admin sessions are never treated as donor sessions.
 
 ## Scope
 
 In-scope:
 
-- Production secret/env hardening.
-- Admin guard, webhook, cron, privacy, payment-safety, and financial audit-log fixes when identified by Phase 40.
-- Tests and documentation for each fixed blocker.
+- Non-blocking donor login/signup banner on `/donasi`.
+- Post-donation signup CTA on `/donasi/status/[orderId]` when a guest donation has an email.
+- Donor signup with Google and email/password.
+- Required email verification for email/password donor signup.
+- Verified-email linking of guest donations to donor accounts.
+- Admin-safe auth resolution on `/donasi`: admin session wins and suppresses donor prefill/banner.
+- Tests and documentation for auth/session/privacy behavior.
+- Critical/high Phase 40 security or launch blockers only if directly related to auth/session hygiene.
 
 Out-of-scope:
 
-- Cosmetic UI polish unrelated to blockers.
-- Deep refactor not required to fix a blocker.
-- New product features.
+- Making login mandatory before donation.
+- Payment, Midtrans, webhook, or financial status changes.
+- Recurring auto donation.
+- Claiming donations by order ID when signup email differs.
+- Cosmetic redesign unrelated to donor auth/session hygiene.
+- Deep refactor not required for this phase.
 
 ## Tasks
 
-- [ ] Prioritize Phase 40 blockers by launch impact.
-- [ ] Fix only critical/high blockers approved for this phase.
-- [ ] Resolve donor-prefill leak on `/donasi` for users authenticated as admin via Better Auth (skip donor prefill when the same email also has admin role, or when an admin session is active).
-- [ ] Add or update tests for fixed security/privacy/payment behavior.
-- [ ] Update docs and `.env.example` if configuration behavior changes.
+- [ ] Implement banner resolver and tests for anonymous, donor, and admin states.
+- [ ] Add `/donasi` donor auth banner and remove duplicate in-form "Masuk sebagai" copy.
+- [ ] Resolve donor-prefill leak on `/donasi` for users authenticated as admin via Better Auth or legacy admin cookie.
+- [ ] Add donor email verification template and Better Auth verification hooks.
+- [ ] Add verified-email donation linking helper with tests and audit log.
+- [ ] Add donor signup page `/daftar` with Google and email/password signup.
+- [ ] Add `/cek-email` handoff and login query-param support.
+- [ ] Add post-donation signup CTA on `/donasi/status/[orderId]` without exposing donor phone.
+- [ ] Update PRD, Technical Spec, and Implementation Plan.
 - [ ] Run automated validation.
 - [ ] Update Blockers, Decision Log, and Work Log.
 
 ## Acceptance Criteria
 
-- Critical/high launch blockers from Phase 40 are fixed or explicitly documented as external/live-provider dependencies.
-- Security/privacy/payment fixes have tests or documented manual verification.
-- No unrelated refactor or feature scope enters this phase.
+- Donor can still donate without login.
+- Anonymous visitor on `/donasi` sees non-blocking login/signup choices.
+- Logged-in donor on `/donasi` sees account/history/logout actions.
+- Admin session on `/donasi` never gets donor prefill or donor banner.
+- Email/password signup requires verification before login.
+- Google signup remains available.
+- Guest donations link to donor account only after verified ownership of the same email.
+- Public donor privacy rules remain unchanged; anonymous donations still display as `Anonim` publicly.
+- No payment, webhook, or financial status behavior changes.
 
 ## Validation
 
@@ -2711,7 +2732,7 @@ npm test
 npm run build
 ```
 
-Manual: verify each fixed blocker using the reproduction or audit check documented in Phase 40.
+Manual: verify anonymous banner, donor banner, admin-hidden banner, `/daftar`, `/cek-email`, verification email, status-page CTA, account donation history linking, and unchanged Snap popup/redirect donation flow.
 
 # Phase 44 — Targeted Refactor
 

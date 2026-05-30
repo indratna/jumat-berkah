@@ -634,6 +634,15 @@ Allowed after optional login:
 - Personal donation history.
 - Profile basics.
 
+Donor auth rules:
+
+- Donation without login remains allowed.
+- Donor login/signup may be offered on `/donasi`, but must not block checkout.
+- Donor signup supports Google and email/password.
+- Email/password donor signup requires email verification before login.
+- Guest donations may be linked to a donor account only after verified ownership of the same email.
+- Admin sessions take precedence over donor resolution on `/donasi`; if a legacy admin cookie or Better Auth admin session exists, donor banner and donor prefill must be suppressed.
+
 ### 10.3 Admin Access
 
 Requires admin role:
@@ -773,6 +782,7 @@ Planned auth capabilities:
 
 - Google OAuth for admin and donor users.
 - Email/password login.
+- Email/password donor signup with required email verification.
 - Password reset/change password.
 - Session management via Better Auth.
 - Profile image from OAuth provider.
@@ -784,6 +794,9 @@ BETTER_AUTH_SECRET=
 BETTER_AUTH_URL=https://berkahkaryo.my.id
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
+EMAIL_PROVIDER=resend
+EMAIL_FROM=
+RESEND_API_KEY=
 ```
 
 Security rules:
@@ -791,7 +804,10 @@ Security rules:
 - Google OAuth success does not imply admin access.
 - Admin authorization must check a server-side role/allowlist.
 - Donor authorization must limit access to donor-owned records only.
-- Password reset tokens must be time-limited and single-use.
+- Admin session resolution must happen before donor session resolution on `/donasi`; admin sessions must not receive donor prefill or donor account copy.
+- Email/password donor signup must not create an active login session until email verification succeeds.
+- Guest donations may be attached to a donor account only after verified ownership of the same normalized email.
+- Password reset and email verification tokens must be time-limited and single-use where supported by Better Auth.
 - Password/session tables must not be exposed to client components.
 - Existing login-code flow must be either migrated with fallback or explicitly removed after validation.
 
@@ -800,6 +816,9 @@ Data model direction:
 - Better Auth may create/use auth tables such as user/session/account/verification.
 - Existing domain models (`donations`, `expenses`, audit logs) remain source of truth for financial data.
 - Any bridge between Better Auth user and app user must preserve existing role and privacy rules.
+- `donations.user_id` remains the donor history link. Guest donation linking uses `donor_email` only after that email is verified for the donor account.
+- Linking guest donations must be idempotent and must not alter amount, payment status, privacy flags, Midtrans fields, or webhook logs.
+- Linking guest donations should create an audit log entry when at least one donation is attached.
 
 ### 15.3 Email Notification Architecture
 
@@ -1123,3 +1142,27 @@ Technical rules:
 - Snap-popup checkout UX changes must not alter request validation, order creation, donor privacy rules, or payment amount rules.
 - Snap script loading must fail safely without blocking donor from paying via redirect flow.
 - Helpers `buildDonationStatusUrl`, `resolveSnapCallbackDestination`, `canUseSnapPopup`, and `resolveFallbackRedirect` in `src/app/donasi/snap-checkout.ts` centralize popup vs redirect decisions and are covered by unit tests.
+
+### 15.19 Donor Auth & Session Hygiene
+
+Planned direction:
+
+- `/donasi` shows a non-blocking donor auth banner for anonymous visitors: links to `/masuk?next=/donasi` and `/daftar?next=/donasi`.
+- Logged-in donors see account context, `/akun/donasi` shortcut, and logout action on `/donasi`.
+- Admin sessions suppress donor banner and donor prefill on `/donasi`.
+- `/daftar` supports Google signup and email/password signup.
+- Email/password signup requires email verification before login.
+- `/cek-email` explains verification and exposes resend/login actions.
+- `/donasi/status/[orderId]` shows a signup CTA only when the current visitor is not a donor and the donation has a donor email.
+- Signup from status page pre-fills donor name/email using safe donation fields; donor phone is never exposed in CTA.
+- Verified donor account linking updates orphan guest donations (`user_id IS NULL`) only when `donor_email` matches the verified account email.
+
+Technical rules:
+
+- Donation without login remains valid.
+- Login/signup must not add a mandatory checkout step.
+- Admin auth check must run before donor auth check on `/donasi`.
+- Guest donation linking must be idempotent and audited.
+- Linking must not alter donation amount, status, privacy flags, or payment fields.
+- Anonymous/public-name privacy rules remain unchanged after account linking.
+- Email provider must be configured and smoke-tested before relying on email/password signup in production; Google signup remains available as fallback.

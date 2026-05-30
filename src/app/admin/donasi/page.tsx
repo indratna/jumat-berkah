@@ -58,9 +58,9 @@ export default async function AdminDonationsPage({
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <TableToolbar filters={filters} />
         {donations.items.length > 0 ? (
-          <div className="overflow-x-auto">
+          <div className="max-h-[62dvh] overflow-auto">
             <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-              <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <thead className="sticky top-0 z-10 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[0_1px_0_0_rgba(226,232,240,1)]">
                 <tr>
                   <th className="px-4 py-3 font-semibold">
                     <SortHeader

@@ -51,6 +51,7 @@ import {
   normalizeWhatsAppPhone,
   sendWhatsAppTemplateMessage,
 } from "@/lib/whatsapp-reminders";
+import { getProfileInitials } from "@/lib/profile";
 
 test("admin navigation keeps every current admin route reachable", () => {
   const navigationHrefs = new Set([
@@ -237,6 +238,12 @@ test("password change validation accepts valid payload", () => {
   if (result.success) {
     assert.equal(result.data.newPassword, "new-password");
   }
+});
+
+test("profile initials prefer first two words and fallback to JB", () => {
+  assert.equal(getProfileInitials("Jumat Berkah"), "JB");
+  assert.equal(getProfileInitials(" donor@example.com "), "D");
+  assert.equal(getProfileInitials(""), "JB");
 });
 
 test("donation validation rejects invalid amount", () => {

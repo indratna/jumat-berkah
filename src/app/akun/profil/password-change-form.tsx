@@ -49,7 +49,7 @@ export function PasswordChangeForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <PasswordField
         id="current-password"
         label="Password saat ini"
@@ -76,7 +76,7 @@ export function PasswordChangeForm() {
         <p className="text-sm font-semibold text-rose-700">{errors.auth}</p>
       ) : null}
       {status === "success" ? (
-        <p className="text-sm font-semibold text-green-700">
+        <p className="text-sm font-semibold text-[color:var(--craft-leaf)]">
           Password berhasil diperbarui. Sesi lain sudah dicabut.
         </p>
       ) : null}
@@ -101,7 +101,10 @@ function PasswordField(input: {
 }) {
   return (
     <div>
-      <label htmlFor={input.id} className="text-sm font-semibold text-slate-950">
+      <label
+        htmlFor={input.id}
+        className="text-sm font-semibold text-[color:var(--craft-ink)]"
+      >
         {input.label}
       </label>
       <input

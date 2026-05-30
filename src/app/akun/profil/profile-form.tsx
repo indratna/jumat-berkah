@@ -53,11 +53,11 @@ export function ProfileForm({ initialName }: ProfileFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
         <label
           htmlFor="name"
-          className="text-sm font-semibold text-slate-950"
+          className="text-sm font-semibold text-[color:var(--craft-ink)]"
         >
           Nama tampilan
         </label>
@@ -70,15 +70,16 @@ export function ProfileForm({ initialName }: ProfileFormProps) {
           className="field mt-2 text-sm"
           placeholder="Nama tampilan"
         />
-        <p className="mt-2 text-xs text-slate-500">
-          Email tidak dapat diubah dari halaman ini agar akses admin/donor tetap
-          aman.
+        <p className="mt-2 text-xs leading-6 text-[color:var(--craft-ink-soft)]">
+          Email tidak dapat diubah dari halaman ini agar akses akun tetap aman.
         </p>
       </div>
 
-      {error ? <p className="text-sm font-semibold text-rose-700">{error}</p> : null}
+      {error ? (
+        <p className="text-sm font-semibold text-rose-700">{error}</p>
+      ) : null}
       {status === "success" ? (
-        <p className="text-sm font-semibold text-green-700">
+        <p className="text-sm font-semibold text-[color:var(--craft-leaf)]">
           Profil berhasil diperbarui.
         </p>
       ) : null}

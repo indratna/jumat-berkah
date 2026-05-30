@@ -11,9 +11,6 @@ export function DonorLoginForm({
   initialEmail?: string;
   next?: string;
 }) {
-  const [method, setMethod] = useState<"signin" | "signup" | "legacy">(
-    "signin",
-  );
   const [name, setName] = useState("");
   const [email, setEmail] = useState(initialEmail);
   const [loginCode, setLoginCode] = useState("");
@@ -59,29 +56,6 @@ export function DonorLoginForm({
     window.location.href = next;
   }
 
-  async function handlePasswordSignUp(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
-
-    const { error: signUpError } = await authClient.signUp.email({
-      email,
-      password,
-      name,
-      callbackURL: next,
-    });
-
-    if (signUpError) {
-      setError(
-        "Pendaftaran gagal. Pastikan email valid dan password minimal 8 karakter.",
-      );
-      setIsSubmitting(false);
-      return;
-    }
-
-    window.location.href = `/cek-email?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`;
-  }
-
   async function handleLegacySubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
@@ -103,150 +77,79 @@ export function DonorLoginForm({
   }
 
   return (
-    <div className="mt-8 space-y-6">
+    <div className="craft-card-strong space-y-6 p-6">
       <button
         type="button"
         onClick={handleGoogleLogin}
-        className="w-full rounded-lg border border-slate-300 bg-white px-6 py-3 font-semibold text-green-700 shadow-sm transition hover:bg-slate-50"
+        className="w-full rounded-full border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] px-5 py-3 font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
       >
         Masuk dengan Google
       </button>
 
-      <div className="grid grid-cols-3 rounded-lg bg-slate-50 p-1 text-xs font-semibold text-slate-700 sm:text-sm">
-        <button
-          type="button"
-          onClick={() => setMethod("signin")}
-          className={`rounded-lg px-3 py-2 ${method === "signin" ? "bg-white shadow-sm" : "text-green-700"}`}
-        >
-          Masuk
-        </button>
-        <button
-          type="button"
-          onClick={() => setMethod("signup")}
-          className={`rounded-lg px-3 py-2 ${method === "signup" ? "bg-white shadow-sm" : "text-green-700"}`}
-        >
-          Daftar
-        </button>
-        <button
-          type="button"
-          onClick={() => setMethod("legacy")}
-          className={`rounded-lg px-3 py-2 ${method === "legacy" ? "bg-white shadow-sm" : "text-green-700"}`}
-        >
-          Kode
-        </button>
+      <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--craft-ink-soft)]">
+        <span className="h-px flex-1 bg-[color:var(--craft-line)]" />
+        atau
+        <span className="h-px flex-1 bg-[color:var(--craft-line)]" />
       </div>
 
-      {method === "signin" ? (
-        <form
-          onSubmit={handlePasswordSignIn}
-          className="space-y-5 rounded-xl border border-slate-200 bg-slate-50/50 p-4"
-        >
-          <p className="text-sm font-semibold text-slate-700">
-            Masuk dengan email dan password
-          </p>
-          <div>
-            <label className="text-sm font-semibold" htmlFor="email-password">
-              Email
-            </label>
-            <input
-              id="email-password"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="field mt-2"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-semibold" htmlFor="password">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="field mt-2"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-lg bg-green-700 px-6 py-3 font-semibold text-white disabled:bg-slate-300"
+      <form onSubmit={handlePasswordSignIn} className="space-y-5">
+        <p className="text-sm font-bold uppercase tracking-[0.14em] text-[color:var(--craft-leaf)]">
+          Masuk dengan email
+        </p>
+        <div>
+          <label
+            htmlFor="email-password"
+            className="text-sm font-semibold text-[color:var(--craft-ink)]"
           >
-            {isSubmitting ? "Masuk…" : "Masuk"}
-          </button>
-        </form>
-      ) : null}
-
-      {method === "signup" ? (
-        <form
-          onSubmit={handlePasswordSignUp}
-          className="space-y-5 rounded-xl border border-slate-200 bg-white p-4"
-        >
-          <p className="text-sm font-semibold text-slate-700">
-            Daftar akun donatur baru
-          </p>
-          <div>
-            <label className="text-sm font-semibold" htmlFor="name">
-              Nama
-            </label>
-            <input
-              id="name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              className="field mt-2"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-semibold" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="field mt-2"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-semibold" htmlFor="signup-password">
-              Password
-            </label>
-            <input
-              id="signup-password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="field mt-2"
-              minLength={8}
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-lg bg-green-700 px-6 py-3 font-semibold text-white disabled:bg-slate-300"
+            Email
+          </label>
+          <input
+            id="email-password"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="field mt-2"
+            required
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="password"
+            className="text-sm font-semibold text-[color:var(--craft-ink)]"
           >
-            {isSubmitting ? "Mendaftar…" : "Daftar Donatur"}
-          </button>
-        </form>
-      ) : null}
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="field mt-2"
+            required
+          />
+        </div>
 
-      {method === "legacy" ? (
-        <form
-          onSubmit={handleLegacySubmit}
-          className="space-y-5 rounded-xl border border-slate-200 bg-slate-50 p-4"
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="btn-primary w-full disabled:bg-slate-300"
         >
-          <p className="text-sm font-semibold text-slate-700">
-            Fallback kode donatur sementara
-          </p>
+          {isSubmitting ? "Masuk…" : "Masuk"}
+        </button>
+      </form>
+
+      <details className="rounded-2xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper)] p-4 text-sm text-[color:var(--craft-ink-soft)]">
+        <summary className="cursor-pointer font-bold text-[color:var(--craft-ink)]">
+          Masuk dengan kode donatur lama
+        </summary>
+        <form onSubmit={handleLegacySubmit} className="mt-4 space-y-4">
           <div>
-            <label className="text-sm font-semibold" htmlFor="legacy-name">
+            <label
+              htmlFor="legacy-name"
+              className="text-sm font-semibold text-[color:var(--craft-ink)]"
+            >
               Nama
             </label>
             <input
@@ -258,7 +161,10 @@ export function DonorLoginForm({
             />
           </div>
           <div>
-            <label className="text-sm font-semibold" htmlFor="legacy-email">
+            <label
+              htmlFor="legacy-email"
+              className="text-sm font-semibold text-[color:var(--craft-ink)]"
+            >
               Email
             </label>
             <input
@@ -271,7 +177,10 @@ export function DonorLoginForm({
             />
           </div>
           <div>
-            <label className="text-sm font-semibold" htmlFor="loginCode">
+            <label
+              htmlFor="loginCode"
+              className="text-sm font-semibold text-[color:var(--craft-ink)]"
+            >
               Kode donatur
             </label>
             <input
@@ -286,13 +195,12 @@ export function DonorLoginForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-lg bg-slate-800 px-6 py-3 font-semibold text-white disabled:bg-slate-300"
+            className="w-full rounded-full bg-slate-800 px-5 py-3 font-bold text-white disabled:bg-slate-300"
           >
-            {isSubmitting ? "Masuk…" : "Masuk dengan Kode Donatur"}
+            {isSubmitting ? "Masuk…" : "Masuk dengan kode"}
           </button>
         </form>
-      ) : null}
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      </details>
     </div>
   );
 }

@@ -80,6 +80,8 @@ Done
 
 ### 2026-05-30
 
+- Further compacted `/admin/donasi` table controls. Moved sort controls from toolbar into sortable table headers, moved total/page meta to the table footer, and replaced previous/next text with compact arrow pagination beside the row-count selector. No API, payment, webhook, database, donation status, or financial logic changed. Validation passed: `npm run lint`, `npm test` (121/121), `npm run build`.
+
 - Audited and simplified `/admin/donasi` UI. Removed duplicate status tabs, removed duplicate admin summary footer, kept status filtering in the main filter form, moved row-count control to footer only, shortened auto-refresh copy, and folded paid date into the status column while renaming `Detail` to `Catatan`. No API, payment, webhook, database, donation status, or financial logic changed. Validation passed: `npm run lint`, `npm test` (121/121), `npm run build`.
 
 - Refined Admin Donor Management table actions. Renamed donor table `Detail` column to `Aksi`, split donor modal into three focused actions (`Lihat`/eye for read-only summary, `Edit`/pencil for profile management, `Gabungkan`/link for duplicate merge), and kept existing donor management APIs/payment/webhook/donation fields unchanged. Validation passed: `npm run lint`, `npm test` (121/121), `npm run build`.

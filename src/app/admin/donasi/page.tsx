@@ -61,11 +61,6 @@ export default async function AdminDonationsPage({
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <TableToolbar filters={filters} />
-        <TableMeta
-          total={donations.total}
-          page={donations.page}
-          totalPages={donations.totalPages}
-        />
         {donations.items.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
@@ -73,10 +68,37 @@ export default async function AdminDonationsPage({
                 <tr>
                   <th className="px-4 py-3 font-semibold">Order ID</th>
                   <th className="px-4 py-3 font-semibold">Donatur</th>
-                  <th className="px-4 py-3 font-semibold">Nominal</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold">
+                    <SortHeader
+                      query={pageQuery}
+                      field="amount"
+                      activeSort={filters.sort}
+                      direction={filters.direction}
+                    >
+                      Nominal
+                    </SortHeader>
+                  </th>
+                  <th className="px-4 py-3 font-semibold">
+                    <SortHeader
+                      query={pageQuery}
+                      field="status"
+                      activeSort={filters.sort}
+                      direction={filters.direction}
+                    >
+                      Status
+                    </SortHeader>
+                  </th>
                   <th className="px-4 py-3 font-semibold">Metode</th>
-                  <th className="px-4 py-3 font-semibold">Dibuat</th>
+                  <th className="px-4 py-3 font-semibold">
+                    <SortHeader
+                      query={pageQuery}
+                      field="createdAt"
+                      activeSort={filters.sort}
+                      direction={filters.direction}
+                    >
+                      Dibuat
+                    </SortHeader>
+                  </th>
                   <th className="px-4 py-3 font-semibold">Catatan</th>
                 </tr>
               </thead>
@@ -124,6 +146,7 @@ export default async function AdminDonationsPage({
           totalPages={donations.totalPages}
           query={pageQuery}
           pageSize={filters.pageSize}
+          total={donations.total}
         />
       </div>
     </main>
@@ -174,46 +197,44 @@ function TableToolbar({
         defaultValue={filters.to ?? ""}
         className="field lg:col-span-2"
       />
+      <input type="hidden" name="sort" value={filters.sort} />
+      <input type="hidden" name="direction" value={filters.direction} />
       <button className="btn-primary lg:col-span-3">Filter</button>
-      <select
-        name="sort"
-        defaultValue={filters.sort}
-        className="field lg:col-span-3"
-      >
-        {donationSortOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            Urut: {option.label}
-          </option>
-        ))}
-      </select>
-      <select
-        name="direction"
-        defaultValue={filters.direction}
-        className="field lg:col-span-2"
-      >
-        <option value="desc">Terbesar/terbaru</option>
-        <option value="asc">Terkecil/terlama</option>
-      </select>
     </form>
   );
 }
 
-function TableMeta({
-  total,
-  page,
-  totalPages,
+function SortHeader({
+  query,
+  field,
+  activeSort,
+  direction,
+  children,
 }: {
-  total: number;
-  page: number;
-  totalPages: number;
+  query: URLSearchParams;
+  field: DonationSortField;
+  activeSort: DonationSortField;
+  direction: AdminSortDirection;
+  children: React.ReactNode;
 }) {
+  const isActive = activeSort === field;
+  const nextDirection = isActive && direction === "desc" ? "asc" : "desc";
+  const nextQuery = new URLSearchParams(query);
+  nextQuery.set("sort", field);
+  nextQuery.set("direction", nextDirection);
+  nextQuery.delete("page");
+
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 text-sm text-slate-600">
-      <span>Total {total} donasi</span>
-      <span>
-        Halaman {page} dari {totalPages}
+    <Link
+      href={`?${nextQuery.toString()}`}
+      scroll={false}
+      className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-950"
+    >
+      <span>{children}</span>
+      <span aria-hidden="true" className="text-[10px]">
+        {isActive ? (direction === "desc" ? "↓" : "↑") : "↕"}
       </span>
-    </div>
+    </Link>
   );
 }
 
@@ -222,39 +243,49 @@ function TableFooter({
   totalPages,
   query,
   pageSize,
+  total,
 }: {
   page: number;
   totalPages: number;
   query: URLSearchParams;
   pageSize: number;
+  total: number;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 text-sm">
-      <div className="flex gap-2">
-        <PaginationLink page={page - 1} disabled={page <= 1} query={query}>
-          Sebelumnya
-        </PaginationLink>
-        <PaginationLink
-          page={page + 1}
-          disabled={page >= totalPages}
-          query={query}
-        >
-          Berikutnya
-        </PaginationLink>
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 text-sm text-slate-600">
+      <div className="flex flex-wrap gap-3">
+        <span>Total {total} donasi</span>
+        <span>
+          Halaman {page}/{totalPages}
+        </span>
       </div>
-      <AutoSubmitSelect
-        name="pageSize"
-        label="Baris"
-        defaultValue={String(pageSize)}
-        hiddenFields={Array.from(query.entries()).map(([name, value]) => ({
-          name,
-          value,
-        }))}
-        options={[10, 25, 50, 100].map((size) => ({
-          value: String(size),
-          label: String(size),
-        }))}
-      />
+      <div className="flex items-center gap-2">
+        <AutoSubmitSelect
+          name="pageSize"
+          label="Baris"
+          defaultValue={String(pageSize)}
+          hiddenFields={Array.from(query.entries()).map(([name, value]) => ({
+            name,
+            value,
+          }))}
+          options={[10, 25, 50, 100].map((size) => ({
+            value: String(size),
+            label: String(size),
+          }))}
+        />
+        <div className="flex gap-1">
+          <PaginationLink page={page - 1} disabled={page <= 1} query={query}>
+            ←
+          </PaginationLink>
+          <PaginationLink
+            page={page + 1}
+            disabled={page >= totalPages}
+            query={query}
+          >
+            →
+          </PaginationLink>
+        </div>
+      </div>
     </div>
   );
 }

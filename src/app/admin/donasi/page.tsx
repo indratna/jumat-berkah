@@ -1,8 +1,6 @@
 import Link from "next/link";
 
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
-import { AdminSummaryFooter } from "@/components/admin/admin-summary-footer";
-import { AdminTopTabs } from "@/components/admin/admin-top-tabs";
 import { AutoSubmitSelect } from "../auto-submit-select";
 import { DonationAutoRefresh } from "./donation-auto-refresh";
 import { DonationStatus } from "@/generated/prisma/client";
@@ -45,7 +43,6 @@ export default async function AdminDonationsPage({
   };
   const donations = await getAdminDonations(filters);
   const pageQuery = buildPageQuery(resolvedSearchParams);
-  const statusTabs = buildStatusTabs(resolvedSearchParams, filters.status);
 
   return (
     <main className="mx-auto max-w-6xl space-y-4">
@@ -56,13 +53,11 @@ export default async function AdminDonationsPage({
             Daftar donasi dan status pembayaran.
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Data otomatis disegarkan tiap 10 detik saat halaman terbuka.
+            Pantau donasi masuk dan status pembayaran.
           </p>
         </div>
         <DonationAutoRefresh />
       </div>
-
-      <AdminTopTabs tabs={statusTabs} />
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <TableToolbar filters={filters} />
@@ -82,7 +77,7 @@ export default async function AdminDonationsPage({
                   <th className="px-4 py-3 font-semibold">Status</th>
                   <th className="px-4 py-3 font-semibold">Metode</th>
                   <th className="px-4 py-3 font-semibold">Dibuat</th>
-                  <th className="px-4 py-3 font-semibold">Detail</th>
+                  <th className="px-4 py-3 font-semibold">Catatan</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
@@ -97,6 +92,11 @@ export default async function AdminDonationsPage({
                     </td>
                     <td className="px-4 py-4">
                       <AdminStatusBadge status={donation.status} />
+                      <p className="mt-2 text-xs text-slate-500">
+                        {donation.paidAt
+                          ? `Dibayar: ${formatAdminDate(donation.paidAt)}`
+                          : "Belum dibayar"}
+                      </p>
                     </td>
                     <td className="px-4 py-4 uppercase">
                       {donation.paymentMethod}
@@ -104,13 +104,8 @@ export default async function AdminDonationsPage({
                     <td className="px-4 py-4">
                       {formatAdminDate(donation.createdAt)}
                     </td>
-                    <td className="px-4 py-4 text-slate-700">
-                      <p>
-                        {donation.paidAt
-                          ? `Dibayar: ${formatAdminDate(donation.paidAt)}`
-                          : "Belum dibayar"}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
+                    <td className="max-w-xs px-4 py-4 text-slate-700">
+                      <p className="line-clamp-2 text-sm">
                         {donation.message ?? "Tanpa pesan"}
                       </p>
                     </td>
@@ -124,17 +119,6 @@ export default async function AdminDonationsPage({
             Belum ada donasi yang cocok dengan filter ini.
           </div>
         )}
-        <AdminSummaryFooter
-          items={[
-            { label: "Total cocok", value: String(donations.total) },
-            {
-              label: "Halaman",
-              value: `${donations.page}/${donations.totalPages}`,
-            },
-            { label: "Baris", value: String(filters.pageSize) },
-            { label: "Status", value: filters.status ?? "Semua" },
-          ]}
-        />
         <TableFooter
           page={donations.page}
           totalPages={donations.totalPages}
@@ -154,23 +138,22 @@ function TableToolbar({
     q: string | null;
     from: string | null;
     to: string | null;
-    pageSize: number;
     sort: DonationSortField;
     direction: AdminSortDirection;
   };
 }) {
   return (
-    <form className="grid gap-3 border-b border-slate-100 bg-white p-5 lg:grid-cols-6">
+    <form className="grid gap-3 border-b border-slate-100 bg-white p-5 lg:grid-cols-12">
       <input
         name="q"
         defaultValue={filters.q ?? ""}
         placeholder="Cari order ID atau nama"
-        className="field lg:col-span-2"
+        className="field lg:col-span-3"
       />
       <select
         name="status"
         defaultValue={filters.status ?? ""}
-        className="field"
+        className="field lg:col-span-2"
       >
         <option value="">Semua status</option>
         {Object.values(DonationStatus).map((status) => (
@@ -183,16 +166,20 @@ function TableToolbar({
         name="from"
         type="date"
         defaultValue={filters.from ?? ""}
-        className="field"
+        className="field lg:col-span-2"
       />
       <input
         name="to"
         type="date"
         defaultValue={filters.to ?? ""}
-        className="field"
+        className="field lg:col-span-2"
       />
-      <button className="btn-primary">Filter</button>
-      <select name="sort" defaultValue={filters.sort} className="field">
+      <button className="btn-primary lg:col-span-3">Filter</button>
+      <select
+        name="sort"
+        defaultValue={filters.sort}
+        className="field lg:col-span-3"
+      >
         {donationSortOptions.map((option) => (
           <option key={option.value} value={option.value}>
             Urut: {option.label}
@@ -202,21 +189,10 @@ function TableToolbar({
       <select
         name="direction"
         defaultValue={filters.direction}
-        className="field"
+        className="field lg:col-span-2"
       >
         <option value="desc">Terbesar/terbaru</option>
         <option value="asc">Terkecil/terlama</option>
-      </select>
-      <select
-        name="pageSize"
-        defaultValue={String(filters.pageSize)}
-        className="field"
-      >
-        {[10, 25, 50, 100].map((size) => (
-          <option key={size} value={size}>
-            {size} baris
-          </option>
-        ))}
       </select>
     </form>
   );
@@ -311,49 +287,6 @@ function PaginationLink({
       {children}
     </Link>
   );
-}
-
-function buildStatusTabs(
-  params: Record<string, string | string[] | undefined>,
-  activeStatus: string | null,
-) {
-  return [
-    {
-      href: buildStatusHref(params, null),
-      label: "Semua",
-      active: !activeStatus,
-    },
-    {
-      href: buildStatusHref(params, DonationStatus.pending),
-      label: "Pending",
-      active: activeStatus === DonationStatus.pending,
-    },
-    {
-      href: buildStatusHref(params, DonationStatus.settlement),
-      label: "Settlement",
-      active: activeStatus === DonationStatus.settlement,
-    },
-    {
-      href: buildStatusHref(params, DonationStatus.failure),
-      label: "Failed/Expired",
-      active:
-        activeStatus === DonationStatus.failure ||
-        activeStatus === DonationStatus.expire,
-    },
-  ];
-}
-
-function buildStatusHref(
-  params: Record<string, string | string[] | undefined>,
-  status: DonationStatus | null,
-) {
-  const query = buildPageQuery(params);
-  query.delete("status");
-  if (status) {
-    query.set("status", status);
-  }
-  const queryString = query.toString();
-  return queryString ? `?${queryString}` : "?";
 }
 
 function buildPageQuery(params: Record<string, string | string[] | undefined>) {

@@ -134,12 +134,6 @@ export function DonationForm({
         </div>
       </div>
 
-      {donor ? (
-        <div className="rounded-2xl border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] p-4 text-sm leading-6 text-[color:var(--craft-ink)]">
-          Masuk sebagai <strong>{donor.name ?? donor.email}</strong>. Donasi ini
-          akan masuk ke riwayat akun Anda.
-        </div>
-      ) : null}
       <div>
         <label
           className="text-sm font-semibold text-[color:var(--craft-ink)]"

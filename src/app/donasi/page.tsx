@@ -1,10 +1,20 @@
 import { cookies, headers } from "next/headers";
 
-import { DONOR_SESSION_COOKIE, getDonorUser } from "@/lib/auth";
-import { getBetterAuthDonorUser } from "@/lib/better-auth-guards";
+import {
+  ADMIN_SESSION_COOKIE,
+  DONOR_SESSION_COOKIE,
+  getDonorUser,
+  requireAdminUser,
+} from "@/lib/auth";
+import {
+  getBetterAuthDonorUser,
+  requireBetterAuthAdminUser,
+} from "@/lib/better-auth-guards";
 import Link from "next/link";
 
 import { DonationForm } from "./donation-form";
+import { DonorAuthBanner } from "./donor-auth-banner";
+import { resolveDonorAuthBannerVariant } from "./donor-auth-banner-rules";
 import { MidtransSnapScript } from "./midtrans-snap-script";
 
 const trustPoints = [
@@ -21,10 +31,22 @@ const reassuranceItems = [
 
 export default async function DonationPage() {
   const cookieStore = await cookies();
+  const requestHeaders = await headers();
+  const legacyAdmin = await requireAdminUser(
+    cookieStore.get(ADMIN_SESSION_COOKIE)?.value,
+  );
+  const admin =
+    legacyAdmin ?? (await requireBetterAuthAdminUser(requestHeaders));
   const legacyDonor = await getDonorUser(
     cookieStore.get(DONOR_SESSION_COOKIE)?.value,
   );
-  const donor = legacyDonor ?? (await getBetterAuthDonorUser(await headers()));
+  const donor = admin
+    ? null
+    : (legacyDonor ?? (await getBetterAuthDonorUser(requestHeaders)));
+  const bannerVariant = resolveDonorAuthBannerVariant({
+    adminUser: admin,
+    donorUser: donor,
+  });
 
   const midtransClientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ?? null;
   const midtransIsProduction = process.env.MIDTRANS_IS_PRODUCTION === "true";
@@ -134,7 +156,10 @@ export default async function DonationPage() {
             </div>
           </div>
 
-          <DonationForm donor={donor} />
+          <div className="space-y-4">
+            <DonorAuthBanner variant={bannerVariant} donor={donor} />
+            <DonationForm donor={donor} />
+          </div>
         </section>
 
         <section className="grid gap-4 md:grid-cols-3">

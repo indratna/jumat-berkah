@@ -2,14 +2,18 @@
 
 import { FormEvent, useState } from "react";
 
+import {
+  canUseSnapPopup,
+  resolveFallbackRedirect,
+  resolveSnapCallbackDestination,
+} from "./snap-checkout";
+import type { DonationPaymentHandoff, SnapWindow } from "./snap-types";
+
 type DonationResponse = {
   orderId: string;
   amount: number;
   status: string;
-  payment?: {
-    redirectUrl: string;
-    snapToken: string;
-  };
+  payment?: DonationPaymentHandoff;
 };
 
 type ErrorResponse = {
@@ -67,8 +71,44 @@ export function DonationForm({
 
     const donation = (await response.json()) as DonationResponse;
 
+    if (canUseSnapPopup(donation.payment, window)) {
+      const snapWindow = window as SnapWindow;
+      const snapToken = donation.payment!.snapToken;
+
+      snapWindow.snap?.pay(snapToken, {
+        onSuccess: () => {
+          window.location.href = resolveSnapCallbackDestination({
+            orderId: donation.orderId,
+            callback: "success",
+          });
+        },
+        onPending: () => {
+          window.location.href = resolveSnapCallbackDestination({
+            orderId: donation.orderId,
+            callback: "pending",
+          });
+        },
+        onError: () => {
+          window.location.href = resolveSnapCallbackDestination({
+            orderId: donation.orderId,
+            callback: "error",
+          });
+        },
+        onClose: () => {
+          window.location.href = resolveSnapCallbackDestination({
+            orderId: donation.orderId,
+            callback: "close",
+          });
+        },
+      });
+      return;
+    }
+
     if (donation.payment?.redirectUrl) {
-      window.location.href = donation.payment.redirectUrl;
+      window.location.href = resolveFallbackRedirect({
+        payment: donation.payment,
+        orderId: donation.orderId,
+      });
       return;
     }
 
@@ -77,16 +117,32 @@ export function DonationForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="panel space-y-5 p-5 sm:p-6">
+    <form
+      onSubmit={handleSubmit}
+      className="craft-card-strong space-y-6 p-5 sm:p-6 lg:p-7"
+    >
+      <div className="space-y-3">
+        <span className="craft-pill">Isi data singkat</span>
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-[color:var(--craft-ink)] sm:text-[2rem]">
+            Lanjutkan ke pembayaran QRIS.
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-[color:var(--craft-ink-soft)]">
+            Email dan WhatsApp bersifat opsional. Nama publik dapat disamarkan
+            sesuai pilihan Anda.
+          </p>
+        </div>
+      </div>
+
       {donor ? (
-        <div className="rounded-xl border border-green-100 bg-green-50 p-3 text-sm text-green-900">
+        <div className="rounded-2xl border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] p-4 text-sm leading-6 text-[color:var(--craft-ink)]">
           Masuk sebagai <strong>{donor.name ?? donor.email}</strong>. Donasi ini
           akan masuk ke riwayat akun Anda.
         </div>
       ) : null}
       <div>
         <label
-          className="text-sm font-semibold text-slate-800"
+          className="text-sm font-semibold text-[color:var(--craft-ink)]"
           htmlFor="amount"
         >
           Nominal donasi
@@ -97,7 +153,7 @@ export function DonationForm({
               key={presetAmount}
               type="button"
               onClick={() => setAmount(String(presetAmount))}
-              className={`rounded-lg border px-3 py-2 text-sm font-semibold ${amount === String(presetAmount) ? "border-green-700 bg-green-700 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"}`}
+              className={`min-h-11 rounded-full border px-3 py-2 text-sm font-semibold transition ${amount === String(presetAmount) ? "border-[color:var(--craft-leaf)] bg-[color:var(--craft-leaf)] text-[color:var(--craft-cream)]" : "border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"}`}
             >
               {formatRupiah(presetAmount)}
             </button>
@@ -110,7 +166,7 @@ export function DonationForm({
           min="1000"
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
-          className="field mt-3 numeric"
+          className="mt-3 min-h-12 w-full rounded-2xl border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] px-4 py-3 text-base text-[color:var(--craft-ink)] outline-none transition placeholder:text-[color:var(--craft-ink-soft)] focus:border-[color:var(--craft-amber)] focus:ring-2 focus:ring-[color:var(--craft-amber)]/30 numeric"
           required
         />
         {errors.amount ? (
@@ -118,7 +174,7 @@ export function DonationForm({
         ) : null}
       </div>
 
-      <label className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4 text-sm font-semibold text-slate-800">
+      <label className="flex items-center gap-3 rounded-2xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper)] p-4 text-sm font-semibold text-[color:var(--craft-ink)]">
         <input
           type="checkbox"
           checked={isAnonymous}
@@ -254,8 +310,9 @@ export function DonationForm({
         <div className="rounded-xl border border-green-100 bg-green-50 p-3 text-sm text-green-900">
           Donasi pending tersimpan dengan order ID{" "}
           <strong>{result.orderId}</strong> sebesar{" "}
-          <strong>{formatRupiah(result.amount)}</strong>. Jika halaman
-          pembayaran tidak terbuka, cek status donasi dari halaman status.
+          <strong>{formatRupiah(result.amount)}</strong>. Jika popup atau
+          halaman pembayaran tidak terbuka, cek status donasi dari halaman
+          status.
         </div>
       ) : null}
     </form>

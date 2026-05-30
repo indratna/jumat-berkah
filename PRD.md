@@ -191,16 +191,17 @@ Sistem membuat transaksi Midtrans dan menampilkan pembayaran QRIS kepada donatur
 
 ### Kebutuhan Fungsional
 
-- Integrasi Midtrans Snap atau Core API.
+- Integrasi Midtrans Snap.
 - Mendukung pembayaran QRIS.
 - Menyimpan status transaksi: `pending`, `settlement`, `expire`, `cancel`, `deny`, `failure`, `refund`.
-- Menampilkan halaman pembayaran atau redirect ke Snap page.
-- Menampilkan instruksi pembayaran.
+- Menampilkan Snap popup ketika script Midtrans tersedia di browser, atau melakukan redirect ke halaman pembayaran Midtrans sebagai fallback bila popup tidak bisa dipakai.
+- Setelah popup selesai, pending, error, atau ditutup, donatur diarahkan ke halaman status donasi internal.
+- Status akhir tetap diverifikasi oleh webhook Midtrans, bukan oleh callback popup.
 
 ### Acceptance Criteria
 
 - Transaksi berhasil dibuat di Midtrans.
-- Donatur dapat melihat QRIS.
+- Donatur dapat melihat QRIS via Snap popup atau halaman pembayaran fallback.
 - Status awal donasi tersimpan sebagai `pending`.
 - Status berubah otomatis setelah webhook diterima.
 
@@ -1057,3 +1058,22 @@ Acceptance criteria:
 - Public view/export/print tidak menampilkan kontak donor.
 - Checklist production lengkap atau blocker eksplisit.
 - Status akhir mencerminkan kesiapan nyata.
+
+### 21.19 v1.18 — Donation Checkout UX Enhancement
+
+Tujuan: membuat handoff pembayaran Midtrans dari halaman donasi terasa lebih mulus tanpa mengubah aturan payment safety.
+
+Kebutuhan fungsional:
+
+- Halaman `/donasi` membuka Midtrans Snap popup ketika script Snap dan client key tersedia di browser.
+- Jika popup gagal dimuat atau dibuka, alur tetap fallback ke redirect Midtrans yang aman menggunakan `redirectUrl` dari respons API donasi.
+- Setelah popup selesai, pending, error, atau ditutup, donor diarahkan ke `/donasi/status/[orderId]` sehingga status final tetap mengikuti server/webhook.
+- Copy dan transisi checkout tetap singkat, jelas, dan menenangkan untuk donatur publik.
+
+Acceptance criteria:
+
+- Pembuatan transaksi dan redirect fallback tetap berjalan.
+- Status akhir donasi tetap mengikuti webhook Midtrans, bukan callback client.
+- Donatur tetap dapat melihat halaman status donasi terbaru dengan order id yang benar.
+- Tidak ada data donor privat yang terekspos pada popup handoff atau status publik.
+- Implementasi dijaga oleh helper terpusat (`snap-checkout.ts`) dengan unit test untuk popup vs fallback decision.

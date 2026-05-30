@@ -467,12 +467,13 @@ Required:
 ```txt
 MIDTRANS_SERVER_KEY=
 MIDTRANS_CLIENT_KEY=
+NEXT_PUBLIC_MIDTRANS_CLIENT_KEY=
 MIDTRANS_IS_PRODUCTION=false
 MIDTRANS_MERCHANT_ID=
 NEXT_PUBLIC_APP_URL=
 ```
 
-Never expose `MIDTRANS_SERVER_KEY` to client.
+Never expose `MIDTRANS_SERVER_KEY` to client. `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` must mirror the same value as `MIDTRANS_CLIENT_KEY` and is intentionally browser-readable so the Snap popup script on `/donasi` can attach `data-client-key`. `MIDTRANS_IS_PRODUCTION` stays server-only and is read in the server component for `/donasi`, then passed to the client Snap script loader as a prop.
 
 ### 9.2 Payment Flow
 
@@ -480,12 +481,15 @@ Never expose `MIDTRANS_SERVER_KEY` to client.
 2. Server validates input.
 3. Server creates donation with `pending` status.
 4. Server creates Midtrans transaction using unique `order_id`.
-5. Server returns payment URL/token to client.
-6. User pays via QRIS.
-7. Midtrans sends webhook.
-8. Server validates signature.
-9. Server updates donation status.
-10. Public report reflects successful donation.
+5. Server returns payment payload to client containing `snapToken` and `redirectUrl`.
+6. Client opens Midtrans Snap popup using `snapToken` when `window.snap.pay` is available; otherwise client navigates to `redirectUrl` as fallback.
+7. After Snap popup `onSuccess`, `onPending`, `onError`, or `onClose`, client navigates donor to `/donasi/status/[orderId]`. Client never marks donation as `settlement` itself.
+8. Midtrans sends webhook to server.
+9. Server validates signature.
+10. Server updates donation status.
+11. Public report reflects successful donation.
+
+Final donation status remains determined by webhook + database state. Snap popup callbacks are navigation-only.
 
 ### 9.3 Signature Verification
 
@@ -1100,3 +1104,22 @@ Rules:
 
 - Any remaining blocker affecting payment, money, security, privacy, or messaging compliance must be documented before marking final readiness.
 - Final status must distinguish code-complete from production-ready.
+
+### 15.18 Donation Checkout UX Enhancement
+
+Implemented direction:
+
+- Midtrans Snap transaction creation stays server-side.
+- `/donasi` server page reads `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` and `MIDTRANS_IS_PRODUCTION` and passes them to a client `MidtransSnapScript` component which mounts `next/script` with `strategy="afterInteractive"` for either `https://app.sandbox.midtrans.com/snap/snap.js` or `https://app.midtrans.com/snap/snap.js`.
+- Client `DonationForm` calls `/api/donations`, then prefers `window.snap.pay(snapToken, ...)` for inline checkout. Snap callbacks (`onSuccess`, `onPending`, `onError`, `onClose`) only navigate the donor to `/donasi/status/[orderId]`.
+- If Snap script or `window.snap.pay` is unavailable, the client falls back to redirecting the donor to `payment.redirectUrl` returned by `/api/donations`.
+- Snap script loading must fail safely when the client key is missing; the redirect-only fallback path stays correct.
+
+Technical rules:
+
+- Midtrans webhook remains the source of truth for final donation status.
+- Client callbacks such as success, pending, error, or close must not directly mark donation `settlement` or call settlement-state mutations.
+- Post-popup navigation routes donor to `/donasi/status/[orderId]` so status display still comes from server/database state.
+- Snap-popup checkout UX changes must not alter request validation, order creation, donor privacy rules, or payment amount rules.
+- Snap script loading must fail safely without blocking donor from paying via redirect flow.
+- Helpers `buildDonationStatusUrl`, `resolveSnapCallbackDestination`, `canUseSnapPopup`, and `resolveFallbackRedirect` in `src/app/donasi/snap-checkout.ts` centralize popup vs redirect decisions and are covered by unit tests.

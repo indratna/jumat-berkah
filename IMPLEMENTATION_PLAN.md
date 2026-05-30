@@ -10,10 +10,10 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 
 ### Current Status
 
-Current Phase: Phase 40 — MVP Launch Readiness Audit  
+Current Phase: Phase 42 — Donation Checkout UX Enhancement  
 Overall Progress: 100%  
-Last Updated: 2026-05-28  
-Current Focus: Phase 40 audit completed. Launch is not stable-MVP ready until production secret hardening, Midtrans live QRIS smoke, Telegram public channel smoke, WhatsApp live template smoke, and backup/restore evidence are completed in later phases.
+Last Updated: 2026-05-30  
+Current Focus: Phase 42 done and manually verified on local sandbox (Snap popup happy path, popup close, and fallback redirect all pass; webhook source-of-truth confirmed by `pending` status surviving client callbacks). Next planned phase: Phase 43 — Security & Launch Blocker Fixes.
 Blockers: Live provider smoke remains required: Telegram public channel broadcast needs `TELEGRAM_PUBLIC_CHANNEL_ID=-100...` plus bot admin/post permission; production `BETTER_AUTH_SECRET` must be high entropy; Midtrans live QRIS and WhatsApp live send need provider credentials/templates; backup/restore production evidence remains required before stable launch.
 
 ### Phase Progress
@@ -61,10 +61,11 @@ Blockers: Live provider smoke remains required: Telegram public channel broadcas
 | Phase 38 | Final QA & Production Readiness Review | Done | 100% |
 | Phase 39 | InApp-Inspired UI Refresh | Done | 100% |
 | Phase 40 | MVP Launch Readiness Audit | Done | 100% |
-| Phase 41 | Dashboard Layout Final Polish | Not Started | 0% |
-| Phase 42 | Security & Launch Blocker Fixes | Not Started | 0% |
-| Phase 43 | Targeted Refactor | Not Started | 0% |
-| Phase 44 | Stable MVP Launch Validation | Not Started | 0% |
+| Phase 41 | Dashboard Layout Final Polish | Done | 100% |
+| Phase 42 | Donation Checkout UX Enhancement | Done | 100% |
+| Phase 43 | Security & Launch Blocker Fixes | Not Started | 0% |
+| Phase 44 | Targeted Refactor | Not Started | 0% |
+| Phase 45 | Stable MVP Launch Validation | Not Started | 0% |
 
 Status values:
 
@@ -77,7 +78,65 @@ Done
 
 ## 3. Work Log
 
+### 2026-05-30
+
+- Manual sandbox Snap popup smoke for Phase 42 completed on `localhost:3037`. Tes 1 popup happy path: popup Midtrans muncul inline tanpa redirect, simulator QRIS sandbox membayar order `JB-20260530-E2FCD17D`, browser navigate ke `/donasi/status/JB-20260530-E2FCD17D`, status tetap `pending` karena webhook tidak menjangkau localhost (perilaku benar; client callback tidak boleh memutuskan settlement). Tes 2 popup close tanpa bayar: order `JB-20260530-9BC9495F`, popup ditutup, browser navigate ke status page, status `pending`. Tes 3 fallback redirect: `snap.js` di-block dari DevTools, submit form mengarahkan donor ke `https://app.sandbox.midtrans.com/snap/v4/redirection/...` lewat `redirectUrl`. Tes 4 server key tidak bocor: pencarian `Mid-server-...` dan `Mid-client-...` di `.next/static` dan `.next/server/app` keduanya kosong; jaminan Next.js bahwa env tanpa prefix `NEXT_PUBLIC_` tidak masuk client bundle dikonfirmasi. Tambahan: `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` ditambahkan ke `.env.local` setempat dengan value mirror dari `MIDTRANS_CLIENT_KEY`. Phase 42 acceptance criteria semuanya lulus.
+
+- Phase 42 smoke test menemukan satu kasus session hygiene yang berada di luar scope Phase 42: admin yang juga login lewat Better Auth dengan email pribadi yang kebetulan terdaftar sebagai `donor` di tabel `users` mendapat blok prefill "Masuk sebagai ..." pada `/donasi`. Logic resolve donor pada `src/app/donasi/page.tsx` (`getDonorUser` legacy + `getBetterAuthDonorUser`) tidak menyaring kasus ini. Issue dicatat untuk dikerjakan di Phase 43 sebagai bagian dari session hygiene/admin guard fix; bukan bug Phase 42 dan bukan regresi karena logic prefill itu pre-existing.
+
+- Implemented Phase 42 — Donation Checkout UX Enhancement. Added `src/app/donasi/snap-types.ts` with browser Snap typings (`DonationPaymentHandoff`, `SnapCallbackKind`, `SnapPayOptions`, `SnapWindow`) and `src/app/donasi/snap-checkout.ts` with pure helpers `buildDonationStatusUrl`, `resolveSnapCallbackDestination`, `canUseSnapPopup`, `resolveFallbackRedirect`. Helpers locked in by 3 unit tests in `src/tests/donation-checkout.test.ts` covering callback navigation always pointing to `/donasi/status/[orderId]`, popup availability requiring both `snapToken` and `window.snap.pay`, and redirect-fallback ordering. Added `src/app/donasi/midtrans-snap-script.tsx` (`"use client"`) that mounts `next/script` with `strategy="afterInteractive"` for sandbox/production Snap script and renders nothing when client key is missing. `src/app/donasi/page.tsx` now reads `process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` and `process.env.MIDTRANS_IS_PRODUCTION` server-side and passes them as props to `MidtransSnapScript`, so the browser never reads the server-only production flag directly. `src/app/donasi/donation-form.tsx` now prefers `window.snap.pay(snapToken, ...)` after `/api/donations` succeeds: `onSuccess`, `onPending`, `onError`, and `onClose` only navigate to `/donasi/status/[orderId]` and never mutate donation status; redirect to `payment.redirectUrl` is kept as a safe fallback when Snap script or `window.snap.pay` is unavailable. No backend change: `/api/donations`, Midtrans helper, webhook, status mapping, and donor privacy rules untouched. Synced canonical docs: `PRD.md` § 8.3 + § 21.19, `TECHNICAL_SPEC.md` § 9.1 + § 9.2 + § 15.18, and `docs/ENV_SETUP.md` Midtrans table now describe Snap-popup-with-fallback flow and the new browser-safe `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` env. Added `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY="SB-Mid-client-your-client-key"` placeholder to `.env.example`. Validation passed: `npm run lint`, `npm test` (101/101), `npm run build` (after starting `jumat-berkah-postgres` Docker container — pre-existing requirement). Manual sandbox Snap popup smoke deferred until live `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` and sandbox QRIS run are available; redirect-only fallback path confirmed by code review and unit tests.
+
+### 2026-05-29
+
+- Added roadmap decision for checkout UX improvement before launch blocker work. Inserted new `Phase 42 — Donation Checkout UX Enhancement` focused on optional Midtrans Snap popup handoff with fallback-safe payment UX, then shifted later phases so security/blocker work becomes Phase 43, targeted refactor becomes Phase 44, and stable MVP launch validation becomes Phase 45. Synced the same roadmap direction into `PRD.md` and `TECHNICAL_SPEC.md`. No application code, payment rules, webhook behavior, or provider configuration changed in this planning update.
+
+- Redesigned public `/donasi` to match the craft landing-page family used by `/`, `/tentang`, and `/laporan`. Replaced the old utility shell with the public craft shell/header, added an editorial hero with trust points and a transparency link, restyled `DonationForm` into a craft card with cream/olive/amber controls, and added a small reassurance strip below the form. `src/app/donasi/page.tsx` still resolves optional donor session prefill, and `src/app/donasi/donation-form.tsx` keeps the same field set, submit handler, request payload, anonymous/public-name behavior, WhatsApp consent logic, error rendering, and Midtrans redirect flow. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Fixed Phase 41 admin dark-mode hydration mismatch on `/admin`. Root cause: `ThemeToggle` read `localStorage` inside the client initial state while server rendered light-mode button text/labels, causing React hydration mismatch when saved theme was dark. Reworked theme state to use `useSyncExternalStore` with a stable server snapshot and client storage subscription, keeping first hydration render consistent while still persisting `admin-theme`. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Fixed admin dark-mode toggle not visibly changing full UI. Root cause: Tailwind v4 dark variant was not explicitly mapped to `html.dark`, and several admin surfaces relied on light utility classes. Added `@custom-variant dark (&:where(.dark, .dark *));` plus global dark overrides for common admin backgrounds, rings, borders, and semantic text tones. Manual browser verification on `http://localhost:3037/admin?from=2026-02-28&to=2026-05-29` confirmed toggle changes `html.dark`, persists `admin-theme`, and updates sidebar/body/card backgrounds. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Adjusted admin sidebar/header layout per review. Dashboard is now a direct sidebar link instead of an expandable group, and the sidebar collapse/expand control moved from the sidebar body into the admin header beside `Jumat Berkah Karyo` as an icon-only button. Added `AdminShell` client wrapper to own sidebar expanded state while keeping `AdminLayout` server-side for auth/notifications. Updated admin navigation reachability test. Manual browser verification on `/admin` confirmed no Dashboard expand button and header toggle changes sidebar width from 252px to 84px. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Replaced admin dashboard date range sliders with a calendar-style range picker placed on the right side of the dashboard hero header. Picker shows compact start/end summary, opens a two-month desktop calendar popover, highlights selected ranges, supports month navigation, and updates `from`/`to` only when `Terapkan` is clicked; `Reset` restores the default 90-day range. Fixed local date formatting to avoid timezone off-by-one URL dates. Manual browser verification confirmed selecting 20 Mar 2026 through 29 May 2026 updates URL to `/admin?from=2026-03-20&to=2026-05-29`. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Fixed dashboard calendar picker clipping and removed the `Periode Dashboard` title from the picker trigger. Root cause: the dashboard hero card still used `overflow-hidden`, which clipped the absolute calendar popover. Manual browser check confirmed card overflow is visible, popup is fully within viewport, and visible date buttons are not clipped. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Refined dashboard calendar picker interaction and spacing after title removal. Removed the leftover empty title row by placing the dropdown arrow absolutely in the trigger, removed the small `pilih` text from every day cell, and added clear popover guidance that changes between `Pilih tanggal mulai` and `Pilih tanggal akhir` so selected dates are visibly reflected immediately. Manual browser check confirmed clicking `10 Mar 2026` highlights the date and updates the picker guidance/range. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Added preset dropdown to dashboard date picker: `Hari Ini`, `7 Hari`, `30 Hari`, `Bulan Ini`, `Bulan Lalu`, `Custom`. Trigger now pairs the preset selector with a calendar range button that shows formatted `dd Mmm yyyy - dd Mmm yyyy`. Selecting a non-`Custom` preset immediately updates the URL `from`/`to`. Selecting `Custom` opens the calendar popover so admin can pick a manual range. Manual browser check on `/admin?from=2026-05-01&to=2026-06-30` confirmed `7 Hari` updates URL to `/admin?from=2026-05-23&to=2026-05-29`, the range button reflects the active range, and `Custom` opens the calendar. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Hid the dashboard calendar range button unless the preset selector is `Custom`, and added a `Hari Ini` button next to `Reset` inside the popover that sets only the end date to today (clamping start to today if it would otherwise be after today). Tracked the active preset in component state so it stays accurate when admin switches between preset and custom selections. Manual browser check on `/admin?from=2026-05-23&to=2026-05-29` confirmed the range button is hidden for `7 Hari`, switching to `Custom` reveals the range button and opens the calendar with `Reset`, `Hari Ini`, and `Terapkan`. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Added admin-only system settings status page at `/admin/pengaturan/sistem`. Server-rendered helper `getSystemSettings()` reads `process.env` and returns sanitized `ok/missing/warning` rows grouped by Aplikasi, Database, Midtrans, Telegram, Email, WhatsApp, and Cron & Ops. The UI never receives token, secret, or chat id values: secrets show only `Aktif`/`Belum diatur`, `ADMIN_EMAIL` is masked, and `BETTER_AUTH_SECRET` shows `Perlu perhatian` when shorter than 32 characters. Added sidebar link `Status Sistem` under the `Pengaturan` group and updated admin navigation reachability test to include the new route. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Added admin-only profile page at `/admin/profil` so the sidebar `Profil Admin` link stays inside the admin shell instead of jumping to the donor `/akun/profil`. The new server page reuses `getCurrentAccountProfile`, `ProfileForm`, and `PasswordChangeForm`, and redirects non-admin sessions to `/akun/profil`. Sidebar nav updated to point at `/admin/profil` and admin navigation reachability test now expects the new route. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Removed the donor contact note above the sidebar logout button and removed the internal `lg:overflow-y-auto` scroll on the admin sidebar nav so the sidebar no longer shows its own scrollbar at desktop widths.
+
+- Removed the `+`/`−` expand indicators from sidebar group buttons; groups still toggle on click. Restyled the admin `Keluar` button with rose background and `font-extrabold` text to make it stand out.
+
+- Added soft polling for admin notifications. New `GET /api/admin/notifications` returns the same payload as the server-rendered bell, guarded by the existing legacy admin cookie or Better Auth admin check. `NotificationBell` now polls every 30 seconds while the tab is visible, refreshes both the items list and unread count, and pauses when the tab is hidden so the dashboard updates without manual reload while staying inexpensive. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Redesigned public landing page `/` to share the admin dashboard visual language. Added `src/lib/landing.ts` with `getLandingMetrics`, `getLandingProgress`, `getLandingStories` reusing existing reporting helpers and respecting public donor privacy. Built section components `LandingHero`, `LandingTargetProgress`, `LandingHowItWorks`, `LandingStories`, `LandingTransparency`, `LandingFaq`, `LandingFooter`, all using slate/green tokens, rounded-xl borders, tabular numbers, and dark-mode pairings consistent with `/admin`. Replaced `src/app/page.tsx` with an async server component that composes the new sections and adds a sticky mobile CTA bar. No backend logic, auth, payment, or business calculation changed. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Fixed landing story cover image runtime error. Root cause: `next/image` rejected external story photo hosts (e.g. `placehold.co`) because they were not whitelisted in `next.config.ts`. Distribution photo URLs are admin-controlled external links that can change over time, so adding a permanent host whitelist is brittle. Switched the story cover to a plain `<img loading="lazy">` inside the existing `aspect-[16/9]` wrapper to allow any approved external URL without remote-image config. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Redesigned landing page `/` with a craft-inspired aesthetic separate from the admin shell. Added scoped craft tokens (cream, olive, amber, ink) and utility classes (`.craft-card`, `.craft-card-strong`, `.craft-pill`, `.craft-num`, `.landing-noise`) to `src/app/globals.css`. Loaded `Plus_Jakarta_Sans` and `Inter` via `next/font/google` and exposed them as `--font-display` and `--font-body`. Rebuilt all `src/components/landing/*` components for an asymmetric bento layout: hero (split with KPI side card), target strip with gradient progress, how-it-works cards with display numbers, stories bento (1 featured + 2 secondary), transparency cards with lucide-style SVGs, FAQ with rotating chevrons, and dark olive footer. Composed `/` with cream noise background and a leaf-green sticky mobile CTA. Admin dashboard remains untouched. No backend, auth, payment, or business logic changed. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`.
+
+- Redesigned `/tentang` to match the new craft aesthetic. Replaced the flat `page-shell` layout with the same `landing-craft landing-noise` wrapper used by `/`, added an asymmetric hero pairing with a quick-action card, four-pillar grid using craft cards with display numerals, transparency principles strip, and pengelola card. Reused only static copy and existing public routes; no API, schema, payment, or privacy behavior changed. Validation passed: `npm run lint`, `npm test` (98/98).
+
+- Redesigned `/laporan` to match the craft system while keeping all existing reporting behavior intact. Wrapped the page in the `landing-craft` shell, added public brand/header nav, restyled the hero + filter/export card, distribution story section, Friday target section, four summary cards, donation/pengeluaran panels, category chart, and transparency timeline using cream/olive/amber craft tokens. Existing date filters, `period=jumat`, print layout, PDF/CSV export links, and donor privacy rules were preserved. Validation passed: `npm run lint`, `npm test` (98/98), `npm run build`. 
+
 ### 2026-05-28
+
+- Added follow-up admin polish from review without changing phase order: admin dark-mode toggle, proper persisted admin notification table/API/bell for donation-created and donation-settlement events, dashboard-wide draggable 90-day date range with auto URL refresh, and date-filtered dashboard metrics plus ranking. Applied local Prisma migration 20260529003000_admin_notifications and generated Prisma client. Manual smoke on http://localhost:3037/admin verified dark toggle, bell dropdown, and dashboard range controls after local migration. Validation passed: npx prisma generate, npx prisma migrate dev --name admin_notifications, npm run lint, npm test (98/98), npm run build.
+
+- Completed Phase 41 manual responsive review on local dev server http://localhost:3037 after admin login with local fallback code. Checked /admin at desktop, mobile 375px, tablet 768px, and laptop/desktop widths; verified dashboard ranking/date filters render, sidebar expanded/collapsed states work, mobile nav keeps labels visible, donor detail opens as a popup on /admin/donatur, and /admin/donasi shows auto-refresh control. Automated validation passed after final sidebar mobile fix: npm run lint, npm test (98/98), npm run build. Phase 41 marked Done; next legal phase is Phase 42.
+
+- Expanded Phase 41 based on admin review without changing phase order. Added dashboard top-donor ranking with date filters, donation admin auto-refresh toggle, donor detail modal on donor table, collapsible/expandable admin sidebar with Dashboard/Masuk/Keluar/Pengaturan groups, removed Laporan Publik and Export CSV from sidebar, and updated admin navigation test expectations. No auth, payment, webhook, provider, database schema, or financial calculation behavior changed. Validation passed: npm run lint, npm test (98/98), npm run build. Manual responsive browser review remains before marking Phase 41 Done.
+
+- Completed Phase 41 dashboard layout code pass while keeping scope UI-only. Refined admin dashboard hero spacing, metric cells, target layout columns, quick-action copy, touch target height, keyboard focus rings, and capped the visual progress bar at 100 percent without changing stored progress calculation. No API, auth, payment, webhook, database, financial calculation, provider integration, route, or report behavior changed. Validation passed: npm run lint, npm test (98/98), npm run build. Manual admin responsive browser review remains before Phase 41 can be marked Done.
 
 - Corrected Phase 40 audit handoff wording to comply with `AGENTS.md` phase order. `docs/MVP_LAUNCH_READINESS_AUDIT.md` now requires Phase 41 next and queues Phase 42 findings until Phase 41 acceptance criteria and validation pass, unless `IMPLEMENTATION_PLAN.md` is explicitly updated to reorder phases. No application code changed.
 
@@ -563,6 +622,8 @@ Done
 | 2026-05-28 | Keep Phase 30 Excel support as documented CSV-only until export dependency is approved | CSV opens in Excel/LibreOffice and avoids adding unreviewed runtime dependency; PDF export is generated without new packages |
 | 2026-05-28 | Follow `IMPLEMENTATION_PLAN.md` phase order after Phase 40 audit; Phase 41 must run before Phase 42 unless the plan is explicitly reordered | `AGENTS.md` requires working only on the current phase and not starting the next phase until current acceptance criteria pass; audit findings are inputs for later phases, not permission to skip Phase 41 |
 | 2026-05-28 | Use Phase 40 audit findings to constrain Phase 41 and feed Phase 42–44 | Audit found no critical code-level blocker, but stable launch depends on production/provider checks; Phase 41 must stay dashboard UI-only, Phase 42 handles security/blockers, and Phase 44 handles live smoke |
+| 2026-05-30 | Phase 42 handoff uses Midtrans Snap popup with mandatory redirect fallback; popup callbacks navigate only and never mutate donation status | Improves checkout UX without touching webhook source-of-truth, donor privacy, or financial rules. Fallback to `redirectUrl` keeps flow safe when client key or Snap script is unavailable. Centralized helpers in `src/app/donasi/snap-checkout.ts` are unit-tested so popup vs redirect decisions cannot drift |
+| 2026-05-30 | Introduce browser-readable `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` while keeping `MIDTRANS_IS_PRODUCTION` server-only | Snap popup script needs a public client key on the browser, but production-mode flag should not be browser-exposed; resolved by reading `MIDTRANS_IS_PRODUCTION` in the `/donasi` server component and passing it as a prop to the client `MidtransSnapScript` loader |
 
 ## 6. Execution Rules
 
@@ -2535,12 +2596,12 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Identify dashboard layout changes from Phase 40 findings and user review.
-- [ ] Update dashboard UI with minimal component changes.
-- [ ] Preserve existing route, API, and data behavior.
-- [ ] Run automated validation.
-- [ ] Manually review admin dashboard responsiveness.
-- [ ] Update Work Log.
+- [x] Identify dashboard layout changes from Phase 40 findings and user review.
+- [x] Update dashboard UI with minimal component changes.
+- [x] Preserve existing route, API, and data behavior.
+- [x] Run automated validation.
+- [x] Manually review admin dashboard responsiveness.
+- [x] Update Work Log.
 
 ## Acceptance Criteria
 
@@ -2558,7 +2619,55 @@ npm run build
 
 Manual: review `/admin` at mobile, tablet, laptop, and desktop widths.
 
-# Phase 42 — Security & Launch Blocker Fixes
+# Phase 42 — Donation Checkout UX Enhancement
+
+## Goal
+
+Improve public donation checkout handoff with a more seamless Midtrans experience while keeping payment safety and validation rules unchanged.
+
+## Scope
+
+In-scope:
+
+- Analysis and implementation of Midtrans Snap popup handoff for `/donasi` if confirmed feasible in current codebase.
+- Client-side checkout UX polish directly related to payment handoff.
+- Fallback-safe handling that keeps `redirectUrl` available when popup load/open fails.
+- Tests and documentation for changed checkout presentation behavior.
+
+Out-of-scope:
+
+- Changing webhook source of truth.
+- Trusting client callback as final payment status.
+- Database schema changes unless separately approved.
+- Unrelated public/admin redesign work.
+
+## Tasks
+
+- [x] Confirm current `/api/donations` and Midtrans helper contract is sufficient for Snap popup flow.
+- [x] Implement client-side Snap popup handoff with safe fallback to `redirectUrl`.
+- [x] Keep `/donasi/status/[orderId]` as post-payment status destination.
+- [x] Add or update tests/documentation for checkout UX behavior.
+- [x] Run automated validation.
+- [x] Update Decision Log and Work Log.
+
+## Acceptance Criteria
+
+- Donor can open Midtrans Snap from `/donasi` without breaking existing payment creation flow.
+- Fallback redirect still works if popup cannot be used.
+- Final donation status remains determined by webhook/server state, not client callback.
+- No privacy, payment, or financial rule regresses.
+
+## Validation
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+Manual: verify popup open, popup close, fallback redirect, pending flow, and status-page handoff.
+
+# Phase 43 — Security & Launch Blocker Fixes
 
 ## Goal
 
@@ -2582,6 +2691,7 @@ Out-of-scope:
 
 - [ ] Prioritize Phase 40 blockers by launch impact.
 - [ ] Fix only critical/high blockers approved for this phase.
+- [ ] Resolve donor-prefill leak on `/donasi` for users authenticated as admin via Better Auth (skip donor prefill when the same email also has admin role, or when an admin session is active).
 - [ ] Add or update tests for fixed security/privacy/payment behavior.
 - [ ] Update docs and `.env.example` if configuration behavior changes.
 - [ ] Run automated validation.
@@ -2603,7 +2713,7 @@ npm run build
 
 Manual: verify each fixed blocker using the reproduction or audit check documented in Phase 40.
 
-# Phase 43 — Targeted Refactor
+# Phase 44 — Targeted Refactor
 
 ## Goal
 
@@ -2626,7 +2736,7 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Identify refactor candidates from Phase 40 and Phase 42 notes.
+- [ ] Identify refactor candidates from Phase 40 and Phase 43 notes.
 - [ ] Prioritize small refactors with clear validation.
 - [ ] Add or preserve tests for behavior before moving code.
 - [ ] Refactor one bounded area at a time.
@@ -2650,7 +2760,7 @@ npm run build
 
 Manual: review changed flows based on refactored area.
 
-# Phase 44 — Stable MVP Launch Validation
+# Phase 45 — Stable MVP Launch Validation
 
 ## Goal
 

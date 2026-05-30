@@ -74,6 +74,7 @@ export const betterAuthInstance = betterAuth({
     enabled: true,
     minPasswordLength: 8,
     maxPasswordLength: 128,
+    requireEmailVerification: true,
     revokeSessionsOnPasswordReset: true,
     resetPasswordTokenExpiresIn: 60 * 60,
     sendResetPassword: async ({ user, url }) => {
@@ -114,6 +115,69 @@ export const betterAuthInstance = betterAuth({
           },
         },
       });
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
+    expiresIn: 60 * 60,
+    sendVerificationEmail: async ({ user, url }) => {
+      const { buildEmailVerificationEmail, safeSendEmail } =
+        await import("@/lib/email");
+
+      const result = await safeSendEmail(
+        buildEmailVerificationEmail({ email: user.email, url }),
+      );
+
+      if (!result.sent && process.env.NODE_ENV !== "production") {
+        console.log(
+          `Better Auth email verification URL for ${user.email}: ${url}`,
+        );
+      }
+    },
+    afterEmailVerification: async (user) => {
+      const { attachOrphanDonationsToUser } = await import("@/lib/donations");
+      const { getPrisma } = await import("@/lib/db");
+      const prisma = getPrisma();
+      const email = user.email.trim().toLowerCase();
+      const appUser = await prisma.user.upsert({
+        where: { email },
+        update: { name: user.name?.trim() || undefined },
+        create: { email, name: user.name?.trim() || null, role: "donor" },
+        select: { id: true, email: true, role: true },
+      });
+
+      if (appUser.role === "donor") {
+        await attachOrphanDonationsToUser({ userId: appUser.id, email });
+      }
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          const email = user.email?.trim().toLowerCase();
+          if (!email || user.emailVerified === false) {
+            return;
+          }
+
+          const { attachOrphanDonationsToUser } =
+            await import("@/lib/donations");
+          const { getPrisma } = await import("@/lib/db");
+          const prisma = getPrisma();
+          const appUser = await prisma.user.upsert({
+            where: { email },
+            update: { name: user.name?.trim() || undefined },
+            create: { email, name: user.name?.trim() || null, role: "donor" },
+            select: { id: true, email: true, role: true },
+          });
+
+          if (appUser.role === "donor") {
+            await attachOrphanDonationsToUser({ userId: appUser.id, email });
+          }
+        },
+      },
     },
   },
   socialProviders: {

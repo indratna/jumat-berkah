@@ -94,6 +94,66 @@ export function getInitialDonationStatus() {
   return DonationStatus.pending;
 }
 
+export function normalizeDonationAccountEmail(
+  value: string | null | undefined,
+) {
+  const normalized = value?.trim().toLowerCase();
+  return normalized && isValidEmail(normalized) ? normalized : null;
+}
+
+export function shouldAttachDonationToUser(input: {
+  donationEmail: string | null;
+  existingUserId: string | null;
+  accountEmail: string;
+}) {
+  const donationEmail = normalizeDonationAccountEmail(input.donationEmail);
+  const accountEmail = normalizeDonationAccountEmail(input.accountEmail);
+
+  return Boolean(
+    donationEmail &&
+    accountEmail &&
+    donationEmail === accountEmail &&
+    !input.existingUserId,
+  );
+}
+
+export async function attachOrphanDonationsToUser(input: {
+  userId: string;
+  email: string;
+}) {
+  const email = normalizeDonationAccountEmail(input.email);
+
+  if (!email) {
+    return { attachedCount: 0 };
+  }
+
+  const { Prisma } = await import("@/generated/prisma/client");
+  const { getPrisma } = await import("@/lib/db");
+  const prisma = getPrisma();
+  const result = await prisma.donation.updateMany({
+    where: {
+      donorEmail: { equals: email, mode: "insensitive" },
+      userId: null,
+    },
+    data: { userId: input.userId },
+  });
+
+  if (result.count > 0) {
+    await prisma.auditLog.create({
+      data: {
+        actorUserId: input.userId,
+        action: "donor_account_attached_donations",
+        entityType: "user",
+        entityId: input.userId,
+        before: Prisma.JsonNull,
+        after: { attachedCount: result.count, email },
+      },
+    });
+  }
+
+  return { attachedCount: result.count };
+}
+
 function normalizeOptionalString(value: unknown) {
   if (typeof value !== "string") {
     return null;

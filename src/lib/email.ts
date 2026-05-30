@@ -57,6 +57,29 @@ export function isEmailEnabled(): boolean {
   return getEmailProvider() !== null && getEmailFrom() !== null;
 }
 
+export function buildEmailVerificationEmail(input: {
+  email: string;
+  url: string;
+}): EmailMessage {
+  const subject = "Verifikasi email donatur Jumat Berkah Karyo";
+  const text = [
+    "Assalamu'alaikum.",
+    "",
+    "Verifikasi email akun donatur Jumat Berkah Anda.",
+    "Klik tautan berikut untuk mengaktifkan akun:",
+    input.url,
+    "",
+    "Tautan berlaku 1 jam. Abaikan email ini jika Anda tidak membuat akun donatur.",
+  ].join("\n");
+
+  return {
+    to: [input.email],
+    subject,
+    text,
+    html: renderBasicHtml(subject, text),
+  };
+}
+
 export function buildPasswordResetEmail(input: {
   email: string;
   url: string;

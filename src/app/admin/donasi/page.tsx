@@ -65,10 +65,10 @@ export default async function AdminDonationsPage({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <TableToolbar filters={filters} />
         {donations.items.length > 0 ? (
-          <div className="overflow-x-auto">
+          <div>
             <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
               <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
@@ -112,7 +112,9 @@ export default async function AdminDonationsPage({
                       Status
                     </SortHeader>
                   </th>
-                  <th className="sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 font-semibold shadow-[0_1px_0_0_rgba(226,232,240,1)]">Metode</th>
+                  <th className="sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 font-semibold shadow-[0_1px_0_0_rgba(226,232,240,1)]">
+                    Metode
+                  </th>
                   <th className="sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 font-semibold shadow-[0_1px_0_0_rgba(226,232,240,1)]">
                     <SortHeader
                       query={pageQuery}
@@ -123,7 +125,9 @@ export default async function AdminDonationsPage({
                       Dibuat
                     </SortHeader>
                   </th>
-                  <th className="sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 font-semibold shadow-[0_1px_0_0_rgba(226,232,240,1)]">Catatan</th>
+                  <th className="sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 font-semibold shadow-[0_1px_0_0_rgba(226,232,240,1)]">
+                    Catatan
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">

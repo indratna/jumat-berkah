@@ -4,12 +4,18 @@ import { FormEvent, useState } from "react";
 
 import { authClient } from "@/lib/auth-client";
 
-export function DonorLoginForm() {
+export function DonorLoginForm({
+  initialEmail = "",
+  next = "/akun/donasi",
+}: {
+  initialEmail?: string;
+  next?: string;
+}) {
   const [method, setMethod] = useState<"signin" | "signup" | "legacy">(
     "signin",
   );
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [loginCode, setLoginCode] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -19,9 +25,9 @@ export function DonorLoginForm() {
     setError(null);
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/akun/donasi",
+      callbackURL: next,
       errorCallbackURL: "/masuk",
-      newUserCallbackURL: "/akun/donasi",
+      newUserCallbackURL: next,
     });
   }
 
@@ -33,16 +39,24 @@ export function DonorLoginForm() {
     const { error: signInError } = await authClient.signIn.email({
       email,
       password,
-      callbackURL: "/akun/donasi",
+      callbackURL: next,
     });
 
     if (signInError) {
+      const errorCode = signInError.code?.toLowerCase() ?? "";
+      if (errorCode.includes("email") && errorCode.includes("verified")) {
+        setError(
+          "Email belum diverifikasi. Cek email Anda atau kirim ulang verifikasi dari Better Auth.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
       setError("Email atau password tidak valid.");
       setIsSubmitting(false);
       return;
     }
 
-    window.location.href = "/akun/donasi";
+    window.location.href = next;
   }
 
   async function handlePasswordSignUp(event: FormEvent<HTMLFormElement>) {
@@ -54,7 +68,7 @@ export function DonorLoginForm() {
       email,
       password,
       name,
-      callbackURL: "/akun/donasi",
+      callbackURL: next,
     });
 
     if (signUpError) {
@@ -65,7 +79,7 @@ export function DonorLoginForm() {
       return;
     }
 
-    window.location.href = "/akun/donasi";
+    window.location.href = `/cek-email?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`;
   }
 
   async function handleLegacySubmit(event: FormEvent<HTMLFormElement>) {
@@ -85,7 +99,7 @@ export function DonorLoginForm() {
       return;
     }
 
-    window.location.href = "/akun/donasi";
+    window.location.href = next;
   }
 
   return (

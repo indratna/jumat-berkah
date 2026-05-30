@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { cookies, headers } from "next/headers";
 
+import { DONOR_SESSION_COOKIE, getDonorUser } from "@/lib/auth";
+import { getBetterAuthDonorUser } from "@/lib/better-auth-guards";
 import { getPrisma } from "@/lib/db";
+import { DonorSignupCta } from "./donor-signup-cta";
 
 type DonationStatusPageProps = {
   params: Promise<{
@@ -21,6 +25,8 @@ export default async function DonationStatusPage({
       status: true,
       paidAt: true,
       donorName: true,
+      donorEmail: true,
+      userId: true,
       isAnonymous: true,
       showNamePublicly: true,
     },
@@ -45,6 +51,10 @@ export default async function DonationStatusPage({
     );
   }
 
+  const cookieStore = await cookies();
+  const donor =
+    (await getDonorUser(cookieStore.get(DONOR_SESSION_COOKIE)?.value)) ??
+    (await getBetterAuthDonorUser(await headers()));
   const content = getStatusContent(donation.status);
 
   return (
@@ -54,9 +64,7 @@ export default async function DonationStatusPage({
           Status Donasi
         </p>
         <h1 className="mt-4 text-3xl font-bold">{content.title}</h1>
-        <p className="mt-3 leading-7 text-slate-600">
-          {content.description}
-        </p>
+        <p className="mt-3 leading-7 text-slate-600">{content.description}</p>
 
         <div className="mt-8 space-y-3 rounded-xl bg-slate-50 p-5 text-sm">
           <div className="flex justify-between gap-4">
@@ -90,6 +98,13 @@ export default async function DonationStatusPage({
               {buildShareText(donation.orderId, donation.amount)}
             </div>
           </div>
+        ) : null}
+
+        {!donor && !donation.userId ? (
+          <DonorSignupCta
+            donorEmail={donation.donorEmail}
+            donorName={donation.donorName}
+          />
         ) : null}
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">

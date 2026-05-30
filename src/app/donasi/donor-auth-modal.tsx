@@ -58,6 +58,11 @@ function DonorAuthModal({
   onClose: () => void;
 }) {
   useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         onClose();
@@ -65,17 +70,21 @@ function DonorAuthModal({
     }
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [onClose]);
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/45 px-4 py-6 backdrop-blur-sm"
+      className="landing-craft fixed inset-0 z-50 grid place-items-center overflow-hidden !bg-black/75 px-4 py-6 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="donor-auth-title"
     >
-      <div className="craft-card-strong max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-2xl">
+      <div className="craft-card-strong max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-[color:var(--craft-leaf)]">

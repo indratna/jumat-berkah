@@ -80,6 +80,8 @@ Done
 
 ### 2026-05-30
 
+- Adjusted Phase 43 donor auth UX after manual review: `/donasi` now opens `Masuk` and `Daftar` in a craft-styled modal instead of navigating away; modal supports Google and email/password flows, switches between masuk/daftar in place, and sends email/password signup to `/cek-email`. Removed the old donor-code login option from `/masuk`, leaving only Google and email/password. `/masuk` and `/daftar` remain fallback direct pages. Validation passed: `npm run lint`, `npm run build`; browser smoke confirmed modal opens on `/donasi`, switches between login/signup, has no nested-form console errors, and `/masuk?next=/donasi` no longer shows donor-code login.
+
 - Adjusted Phase 43 `/masuk` UX after manual review: changed donor login from the older `page-shell`/tabbed layout to the same craft split layout as `/daftar`, with primary `Masuk dengan Google`, email/password login fields visible by default, a `Belum punya akun? Daftar` link, and legacy donor-code login collapsed under a fallback details section. Validation passed: `npm run lint`, `npm run build`; browser snapshot confirmed `/masuk?next=/donasi` matches `/daftar` visual system.
 
 - Adjusted Phase 43 `/donasi` UX after manual review: moved the `Akun donatur` login/signup box inside the `Isi data singkat` donation form card, directly below nominal selection, while preserving anonymous/donor/admin banner variants and donor prefill rules. Validation passed: `npm run lint`, `npm run build`; browser snapshot confirmed placement below nominal on `http://localhost:3037/donasi`.

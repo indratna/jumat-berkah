@@ -11,9 +11,7 @@ export function DonorLoginForm({
   initialEmail?: string;
   next?: string;
 }) {
-  const [name, setName] = useState("");
   const [email, setEmail] = useState(initialEmail);
-  const [loginCode, setLoginCode] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,41 +32,18 @@ export function DonorLoginForm({
     setError(null);
 
     const { error: signInError } = await authClient.signIn.email({
-      email,
+      email: email.trim(),
       password,
       callbackURL: next,
     });
 
     if (signInError) {
       const errorCode = signInError.code?.toLowerCase() ?? "";
-      if (errorCode.includes("email") && errorCode.includes("verified")) {
-        setError(
-          "Email belum diverifikasi. Cek email Anda atau kirim ulang verifikasi dari Better Auth.",
-        );
-        setIsSubmitting(false);
-        return;
-      }
-      setError("Email atau password tidak valid.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    window.location.href = next;
-  }
-
-  async function handleLegacySubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
-
-    const response = await fetch("/api/auth/donor/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, loginCode }),
-    });
-
-    if (!response.ok) {
-      setError("Nama, email, atau kode donatur tidak valid.");
+      setError(
+        errorCode.includes("email") && errorCode.includes("verified")
+          ? "Email belum diverifikasi. Cek email Anda sebelum masuk."
+          : "Email atau password tidak valid.",
+      );
       setIsSubmitting(false);
       return;
     }
@@ -139,68 +114,6 @@ export function DonorLoginForm({
           {isSubmitting ? "Masuk…" : "Masuk"}
         </button>
       </form>
-
-      <details className="rounded-2xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper)] p-4 text-sm text-[color:var(--craft-ink-soft)]">
-        <summary className="cursor-pointer font-bold text-[color:var(--craft-ink)]">
-          Masuk dengan kode donatur lama
-        </summary>
-        <form onSubmit={handleLegacySubmit} className="mt-4 space-y-4">
-          <div>
-            <label
-              htmlFor="legacy-name"
-              className="text-sm font-semibold text-[color:var(--craft-ink)]"
-            >
-              Nama
-            </label>
-            <input
-              id="legacy-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              className="field mt-2"
-              required
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="legacy-email"
-              className="text-sm font-semibold text-[color:var(--craft-ink)]"
-            >
-              Email
-            </label>
-            <input
-              id="legacy-email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="field mt-2"
-              required
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="loginCode"
-              className="text-sm font-semibold text-[color:var(--craft-ink)]"
-            >
-              Kode donatur
-            </label>
-            <input
-              id="loginCode"
-              type="password"
-              value={loginCode}
-              onChange={(event) => setLoginCode(event.target.value)}
-              className="field mt-2"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-full bg-slate-800 px-5 py-3 font-bold text-white disabled:bg-slate-300"
-          >
-            {isSubmitting ? "Masuk…" : "Masuk dengan kode"}
-          </button>
-        </form>
-      </details>
     </div>
   );
 }

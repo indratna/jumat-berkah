@@ -5,6 +5,7 @@ import type {
   DonorAuthBannerVariant,
 } from "./donor-auth-banner-rules";
 import { DonorAuthLogoutButton } from "./donor-auth-logout-button";
+import { DonorAuthModalTrigger } from "./donor-auth-modal";
 
 export function DonorAuthBanner({
   variant,
@@ -57,20 +58,7 @@ export function DonorAuthBanner({
           Masuk agar nama dan email tidak perlu diisi ulang.
         </p>
       </div>
-      <div className="flex flex-wrap gap-2">
-        <Link
-          href="/masuk?next=/donasi"
-          className="inline-flex min-h-10 items-center rounded-full bg-[color:var(--craft-leaf)] px-4 text-sm font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)]"
-        >
-          Masuk
-        </Link>
-        <Link
-          href="/daftar?next=/donasi"
-          className="inline-flex min-h-10 items-center rounded-full border border-[color:var(--craft-line-strong)] px-4 text-sm font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
-        >
-          Daftar
-        </Link>
-      </div>
+      <DonorAuthModalTrigger />
     </div>
   );
 }

@@ -25,6 +25,8 @@ const donationSortOptions: Array<{ value: DonationSortField; label: string }> =
     { value: "paidAt", label: "Tanggal bayar" },
     { value: "amount", label: "Nominal" },
     { value: "status", label: "Status" },
+    { value: "orderId", label: "Order ID" },
+    { value: "donorName", label: "Donatur" },
   ];
 
 export default async function AdminDonationsPage({
@@ -46,16 +48,10 @@ export default async function AdminDonationsPage({
 
   return (
     <main className="mx-auto max-w-6xl space-y-4">
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="kicker">Donasi Admin</p>
-          <h1 className="mt-4 text-2xl font-bold">
-            Daftar donasi dan status pembayaran.
-          </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Pantau donasi masuk dan status pembayaran.
-          </p>
-        </div>
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold">
+          Daftar donasi dan status pembayaran.
+        </h1>
         <DonationAutoRefresh />
       </div>
 
@@ -66,8 +62,26 @@ export default async function AdminDonationsPage({
             <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
               <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">Order ID</th>
-                  <th className="px-4 py-3 font-semibold">Donatur</th>
+                  <th className="px-4 py-3 font-semibold">
+                    <SortHeader
+                      query={pageQuery}
+                      field="orderId"
+                      activeSort={filters.sort}
+                      direction={filters.direction}
+                    >
+                      Order ID
+                    </SortHeader>
+                  </th>
+                  <th className="px-4 py-3 font-semibold">
+                    <SortHeader
+                      query={pageQuery}
+                      field="donorName"
+                      activeSort={filters.sort}
+                      direction={filters.direction}
+                    >
+                      Donatur
+                    </SortHeader>
+                  </th>
                   <th className="px-4 py-3 font-semibold">
                     <SortHeader
                       query={pageQuery}

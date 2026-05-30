@@ -9,7 +9,13 @@ import { getPublicDonorName } from "@/lib/reports";
 export { formatRupiah } from "@/lib/format";
 
 export type AdminSortDirection = "asc" | "desc";
-export type DonationSortField = "createdAt" | "paidAt" | "amount" | "status";
+export type DonationSortField =
+  | "createdAt"
+  | "paidAt"
+  | "amount"
+  | "status"
+  | "orderId"
+  | "donorName";
 export type ExpenseSortField =
   | "expenseDate"
   | "amount"

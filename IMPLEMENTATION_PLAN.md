@@ -80,6 +80,8 @@ Done
 
 ### 2026-05-30
 
+- Removed nested vertical scrolling from `/admin/donasi` after manual UI review. Reverted the table body scroll container to horizontal overflow only, keeping a single page scrollbar while preserving the sticky table header for page scroll. No API, payment, webhook, database, donation status, or financial logic changed. Validation passed: `npm run lint`, `npm test` (121/121), `npm run build`.
+
 - Made `/admin/donasi` table header sticky within the table scroll area so only donation rows scroll while filter/header/footer controls remain fixed around the table. No API, payment, webhook, database, donation status, or financial logic changed. Validation passed: `npm run lint`, `npm test` (121/121), `npm run build`.
 
 - Refined `/admin/donasi` header and sortable columns. Removed extra page kicker/description so the header only shows `Daftar donasi dan status pembayaran` beside auto-refresh, and added sortable `Order ID` plus `Donatur` table headers. No API, payment, webhook, database, donation status, or financial logic changed. Validation passed: `npm run lint`, `npm test` (121/121), `npm run build`.

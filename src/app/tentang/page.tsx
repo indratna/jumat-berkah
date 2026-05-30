@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PublicHeader } from "@/components/landing/public-header";
+
 const pillars = [
   {
     title: "Tujuan program",
@@ -41,35 +43,7 @@ export default function TentangPage() {
         id="main-content"
         className="mx-auto flex max-w-5xl flex-col gap-16 px-4 pb-32 pt-6 sm:px-6 sm:pb-20 lg:px-8 lg:py-12"
       >
-        <header className="flex items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-3 text-base font-extrabold tracking-tight text-[color:var(--craft-ink)]"
-            aria-label="Beranda Jumat Berkah Karyo"
-          >
-            <span className="grid size-10 place-items-center rounded-2xl bg-[color:var(--craft-leaf)] text-sm font-bold text-[color:var(--craft-cream)]">
-              JB
-            </span>
-            <span>Jumat Berkah Karyo</span>
-          </Link>
-          <nav
-            aria-label="Navigasi utama"
-            className="flex items-center gap-2 text-sm"
-          >
-            <Link
-              href="/laporan"
-              className="hidden min-h-11 items-center rounded-full px-4 font-semibold text-[color:var(--craft-ink)] hover:text-[color:var(--craft-leaf)] sm:inline-flex"
-            >
-              Laporan
-            </Link>
-            <Link
-              href="/donasi"
-              className="inline-flex min-h-11 items-center rounded-full bg-[color:var(--craft-leaf)] px-5 font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)]"
-            >
-              Donasi
-            </Link>
-          </nav>
-        </header>
+        <PublicHeader />
 
         <section className="grid gap-6 lg:grid-cols-12 lg:items-end lg:gap-8">
           <div className="lg:col-span-8">

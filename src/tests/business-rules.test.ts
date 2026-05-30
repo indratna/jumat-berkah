@@ -52,6 +52,7 @@ import {
   sendWhatsAppTemplateMessage,
 } from "@/lib/whatsapp-reminders";
 import { getProfileInitials } from "@/lib/profile";
+import { getPublicNavActiveState } from "@/lib/public-nav";
 
 test("admin navigation keeps every current admin route reachable", () => {
   const navigationHrefs = new Set([
@@ -244,6 +245,25 @@ test("profile initials prefer first two words and fallback to JB", () => {
   assert.equal(getProfileInitials("Jumat Berkah"), "JB");
   assert.equal(getProfileInitials(" donor@example.com "), "D");
   assert.equal(getProfileInitials(""), "JB");
+});
+
+test("public landing nav active state follows landing-family routes", () => {
+  assert.deepEqual(getPublicNavActiveState("/laporan"), {
+    activeNavHref: "/laporan",
+    isDonationActive: false,
+  });
+  assert.deepEqual(getPublicNavActiveState("/tentang"), {
+    activeNavHref: "/tentang",
+    isDonationActive: false,
+  });
+  assert.deepEqual(getPublicNavActiveState("/"), {
+    activeNavHref: null,
+    isDonationActive: false,
+  });
+  assert.deepEqual(getPublicNavActiveState("/donasi"), {
+    activeNavHref: null,
+    isDonationActive: true,
+  });
 });
 
 test("donation validation rejects invalid amount", () => {

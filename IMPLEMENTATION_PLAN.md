@@ -80,6 +80,8 @@ Done
 
 ### 2026-05-30
 
+- Unified public landing-family headers for `/`, `/tentang`, `/laporan`, and `/donasi` with shared `PublicHeader`, consistent `Laporan`/`Tentang`/`Donasi Sekarang` navigation, and animated desktop active-pill styling. Added TDD coverage for public nav active-state helper. Validation passed: `npm run lint`, `npm test` (117/117), `npm run build`. Manual smoke covered all four pages, active states, CTA links, and mobile header stability.
+
 - Refined `/admin/profil` to match current admin shell instead of donor craft styling. Reused shared initials helper, upgraded hero/summary layout, and kept existing profile update plus password change behavior unchanged. Validation passed: `npm run lint`, `npm test` (116/116), `npm run build`.
 
 - Redesigned donor profile page `/akun/profil` with craft styling to match donor dashboard and public donor flows. Added craft header, personal hero, account summary card, profile edit card, and security card while preserving existing profile update and password change behavior. Added TDD coverage for initials fallback helper. Validation passed: `npm run lint`, `npm test` (116/116), `npm run build`. Manual smoke covered donor profile render, dashboard/back CTA, donor avatar-or-initials fallback, profile update flow, password form render, and anonymous redirect to `/masuk`.

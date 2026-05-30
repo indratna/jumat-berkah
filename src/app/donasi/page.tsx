@@ -12,6 +12,8 @@ import {
 } from "@/lib/better-auth-guards";
 import Link from "next/link";
 
+import { PublicHeader } from "@/components/landing/public-header";
+
 import { DonationForm } from "./donation-form";
 import { DonorAuthBanner } from "./donor-auth-banner";
 import { resolveDonorAuthBannerVariant } from "./donor-auth-banner-rules";
@@ -61,47 +63,7 @@ export default async function DonationPage() {
           clientKey={midtransClientKey}
           isProduction={midtransIsProduction}
         />
-        <header className="flex items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-3 text-base font-extrabold tracking-tight text-[color:var(--craft-ink)]"
-            aria-label="Beranda Jumat Berkah Karyo"
-          >
-            <span className="grid size-10 place-items-center rounded-2xl bg-[color:var(--craft-leaf)] text-sm font-bold text-[color:var(--craft-cream)]">
-              JB
-            </span>
-            <span>Jumat Berkah Karyo</span>
-          </Link>
-          <nav
-            aria-label="Navigasi utama"
-            className="flex items-center gap-2 text-sm"
-          >
-            <Link
-              href="/"
-              className="hidden min-h-11 items-center rounded-full px-4 font-semibold text-[color:var(--craft-ink)] hover:text-[color:var(--craft-leaf)] sm:inline-flex"
-            >
-              Beranda
-            </Link>
-            <Link
-              href="/laporan"
-              className="hidden min-h-11 items-center rounded-full px-4 font-semibold text-[color:var(--craft-ink)] hover:text-[color:var(--craft-leaf)] sm:inline-flex"
-            >
-              Laporan
-            </Link>
-            <Link
-              href="/tentang"
-              className="hidden min-h-11 items-center rounded-full px-4 font-semibold text-[color:var(--craft-ink)] hover:text-[color:var(--craft-leaf)] sm:inline-flex"
-            >
-              Tentang
-            </Link>
-            <Link
-              href="/donasi"
-              className="inline-flex min-h-11 items-center rounded-full bg-[color:var(--craft-leaf)] px-5 font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)]"
-            >
-              Donasi
-            </Link>
-          </nav>
-        </header>
+        <PublicHeader />
 
         <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-start lg:gap-8">
           <div className="space-y-6 lg:sticky lg:top-10">

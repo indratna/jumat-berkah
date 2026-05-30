@@ -156,10 +156,12 @@ export default async function DonationPage() {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <DonorAuthBanner variant={bannerVariant} donor={donor} />
-            <DonationForm donor={donor} />
-          </div>
+          <DonationForm
+            donor={donor}
+            authBanner={
+              <DonorAuthBanner variant={bannerVariant} donor={donor} />
+            }
+          />
         </section>
 
         <section className="grid gap-4 md:grid-cols-3">

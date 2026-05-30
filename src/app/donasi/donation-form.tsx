@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import type { ReactNode } from "react";
 
 import {
   canUseSnapPopup,
@@ -24,8 +25,10 @@ const presetAmounts = [10_000, 25_000, 50_000, 100_000];
 
 export function DonationForm({
   donor,
+  authBanner,
 }: {
   donor?: { name: string | null; email: string } | null;
+  authBanner?: ReactNode;
 }) {
   const [amount, setAmount] = useState("50000");
   const [donorName, setDonorName] = useState(donor?.name ?? "");
@@ -167,6 +170,8 @@ export function DonationForm({
           <p className="mt-2 text-sm text-red-600">{errors.amount}</p>
         ) : null}
       </div>
+
+      {authBanner ? <div>{authBanner}</div> : null}
 
       <label className="flex items-center gap-3 rounded-2xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper)] p-4 text-sm font-semibold text-[color:var(--craft-ink)]">
         <input

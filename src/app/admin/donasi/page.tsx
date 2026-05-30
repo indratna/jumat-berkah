@@ -45,14 +45,24 @@ export default async function AdminDonationsPage({
   };
   const donations = await getAdminDonations(filters);
   const pageQuery = buildPageQuery(resolvedSearchParams);
+  const csvExportHref = buildExportHref(pageQuery, "csv");
+  const pdfExportHref = buildExportHref(pageQuery, "pdf");
 
   return (
     <main className="mx-auto max-w-6xl space-y-4">
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="sticky top-16 z-20 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">
           Daftar donasi dan status pembayaran.
         </h1>
-        <DonationAutoRefresh />
+        <div className="flex items-center gap-2">
+          <ExportIconLink href={pdfExportHref} label="Export PDF">
+            PDF
+          </ExportIconLink>
+          <ExportIconLink href={csvExportHref} label="Export CSV">
+            CSV
+          </ExportIconLink>
+          <DonationAutoRefresh />
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -60,7 +70,7 @@ export default async function AdminDonationsPage({
         {donations.items.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-              <thead className="sticky top-0 z-10 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[0_1px_0_0_rgba(226,232,240,1)]">
+              <thead className="sticky top-[9rem] z-10 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[0_1px_0_0_rgba(226,232,240,1)]">
                 <tr>
                   <th className="px-4 py-3 font-semibold">
                     <SortHeader
@@ -164,6 +174,27 @@ export default async function AdminDonationsPage({
         />
       </div>
     </main>
+  );
+}
+
+function ExportIconLink({
+  href,
+  label,
+  children,
+}: {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex h-10 min-w-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-black tracking-wide text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+      aria-label={label}
+      title={label}
+    >
+      {children}
+    </Link>
   );
 }
 
@@ -341,6 +372,17 @@ function buildPageQuery(params: Record<string, string | string[] | undefined>) {
       query.set(key, value);
   }
   return query;
+}
+
+function buildExportHref(query: URLSearchParams, format: "csv" | "pdf") {
+  const nextQuery = new URLSearchParams(query);
+  nextQuery.set("format", format);
+  nextQuery.delete("page");
+  nextQuery.delete("pageSize");
+  const queryString = nextQuery.toString();
+  return queryString
+    ? `/api/admin/donations/export?${queryString}`
+    : `/api/admin/donations/export?format=${format}`;
 }
 
 function buildPageHref(query: URLSearchParams, page: number) {

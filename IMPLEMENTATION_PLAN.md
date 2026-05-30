@@ -80,6 +80,8 @@ Done
 
 ### 2026-05-30
 
+- Refined `/admin/profil` to match current admin shell instead of donor craft styling. Reused shared initials helper, upgraded hero/summary layout, and kept existing profile update plus password change behavior unchanged. Validation passed: `npm run lint`, `npm test` (116/116), `npm run build`.
+
 - Redesigned donor profile page `/akun/profil` with craft styling to match donor dashboard and public donor flows. Added craft header, personal hero, account summary card, profile edit card, and security card while preserving existing profile update and password change behavior. Added TDD coverage for initials fallback helper. Validation passed: `npm run lint`, `npm test` (116/116), `npm run build`. Manual smoke covered donor profile render, dashboard/back CTA, donor avatar-or-initials fallback, profile update flow, password form render, and anonymous redirect to `/masuk`.
 
 - Implemented donor dashboard craft redesign for `/akun/donasi`. Replaced the old account history table page with a warm craft dashboard: personal salam hero, donor KPI bento, current Friday target aggregate card, Telegram status/link-code card, profile summary, and mobile-first donation history cards. No database schema, payment, webhook, or financial status rules changed. Validation passed: `npm run lint`, `npm test` (115/115), `npm run build`. Manual smoke covered donor session dashboard render, anonymous redirect to `/masuk`, target fallback copy, Telegram unlinked card, and donation card status/detail links in local browser.

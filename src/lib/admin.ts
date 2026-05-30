@@ -346,7 +346,7 @@ export async function getAdminDonors(filters: DonorFilterParams) {
         paidAt: true,
       },
     }),
-    prisma.donorProfile.findMany({ where: { mergedIntoId: null } }),
+    prisma.donorProfile.findMany(),
   ]);
 
   const donors = new Map<string, AdminDonor>();
@@ -436,6 +436,11 @@ export async function getAdminDonors(filters: DonorFilterParams) {
   }
 
   for (const profile of donorProfiles) {
+    if (profile.mergedIntoId) {
+      donors.delete(profile.donorKey);
+      continue;
+    }
+
     const current = donors.get(profile.donorKey);
     if (!current) continue;
     current.profileId = profile.id;

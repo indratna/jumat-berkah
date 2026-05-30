@@ -42,6 +42,7 @@ import {
 import { buildAdminDonorKey } from "@/lib/admin";
 import {
   normalizeDonorLabels,
+  validateDonorMergePayload,
   validateDonorProfilePayload,
 } from "@/lib/admin-donor-profile";
 import {
@@ -144,6 +145,34 @@ test("donor labels normalize and limit values", () => {
     "VIP",
     "Rutin",
   ]);
+});
+
+test("donor merge validation requires distinct donors and confirmation", () => {
+  assert.deepEqual(
+    validateDonorMergePayload({
+      primaryDonorKey: "email:a@example.com",
+      duplicateDonorKey: "email:a@example.com",
+      confirmation: "GABUNG DONATUR",
+    }),
+    {
+      success: false,
+      errors: {
+        duplicateDonorKey: "Donatur duplikat harus berbeda dari donatur utama.",
+      },
+    },
+  );
+
+  assert.deepEqual(
+    validateDonorMergePayload({
+      primaryDonorKey: "email:a@example.com",
+      duplicateDonorKey: "phone:0812",
+      confirmation: "gabung",
+    }),
+    {
+      success: false,
+      errors: { confirmation: "Ketik GABUNG DONATUR untuk konfirmasi." },
+    },
+  );
 });
 
 test("admin donor settlement summary excludes pending donations", () => {

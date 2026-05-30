@@ -58,6 +58,47 @@ export function validateDonorProfilePayload(
   };
 }
 
+export function validateDonorMergePayload(payload: {
+  primaryDonorKey?: unknown;
+  duplicateDonorKey?: unknown;
+  confirmation?: unknown;
+}) {
+  const errors: Record<string, string> = {};
+  const primaryDonorKey =
+    typeof payload.primaryDonorKey === "string"
+      ? payload.primaryDonorKey.trim()
+      : "";
+  const duplicateDonorKey =
+    typeof payload.duplicateDonorKey === "string"
+      ? payload.duplicateDonorKey.trim()
+      : "";
+  const confirmation =
+    typeof payload.confirmation === "string" ? payload.confirmation.trim() : "";
+
+  if (!primaryDonorKey) errors.primaryDonorKey = "Donatur utama wajib dipilih.";
+  if (!duplicateDonorKey) {
+    errors.duplicateDonorKey = "Donatur duplikat wajib dipilih.";
+  }
+  if (
+    primaryDonorKey &&
+    duplicateDonorKey &&
+    primaryDonorKey === duplicateDonorKey
+  ) {
+    errors.duplicateDonorKey =
+      "Donatur duplikat harus berbeda dari donatur utama.";
+  }
+  if (confirmation !== "GABUNG DONATUR") {
+    errors.confirmation = "Ketik GABUNG DONATUR untuk konfirmasi.";
+  }
+
+  if (Object.keys(errors).length > 0)
+    return { success: false as const, errors };
+  return {
+    success: true as const,
+    data: { primaryDonorKey, duplicateDonorKey },
+  };
+}
+
 export function normalizeDonorLabels(values: unknown[]) {
   const labels: string[] = [];
   const seen = new Set<string>();

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AdminSummaryFooter } from "@/components/admin/admin-summary-footer";
 import { DonorManagementForm } from "@/app/admin/donatur/donor-management-form";
+import { DonorMergeForm } from "@/app/admin/donatur/donor-merge-form";
 import {
   type AdminDonor,
   type AdminSortDirection,
@@ -326,6 +327,7 @@ function DonorDetail({
           />
         </dl>
         <DonorManagementForm donor={donor} />
+        <DonorMergeForm donor={donor} />
         <div className="mt-6 space-y-2">
           <Link
             href={`/admin/donasi?q=${encodeURIComponent(donor.email ?? donor.phone ?? donor.name)}`}

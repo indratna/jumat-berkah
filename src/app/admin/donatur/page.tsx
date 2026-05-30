@@ -18,6 +18,8 @@ type AdminDonorPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+type DonorDetailMode = "view" | "edit" | "merge";
+
 const donorSortOptions: Array<{ value: DonorSortField; label: string }> = [
   { value: "lastDonationAt", label: "Aktivitas terakhir" },
   { value: "totalSettlementAmount", label: "Total settlement" },
@@ -41,6 +43,9 @@ export default async function AdminDonorPage({
   };
   const donors = await getAdminDonors(filters);
   const pageQuery = buildPageQuery(resolvedSearchParams);
+  const detailMode = getDonorDetailMode(
+    getStringParam(resolvedSearchParams.mode),
+  );
 
   return (
     <main className="mx-auto max-w-6xl space-y-4">
@@ -75,7 +80,7 @@ export default async function AdminDonorPage({
                   <th className="px-4 py-3 font-semibold">Label</th>
                   <th className="px-4 py-3 font-semibold">Consent WA</th>
                   <th className="px-4 py-3 font-semibold">Aktivitas</th>
-                  <th className="px-4 py-3 font-semibold">Detail</th>
+                  <th className="px-4 py-3 font-semibold">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
@@ -121,13 +126,10 @@ export default async function AdminDonorPage({
                         : "Belum ada donasi"}
                     </td>
                     <td className="px-4 py-4">
-                      <Link
-                        href={`?${buildDetailHref(pageQuery, donor.key)}`}
-                        scroll={false}
-                        className="btn-outline"
-                      >
-                        Lihat
-                      </Link>
+                      <DonorActionButtons
+                        query={pageQuery}
+                        donorKey={donor.key}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -157,7 +159,11 @@ export default async function AdminDonorPage({
         />
       </section>
 
-      <DonorDetail donor={donors.selectedDonor} query={pageQuery} />
+      <DonorDetail
+        donor={donors.selectedDonor}
+        query={pageQuery}
+        mode={detailMode}
+      />
     </main>
   );
 }
@@ -240,12 +246,64 @@ function TableToolbar({
   );
 }
 
+function DonorActionButtons({
+  query,
+  donorKey,
+}: {
+  query: URLSearchParams;
+  donorKey: string;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <ActionLink
+        href={`?${buildDetailHref(query, donorKey, "view")}`}
+        label="Lihat"
+        icon="👁️"
+      />
+      <ActionLink
+        href={`?${buildDetailHref(query, donorKey, "edit")}`}
+        label="Edit"
+        icon="✏️"
+      />
+      <ActionLink
+        href={`?${buildDetailHref(query, donorKey, "merge")}`}
+        label="Gabungkan"
+        icon="🔗"
+      />
+    </div>
+  );
+}
+
+function ActionLink({
+  href,
+  label,
+  icon,
+}: {
+  href: string;
+  label: string;
+  icon: string;
+}) {
+  return (
+    <Link
+      href={href}
+      scroll={false}
+      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-base shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+      title={label}
+      aria-label={label}
+    >
+      <span aria-hidden="true">{icon}</span>
+    </Link>
+  );
+}
+
 function DonorDetail({
   donor,
   query,
+  mode,
 }: {
   donor: AdminDonor | null;
   query: URLSearchParams;
+  mode: DonorDetailMode;
 }) {
   if (!donor) {
     return null;
@@ -253,13 +311,14 @@ function DonorDetail({
 
   const closeQuery = new URLSearchParams(query);
   closeQuery.delete("donor");
+  closeQuery.delete("mode");
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4">
       <aside className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="kicker">Detail Donatur</p>
+            <p className="kicker">{getModeTitle(mode)}</p>
             <h2 className="mt-3 text-2xl font-bold">{donor.name}</h2>
           </div>
           <Link
@@ -270,83 +329,91 @@ function DonorDetail({
             Tutup
           </Link>
         </div>
-        <dl className="mt-5 space-y-4 text-sm">
-          <DetailRow label="Email" value={donor.email ?? "Tidak ada"} />
-          <DetailRow label="WhatsApp" value={donor.phone ?? "Tidak ada"} />
-          <DetailRow label="Consent WA" value={formatConsentStatus(donor)} />
-          <DetailRow
-            label="Label"
-            value={
-              donor.labels.length > 0 ? donor.labels.join(", ") : "Tidak ada"
-            }
-          />
-          <DetailRow
-            label="Catatan internal"
-            value={donor.internalNote ?? "Tidak ada"}
-          />
-          <DetailRow
-            label="Opt-in WA"
-            value={
-              donor.whatsappReminderOptInAt
-                ? formatAdminDate(donor.whatsappReminderOptInAt)
-                : "Belum pernah"
-            }
-          />
-          <DetailRow
-            label="Instruksi opt-out"
-            value="Balas STOP saat fitur pengingat WhatsApp aktif."
-          />
-          <DetailRow
-            label="Tipe"
-            value={donor.userId ? "Akun terdaftar" : "Tamu"}
-          />
-          <DetailRow
-            label="Total settlement"
-            value={formatRupiah(donor.totalSettlementAmount)}
-          />
-          <DetailRow
-            label="Jumlah settlement"
-            value={String(donor.settlementCount)}
-          />
-          <DetailRow label="Total donasi" value={String(donor.donationCount)} />
-          <DetailRow
-            label="Donasi pertama"
-            value={
-              donor.firstDonationAt
-                ? formatAdminDate(donor.firstDonationAt)
-                : "Belum ada"
-            }
-          />
-          <DetailRow
-            label="Donasi terakhir"
-            value={
-              donor.lastDonationAt
-                ? formatAdminDate(donor.lastDonationAt)
-                : "Belum ada"
-            }
-          />
-        </dl>
-        <DonorManagementForm donor={donor} />
-        <DonorMergeForm donor={donor} />
-        <div className="mt-6 space-y-2">
-          <Link
-            href={`/admin/donasi?q=${encodeURIComponent(donor.email ?? donor.phone ?? donor.name)}`}
-            className="btn-primary w-full text-sm"
-          >
-            Buka riwayat donasi
-          </Link>
-          {donor.donationOrderIds.slice(0, 5).map((orderId) => (
-            <Link
-              key={orderId}
-              href={`/admin/donasi?q=${encodeURIComponent(orderId)}`}
-              className="block rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
-            >
-              {orderId}
-            </Link>
-          ))}
-        </div>
+        {mode === "view" ? <DonorSummary donor={donor} /> : null}
+        {mode === "edit" ? <DonorManagementForm donor={donor} /> : null}
+        {mode === "merge" ? <DonorMergeForm donor={donor} /> : null}
       </aside>
     </div>
+  );
+}
+
+function DonorSummary({ donor }: { donor: AdminDonor }) {
+  return (
+    <>
+      <dl className="mt-5 space-y-4 text-sm">
+        <DetailRow label="Email" value={donor.email ?? "Tidak ada"} />
+        <DetailRow label="WhatsApp" value={donor.phone ?? "Tidak ada"} />
+        <DetailRow label="Consent WA" value={formatConsentStatus(donor)} />
+        <DetailRow
+          label="Label"
+          value={
+            donor.labels.length > 0 ? donor.labels.join(", ") : "Tidak ada"
+          }
+        />
+        <DetailRow
+          label="Catatan internal"
+          value={donor.internalNote ?? "Tidak ada"}
+        />
+        <DetailRow
+          label="Opt-in WA"
+          value={
+            donor.whatsappReminderOptInAt
+              ? formatAdminDate(donor.whatsappReminderOptInAt)
+              : "Belum pernah"
+          }
+        />
+        <DetailRow
+          label="Instruksi opt-out"
+          value="Balas STOP saat fitur pengingat WhatsApp aktif."
+        />
+        <DetailRow
+          label="Tipe"
+          value={donor.userId ? "Akun terdaftar" : "Tamu"}
+        />
+        <DetailRow
+          label="Total settlement"
+          value={formatRupiah(donor.totalSettlementAmount)}
+        />
+        <DetailRow
+          label="Jumlah settlement"
+          value={String(donor.settlementCount)}
+        />
+        <DetailRow label="Total donasi" value={String(donor.donationCount)} />
+        <DetailRow
+          label="Donasi pertama"
+          value={
+            donor.firstDonationAt
+              ? formatAdminDate(donor.firstDonationAt)
+              : "Belum ada"
+          }
+        />
+        <DetailRow
+          label="Donasi terakhir"
+          value={
+            donor.lastDonationAt
+              ? formatAdminDate(donor.lastDonationAt)
+              : "Belum ada"
+          }
+        />
+      </dl>
+      <div className="mt-6 space-y-2">
+        <Link
+          href={`/admin/donasi?q=${encodeURIComponent(donor.email ?? donor.phone ?? donor.name)}`}
+          className="btn-primary w-full text-sm"
+        >
+          Buka riwayat donasi
+        </Link>
+        {donor.donationOrderIds.slice(0, 5).map((orderId) => (
+          <Link
+            key={orderId}
+            href={`/admin/donasi?q=${encodeURIComponent(orderId)}`}
+            className="block rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            {orderId}
+          </Link>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -469,9 +536,14 @@ function PaginationLink({
   );
 }
 
-function buildDetailHref(query: URLSearchParams, donorKey: string) {
+function buildDetailHref(
+  query: URLSearchParams,
+  donorKey: string,
+  mode: DonorDetailMode,
+) {
   const nextQuery = new URLSearchParams(query);
   nextQuery.set("donor", donorKey);
+  nextQuery.set("mode", mode);
   return nextQuery.toString();
 }
 
@@ -496,6 +568,22 @@ function getNumberParam(value: string | string[] | undefined) {
 
 function getSortDirection(value: string | null): AdminSortDirection {
   return value === "asc" ? "asc" : "desc";
+}
+
+function getDonorDetailMode(value: string | null): DonorDetailMode {
+  return value === "edit" || value === "merge" ? value : "view";
+}
+
+function getModeTitle(mode: DonorDetailMode) {
+  if (mode === "edit") {
+    return "Edit Donatur";
+  }
+
+  if (mode === "merge") {
+    return "Gabungkan Donatur";
+  }
+
+  return "Ringkasan Donatur";
 }
 
 function getDonorSort(value: string | null): DonorSortField {

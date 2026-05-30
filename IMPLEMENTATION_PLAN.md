@@ -80,6 +80,8 @@ Done
 
 ### 2026-05-30
 
+- Refined Admin Donor Management table actions. Renamed donor table `Detail` column to `Aksi`, split donor modal into three focused actions (`Lihat`/eye for read-only summary, `Edit`/pencil for profile management, `Gabungkan`/link for duplicate merge), and kept existing donor management APIs/payment/webhook/donation fields unchanged. Validation passed: `npm run lint`, `npm test` (121/121), `npm run build`.
+
 - Implemented Admin Donor Management Phase 2 — Donor Merge. Added confirmation-gated donor merge validation, admin-only merge API, merge UI in donor detail, duplicate profile hiding through `mergedIntoId`, label/note metadata merge, and `donor.merged` audit logs. Merge only updates `DonorProfile` metadata and does not mutate donation amount/status/order ID/Midtrans transaction fields, payment flow, webhook behavior, or public report privacy. Validation passed: `npm run lint`, `npm test` (121/121), `npm run build`.
 
 - Implemented Admin Donor Management Phase 1 — Donor CRM Basics. Added `DonorProfile` metadata model/migration separate from `Donation`, donor profile validation/label normalization tests, admin donor profile edit API/UI, WhatsApp consent editing, internal notes, labels, label filtering, filtered CSV export, and audit logs for profile writes/export. Donation amount/status/order ID/Midtrans fields, payment flow, webhook behavior, and public report privacy were not changed. Validation passed: `npm run lint`, `npm test` (120/120), `npm run build`.

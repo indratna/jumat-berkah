@@ -1,8 +1,11 @@
+import Link from "next/link";
+
 import { AdminDataPageShell } from "@/components/admin/admin-data-page-shell";
 import { AdminStickyPageBar } from "@/components/admin/admin-sticky-page-bar";
 import { AdminTableCard } from "@/components/admin/admin-table-card";
 import { AdminTableFooter } from "@/components/admin/admin-table-footer";
 import { adminTableStyles } from "@/components/admin/admin-table-styles";
+import { AutoSubmitSelect } from "../auto-submit-select";
 import {
   type AdminSortDirection,
   type AuditSortField,
@@ -15,12 +18,6 @@ import {
 type AdminAuditPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
-
-const auditSortOptions: Array<{ value: AuditSortField; label: string }> = [
-  { value: "createdAt", label: "Waktu" },
-  { value: "action", label: "Aksi" },
-  { value: "entityType", label: "Entitas" },
-];
 
 export default async function AdminAuditPage({
   searchParams,
@@ -42,10 +39,7 @@ export default async function AdminAuditPage({
 
   return (
     <AdminDataPageShell>
-      <AdminStickyPageBar
-        title="Jejak perubahan sistem."
-        description="Lihat aktivitas operasional penting secara read-only. Data audit tidak bisa diubah dari halaman ini."
-      />
+      <AdminStickyPageBar title="Jejak audit perubahan sistem." />
 
       <AdminTableCard>
         <AuditToolbar
@@ -53,47 +47,67 @@ export default async function AdminAuditPage({
           actions={logs.actions}
           entityTypes={logs.entityTypes}
         />
-        <div className="divide-y divide-slate-100">
-          {logs.items.length === 0 ? (
-            <div className={adminTableStyles.emptyState}>
-              Tidak ada audit log sesuai filter.
-            </div>
-          ) : (
-            logs.items.map((log) => (
-              <details key={log.id} className="group p-5 open:bg-slate-50/70">
-                <summary className="cursor-pointer list-none">
-                  <div className="grid gap-3 lg:grid-cols-[1fr_11rem_10rem] lg:items-center">
+
+        {logs.items.length === 0 ? (
+          <div className={adminTableStyles.emptyState}>
+            Tidak ada audit log sesuai filter.
+          </div>
+        ) : (
+          <>
+            <AuditTableHeader
+              query={pageQuery}
+              sort={filters.sort}
+              direction={filters.direction}
+            />
+            <div className="divide-y divide-slate-100">
+              {logs.items.map((log) => (
+                <details key={log.id} className="group p-5 open:bg-slate-50/70">
+                  <summary className="grid cursor-pointer list-none gap-3 lg:grid-cols-[1fr_11rem_10rem_11rem] lg:items-center">
                     <div>
                       <p className="font-semibold text-slate-950">
                         {log.action}
                       </p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {log.entityType} · {log.entityId}
+                      <p className="mt-1 text-xs text-slate-500">
+                        {log.entityId}
                       </p>
                     </div>
+                    <p className="text-sm text-slate-700">{log.entityType}</p>
                     <p className="text-sm text-slate-600">
                       {log.actor?.name ?? log.actor?.email ?? "Sistem"}
                     </p>
                     <p className="text-sm text-slate-600">
                       {formatAdminDate(log.createdAt)}
                     </p>
+                  </summary>
+                  <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                    <AuditJson title="Sebelum" value={log.before} />
+                    <AuditJson title="Sesudah" value={log.after} />
                   </div>
-                </summary>
-                <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                  <AuditJson title="Sebelum" value={log.before} />
-                  <AuditJson title="Sesudah" value={log.after} />
-                </div>
-              </details>
-            ))
-          )}
-        </div>
+                </details>
+              ))}
+            </div>
+          </>
+        )}
+
         <AdminTableFooter
           page={logs.page}
           totalPages={logs.totalPages}
-          hrefBuilder={(page) =>
-            buildPageHref(pageQuery, page, filters.pageSize)
+          hrefBuilder={(page) => buildPageHref(pageQuery, page)}
+          pageSizeControl={
+            <AutoSubmitSelect
+              name="pageSize"
+              label="Baris"
+              defaultValue={String(filters.pageSize)}
+              hiddenFields={Array.from(pageQuery.entries()).map(
+                ([name, value]) => ({ name, value }),
+              )}
+              options={[10, 25, 50, 100].map((size) => ({
+                value: String(size),
+                label: String(size),
+              }))}
+            />
           }
-          totalLabel={`Total ${logs.total} log audit · Baris ${filters.pageSize} · Mode read-only`}
+          totalLabel={`Total ${logs.total} log audit · Read-only`}
         />
       </AdminTableCard>
     </AdminDataPageShell>
@@ -111,7 +125,6 @@ function AuditToolbar({
     entityType: string | null;
     from: string | null;
     to: string | null;
-    pageSize: number;
     sort: AuditSortField;
     direction: AdminSortDirection;
   };
@@ -119,11 +132,11 @@ function AuditToolbar({
   entityTypes: string[];
 }) {
   return (
-    <form className={`${adminTableStyles.toolbar} lg:grid-cols-6`}>
+    <form className={`${adminTableStyles.toolbar} lg:grid-cols-12`}>
       <select
         name="action"
         defaultValue={filters.action ?? ""}
-        className="field"
+        className="field lg:col-span-3"
       >
         <option value="">Semua aksi</option>
         {actions.map((action) => (
@@ -135,7 +148,7 @@ function AuditToolbar({
       <select
         name="entityType"
         defaultValue={filters.entityType ?? ""}
-        className="field"
+        className="field lg:col-span-2"
       >
         <option value="">Semua entitas</option>
         {entityTypes.map((entityType) => (
@@ -148,48 +161,110 @@ function AuditToolbar({
         name="actor"
         defaultValue={filters.actor ?? ""}
         placeholder="Cari aktor"
-        className="field"
+        className="field lg:col-span-2"
       />
       <input
         name="from"
         type="date"
         defaultValue={filters.from ?? ""}
-        className="field"
+        className="field lg:col-span-2"
       />
       <input
         name="to"
         type="date"
         defaultValue={filters.to ?? ""}
-        className="field"
+        className="field lg:col-span-2"
       />
-      <button className="btn-primary">Filter</button>
-      <select name="sort" defaultValue={filters.sort} className="field">
-        {auditSortOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            Urut: {option.label}
-          </option>
-        ))}
-      </select>
-      <select
-        name="direction"
-        defaultValue={filters.direction}
-        className="field"
-      >
-        <option value="desc">Z-A/terbaru</option>
-        <option value="asc">A-Z/terlama</option>
-      </select>
-      <select
-        name="pageSize"
-        defaultValue={String(filters.pageSize)}
-        className="field"
-      >
-        {[10, 25, 50, 100].map((size) => (
-          <option key={size} value={size}>
-            {size} baris
-          </option>
-        ))}
-      </select>
+      <input type="hidden" name="sort" value={filters.sort} />
+      <input type="hidden" name="direction" value={filters.direction} />
+      <button className="btn-primary lg:col-span-1">Filter</button>
     </form>
+  );
+}
+
+function AuditTableHeader({
+  query,
+  sort,
+  direction,
+}: {
+  query: URLSearchParams;
+  sort: AuditSortField;
+  direction: AdminSortDirection;
+}) {
+  const headerCellClass =
+    "sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[0_1px_0_0_rgba(226,232,240,1)]";
+
+  return (
+    <div
+      className={`grid border-b border-slate-200 bg-slate-50 lg:grid-cols-[1fr_11rem_10rem_11rem]`}
+    >
+      <div className={headerCellClass}>
+        <SortHeader
+          query={query}
+          field="action"
+          activeSort={sort}
+          direction={direction}
+        >
+          Aksi
+        </SortHeader>
+      </div>
+      <div className={headerCellClass}>
+        <SortHeader
+          query={query}
+          field="entityType"
+          activeSort={sort}
+          direction={direction}
+        >
+          Entitas
+        </SortHeader>
+      </div>
+      <div className={headerCellClass}>Aktor</div>
+      <div className={headerCellClass}>
+        <SortHeader
+          query={query}
+          field="createdAt"
+          activeSort={sort}
+          direction={direction}
+        >
+          Waktu
+        </SortHeader>
+      </div>
+    </div>
+  );
+}
+
+function SortHeader({
+  query,
+  field,
+  activeSort,
+  direction,
+  children,
+}: {
+  query: URLSearchParams;
+  field: AuditSortField;
+  activeSort: AuditSortField;
+  direction: AdminSortDirection;
+  children: React.ReactNode;
+}) {
+  const isActive = activeSort === field;
+  const nextDirection: AdminSortDirection =
+    isActive && direction === "desc" ? "asc" : "desc";
+  const nextQuery = new URLSearchParams(query);
+  nextQuery.set("sort", field);
+  nextQuery.set("direction", nextDirection);
+  nextQuery.delete("page");
+
+  return (
+    <Link
+      href={`?${nextQuery.toString()}`}
+      scroll={false}
+      className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-950"
+    >
+      <span>{children}</span>
+      <span aria-hidden="true" className="text-[10px]">
+        {isActive ? (direction === "desc" ? "↓" : "↑") : "↕"}
+      </span>
+    </Link>
   );
 }
 
@@ -204,10 +279,9 @@ function AuditJson({ title, value }: { title: string; value: unknown }) {
   );
 }
 
-function buildPageHref(query: URLSearchParams, page: number, pageSize: number) {
+function buildPageHref(query: URLSearchParams, page: number) {
   const nextQuery = new URLSearchParams(query);
   nextQuery.set("page", String(page));
-  nextQuery.set("pageSize", String(pageSize));
   return nextQuery.toString();
 }
 

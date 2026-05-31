@@ -2,6 +2,22 @@ import { CycleCountdown } from "@/components/cycle-countdown";
 import type { WeeklyTargetProgress } from "@/lib/weekly-target";
 import { formatRupiah } from "@/lib/format";
 
+const JAKARTA_TIME_ZONE = "Asia/Jakarta";
+
+function formatDistributionFriday(cycleToDate: string): string {
+  // Cycle ends Thursday (cycleToDate). The Nasi Jumat Berkah is served the next day (Friday).
+  const distributionDate = new Date(`${cycleToDate}T00:00:00+07:00`);
+  distributionDate.setUTCDate(distributionDate.getUTCDate() + 1);
+
+  return new Intl.DateTimeFormat("id-ID", {
+    timeZone: JAKARTA_TIME_ZONE,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(distributionDate);
+}
+
 export function LandingTargetProgress({
   progress,
   collectedPercent,
@@ -11,15 +27,11 @@ export function LandingTargetProgress({
 }) {
   const targetAmount = progress.target?.targetAmount ?? 0;
   const cappedPercent = Math.min(collectedPercent, 100);
-  const status = progress.target
-    ? progress.reachedTarget
-      ? "Target tercapai"
-      : "Berjalan"
-    : "Target belum diatur";
+  const distributionDateLabel = formatDistributionFriday(progress.cycle.toDate);
 
   return (
-    <section className="craft-card-strong overflow-hidden">
-      <div className="grid gap-6 px-6 py-6 sm:px-8 sm:py-8 lg:grid-cols-[1.1fr_1.4fr] lg:items-center">
+    <section className="craft-card-strong h-full overflow-hidden">
+      <div className="flex h-full flex-col gap-6 px-6 py-6 sm:px-8 sm:py-8">
         <div>
           <span className="craft-pill">Target Minggu Ini</span>
           <h2 className="mt-4 text-2xl font-bold leading-tight sm:text-3xl">
@@ -38,12 +50,12 @@ export function LandingTargetProgress({
             />
           </div>
           <p className="mt-3 max-w-md text-sm leading-6 text-[color:var(--craft-ink-soft)]">
-            Periode {progress.cycle.label}. Donasi yang masuk sampai Kamis malam
-            akan dihitung ke siklus ini.
+            Donasi yang masuk akan digunakan untuk Nasi Jumat Berkah{" "}
+            {distributionDateLabel}.
           </p>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="mt-auto flex flex-col gap-4">
           <div className="flex items-end justify-between gap-3">
             <p className="text-xs font-semibold uppercase tracking-widest text-[color:var(--craft-ink-soft)]">
               Progress
@@ -65,7 +77,7 @@ export function LandingTargetProgress({
               }}
             />
           </div>
-          <div className="grid grid-cols-3 gap-3 pt-2 text-sm">
+          <div className="grid grid-cols-2 gap-3 pt-2 text-sm">
             <Stat
               label="Target"
               value={
@@ -73,7 +85,6 @@ export function LandingTargetProgress({
               }
             />
             <Stat label="Terkumpul" value={formatRupiah(progress.collected)} />
-            <Stat label="Status" value={status} />
           </div>
         </div>
       </div>

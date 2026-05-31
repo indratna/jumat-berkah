@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -16,6 +18,28 @@ export function PublicHeader({ className = "" }: { className?: string }) {
     (link) => link.href === activeNavHref,
   );
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [mobileMenuOpen]);
+
   return (
     <header
       className={`flex items-center justify-between gap-4 ${className}`.trim()}
@@ -31,9 +55,71 @@ export function PublicHeader({ className = "" }: { className?: string }) {
         <span className="truncate">Jumat Berkah Karyo</span>
       </Link>
       <nav
+        ref={menuRef}
         aria-label="Navigasi utama"
-        className="flex shrink-0 items-center gap-2 text-sm"
+        className="relative flex shrink-0 items-center gap-2 text-sm"
       >
+        {/* Mobile hamburger button */}
+        <button
+          type="button"
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-nav-menu"
+          aria-label="Buka menu navigasi"
+          onClick={() => setMobileMenuOpen((prev) => !prev)}
+          className="inline-flex size-10 items-center justify-center rounded-full border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-cream)]/80 text-[color:var(--craft-ink)] shadow-sm transition-colors hover:bg-[color:var(--craft-leaf)] hover:text-[color:var(--craft-cream)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[color:var(--craft-leaf)] sm:hidden"
+        >
+          <svg
+            aria-hidden="true"
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            {mobileMenuOpen ? (
+              <>
+                <line x1="4" y1="4" x2="16" y2="16" />
+                <line x1="16" y1="4" x2="4" y2="16" />
+              </>
+            ) : (
+              <>
+                <line x1="3" y1="5" x2="17" y2="5" />
+                <line x1="3" y1="10" x2="17" y2="10" />
+                <line x1="3" y1="15" x2="17" y2="15" />
+              </>
+            )}
+          </svg>
+        </button>
+
+        {/* Mobile dropdown menu */}
+        {mobileMenuOpen && (
+          <div
+            id="mobile-nav-menu"
+            className="absolute right-0 top-full z-50 mt-2 min-w-[10rem] overflow-hidden rounded-2xl border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-cream)] shadow-lg sm:hidden"
+          >
+            {publicNavLinks.map((link) => {
+              const isActive = activeNavHref === link.href;
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-5 py-3 font-bold transition-colors ${
+                    isActive
+                      ? "bg-[color:var(--craft-leaf)] text-[color:var(--craft-cream)]"
+                      : "text-[color:var(--craft-ink)] hover:bg-[color:var(--craft-leaf)]/10 hover:text-[color:var(--craft-leaf)]"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
         <div className="relative hidden rounded-full border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-cream)]/80 p-1 shadow-sm sm:flex">
           {activeNavIndex >= 0 ? (
             <span

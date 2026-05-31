@@ -31,12 +31,17 @@ export default async function Home() {
       >
         <PublicHeader />
 
-        <LandingHero metrics={metrics} collectedPercent={collectedPercent} />
-
-        <LandingTargetProgress
-          progress={progress}
-          collectedPercent={collectedPercent}
-        />
+        <div className="grid items-stretch gap-8 lg:grid-cols-12">
+          <div className="lg:col-span-7">
+            <LandingHero metrics={metrics} />
+          </div>
+          <div className="lg:col-span-5">
+            <LandingTargetProgress
+              progress={progress}
+              collectedPercent={collectedPercent}
+            />
+          </div>
+        </div>
 
         <LandingStories stories={stories} />
 

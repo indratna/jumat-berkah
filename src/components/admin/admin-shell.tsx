@@ -28,6 +28,7 @@ const collapsedWidth = "84px";
 
 export function AdminShell({ children, notifications }: AdminShellProps) {
   const [expanded, setExpanded] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -38,12 +39,24 @@ export function AdminShell({ children, notifications }: AdminShellProps) {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-50 lg:pl-(--admin-sidebar-width,252px)">
-      <AdminSidebar expanded={expanded} />
+      <AdminSidebar
+        expanded={expanded}
+        mobileOpen={mobileOpen}
+        onMobileClose={() => setMobileOpen(false)}
+      />
 
       <div className="min-h-screen">
         <header className="sticky top-0 z-[60] border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
           <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setMobileOpen(true)}
+                className="grid size-9 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 lg:hidden"
+                aria-label="Buka menu navigasi"
+              >
+                ☰
+              </button>
               <button
                 type="button"
                 onClick={() => setExpanded((value) => !value)}

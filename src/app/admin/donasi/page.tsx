@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { AutoSubmitSelect } from "../auto-submit-select";
+import { CheckStatusButton } from "./check-status-button";
 import { DonationAutoRefresh } from "./donation-auto-refresh";
 import { DonationStatus } from "@/generated/prisma/client";
 import {
@@ -155,6 +156,9 @@ export default async function AdminDonationsPage({
                           ? `Dibayar: ${formatAdminDate(donation.paidAt)}`
                           : "Belum dibayar"}
                       </p>
+                      {donation.status === DonationStatus.pending && (
+                        <CheckStatusButton orderId={donation.orderId} />
+                      )}
                     </td>
                     <td className="px-4 py-4 uppercase">
                       {donation.paymentMethod}

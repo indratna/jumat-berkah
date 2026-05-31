@@ -103,19 +103,24 @@ export async function createMidtransSnapTransaction(
     payload.customer_details = customerDetails;
   }
 
-  const response = await fetch(`${getMidtransApiBaseUrl(config)}/snap/v1/transactions`, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      Authorization: `Basic ${Buffer.from(`${config.serverKey}:`).toString("base64")}`,
-      "Content-Type": "application/json",
+  const response = await fetch(
+    `${getMidtransApiBaseUrl(config)}/snap/v1/transactions`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Basic ${Buffer.from(`${config.serverKey}:`).toString("base64")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     },
-    body: JSON.stringify(payload),
-  });
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Midtrans transaction failed: ${response.status} ${errorText}`);
+    throw new Error(
+      `Midtrans transaction failed: ${response.status} ${errorText}`,
+    );
   }
 
   const snapResponse = (await response.json()) as MidtransSnapResponse;
@@ -139,7 +144,13 @@ export function parseMidtransNotification(
   const fraudStatus = normalizeString(payload.fraud_status);
   const transactionId = normalizeString(payload.transaction_id);
 
-  if (!orderId || !statusCode || !grossAmount || !signatureKey || !transactionStatus) {
+  if (
+    !orderId ||
+    !statusCode ||
+    !grossAmount ||
+    !signatureKey ||
+    !transactionStatus
+  ) {
     return null;
   }
 
@@ -154,7 +165,9 @@ export function parseMidtransNotification(
   };
 }
 
-export function verifyMidtransSignature(notification: ParsedMidtransNotification) {
+export function verifyMidtransSignature(
+  notification: ParsedMidtransNotification,
+) {
   const config = getMidtransConfig();
   const expectedSignature = createHash("sha512")
     .update(
@@ -164,7 +177,9 @@ export function verifyMidtransSignature(notification: ParsedMidtransNotification
   const expected = Buffer.from(expectedSignature);
   const received = Buffer.from(notification.signatureKey);
 
-  return expected.length === received.length && timingSafeEqual(expected, received);
+  return (
+    expected.length === received.length && timingSafeEqual(expected, received)
+  );
 }
 
 export function mapMidtransStatus(notification: ParsedMidtransNotification) {
@@ -205,6 +220,47 @@ export function mapMidtransStatus(notification: ParsedMidtransNotification) {
   return null;
 }
 
+export type MidtransTransactionStatusResponse = {
+  orderId: string;
+  transactionStatus: string;
+  fraudStatus: string | null;
+  statusCode: string;
+  grossAmount: string;
+};
+
+export async function checkMidtransTransactionStatus(
+  orderId: string,
+): Promise<MidtransTransactionStatusResponse> {
+  const config = getMidtransConfig();
+  const baseUrl = getMidtransApiBaseUrl(config);
+
+  const response = await fetch(`${baseUrl}/v2/${orderId}/status`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Basic ${Buffer.from(`${config.serverKey}:`).toString("base64")}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Midtrans status check failed: ${response.status} ${errorText}`,
+    );
+  }
+
+  const data = (await response.json()) as Record<string, unknown>;
+
+  return {
+    orderId: String(data.order_id ?? ""),
+    transactionStatus: String(data.transaction_status ?? ""),
+    fraudStatus:
+      typeof data.fraud_status === "string" ? data.fraud_status : null,
+    statusCode: String(data.status_code ?? ""),
+    grossAmount: String(data.gross_amount ?? ""),
+  };
+}
+
 function getMidtransConfig(): MidtransConfig {
   const serverKey = process.env.MIDTRANS_SERVER_KEY;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -217,7 +273,9 @@ function getMidtransConfig(): MidtransConfig {
     serverKey,
     isProduction: process.env.MIDTRANS_IS_PRODUCTION === "true",
     appUrl: appUrl.replace(/\/$/, ""),
-    enabledPayments: parseEnabledPayments(process.env.MIDTRANS_ENABLED_PAYMENTS),
+    enabledPayments: parseEnabledPayments(
+      process.env.MIDTRANS_ENABLED_PAYMENTS,
+    ),
   };
 }
 
@@ -257,5 +315,7 @@ function buildCustomerDetails(input: CreateSnapTransactionInput) {
 }
 
 function normalizeString(value: unknown) {
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }

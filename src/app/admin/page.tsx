@@ -49,7 +49,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 Lihat Donasi
               </Link>
               <Link
-                href="/admin/pengeluaran"
+                href="#atur-target-siklus"
+                className="min-h-11 rounded-md border border-slate-200 bg-white px-3 py-2.5 text-center font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700"
+              >
+                Atur Target Siklus
+              </Link>
+              <Link
+                href="/admin/pengeluaran?modal=add"
                 className="min-h-11 rounded-md bg-green-700 px-3 py-2.5 text-center font-semibold text-white hover:bg-green-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700"
               >
                 Catat Biaya
@@ -191,7 +197,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div
+          id="atur-target-siklus"
+          className="rounded-xl border border-slate-200 bg-white shadow-sm scroll-mt-20"
+        >
           <div className="border-b border-slate-200 px-5 py-4">
             <p className="text-sm font-bold text-slate-950">
               Atur Target Siklus

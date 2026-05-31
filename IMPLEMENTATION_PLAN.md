@@ -10,10 +10,10 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 
 ### Current Status
 
-Current Phase: Phase 43 — Donor Auth & Session Hygiene  
+Current Phase: Phase 44 — Targeted Refactor  
 Overall Progress: 100%  
-Last Updated: 2026-05-31  
-Current Focus: Improved mobile navigation and donation status recovery flow. Admin dashboard now uses a mobile slide-in drawer instead of horizontal top navigation, landing page now exposes `Laporan` and `Tentang` through a mobile hamburger menu while keeping `Donasi Sekarang` visible, and admin donation rows with `pending` status now include a per-row `Cek Status` action that calls Midtrans status API through an admin-only endpoint to recover from missed/delayed webhook sync. Validation passed (`npm test` 155/155; targeted `npx tsc --noEmit` check showed only pre-existing `src/tests/business-rules.test.ts` errors unrelated to this change).
+Last Updated: 2026-06-01  
+Current Focus: Continued Phase 44 with three bounded no-behavior-change refactors. `src/components/admin/admin-sidebar.tsx` centralizes duplicated mobile/desktop nav rendering into shared `SidebarNav`; `src/lib/midtrans.ts` centralizes repeated Basic auth header generation into one helper; and `src/app/admin/donasi/page.tsx` now centralizes donation-list query parsing into typed `resolveDonationFilters()` + shared filter types to reduce scattered query parsing logic. Build instability was traced to stale generated `.next/dev/types/validator.ts`; after clearing `.next`, full validation passed. Validation passed (`npm run lint`, `npm test` 155/155, `npm run build`) with existing local `BETTER_AUTH_SECRET` low-entropy warning only.
 Blockers: Live provider smoke remains required: Telegram public channel broadcast needs `TELEGRAM_PUBLIC_CHANNEL_ID=-100...` plus bot admin/post permission; production `BETTER_AUTH_SECRET` must be high entropy; Midtrans live QRIS and WhatsApp live send need provider credentials/templates; backup/restore production evidence remains required before stable launch.
 
 ### Phase Progress
@@ -64,7 +64,7 @@ Blockers: Live provider smoke remains required: Telegram public channel broadcas
 | Phase 41 | Dashboard Layout Final Polish | Done | 100% |
 | Phase 42 | Donation Checkout UX Enhancement | Done | 100% |
 | Phase 43 | Donor Auth & Session Hygiene | Done | 100% |
-| Phase 44 | Targeted Refactor | Not Started | 0% |
+| Phase 44 | Targeted Refactor | In Progress | 60% |
 | Phase 45 | Stable MVP Launch Validation | Not Started | 0% |
 
 Status values:
@@ -77,6 +77,20 @@ Done
 ```
 
 ## 3. Work Log
+
+### 2026-06-01
+
+- Started Phase 44 (`Targeted Refactor`) with one bounded no-behavior-change cleanup in `src/components/admin/admin-sidebar.tsx`. Extracted duplicated nav rendering (dashboard item + grouped menu items) into shared `SidebarNav` component used by both mobile drawer and desktop sidebar. Kept existing route set, open/close group state, mobile close-on-item-click behavior, and desktop collapse behavior intact while reducing maintenance duplication risk.
+
+- Investigated `npm run build` failure systematically before changing code further. Root cause was stale generated artifact under `.next/dev/types/validator.ts`, not the account password route or the refactor itself. After deleting `.next`, `npm run build` passed again.
+
+- Completed second bounded refactor in `src/lib/midtrans.ts` by centralizing repeated Basic auth header construction into a single helper used by both Snap transaction creation and admin status-check calls. No payment behavior, status mapping, webhook verification, or public/private data rules changed.
+
+- Validation for current phase rerun passed: `npm run lint`, `npm test` (155/155), and `npm run build`. Remaining warning: local `BETTER_AUTH_SECRET` is low entropy.
+
+- Completed third bounded refactor in `src/app/admin/donasi/page.tsx` by introducing typed donation search/filter aliases and `resolveDonationFilters()` so parsing/normalization for `status`, `q`, date range, page, page size, sort, and direction is centralized in one helper. This keeps donation admin table behavior unchanged while reducing per-field duplication across page setup and toolbar typing.
+
+- Full validation rerun after third refactor passed: `npm run lint`, `npm test` (155/155), and `npm run build`.
 
 ### 2026-05-31
 

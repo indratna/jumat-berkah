@@ -109,7 +109,7 @@ export async function createMidtransSnapTransaction(
       method: "POST",
       headers: {
         Accept: "application/json",
-        Authorization: `Basic ${Buffer.from(`${config.serverKey}:`).toString("base64")}`,
+        Authorization: getMidtransBasicAuthHeader(config),
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
@@ -238,7 +238,7 @@ export async function checkMidtransTransactionStatus(
     method: "GET",
     headers: {
       Accept: "application/json",
-      Authorization: `Basic ${Buffer.from(`${config.serverKey}:`).toString("base64")}`,
+      Authorization: getMidtransBasicAuthHeader(config),
     },
   });
 
@@ -294,6 +294,10 @@ function getMidtransApiBaseUrl(config: MidtransConfig) {
   return config.isProduction
     ? "https://app.midtrans.com"
     : "https://app.sandbox.midtrans.com";
+}
+
+function getMidtransBasicAuthHeader(config: MidtransConfig) {
+  return `Basic ${Buffer.from(`${config.serverKey}:`).toString("base64")}`;
 }
 
 function buildCustomerDetails(input: CreateSnapTransactionInput) {

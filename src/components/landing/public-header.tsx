@@ -21,11 +21,6 @@ export function PublicHeader({ className = "" }: { className?: string }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close menu on route change
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
-
   // Close menu when clicking outside
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -107,7 +102,11 @@ export function PublicHeader({ className = "" }: { className?: string }) {
                   key={link.href}
                   href={link.href}
                   aria-current={isActive ? "page" : undefined}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    if (pathname !== link.href) {
+                      setMobileMenuOpen(false);
+                    }
+                  }}
                   className={`block px-5 py-3 font-bold transition-colors ${
                     isActive
                       ? "bg-[color:var(--craft-leaf)] text-[color:var(--craft-cream)]"

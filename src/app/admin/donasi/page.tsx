@@ -16,8 +16,21 @@ import {
   normalizePageSize,
 } from "@/lib/admin";
 
+type AdminDonationSearchParams = Record<string, string | string[] | undefined>;
+
 type AdminDonationPageProps = {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  searchParams?: Promise<AdminDonationSearchParams>;
+};
+
+type AdminDonationFilters = {
+  status: string | null;
+  q: string | null;
+  from: string | null;
+  to: string | null;
+  page: number;
+  pageSize: number;
+  sort: DonationSortField;
+  direction: AdminSortDirection;
 };
 
 const donationSortOptions: Array<{ value: DonationSortField; label: string }> =
@@ -34,16 +47,7 @@ export default async function AdminDonationsPage({
   searchParams,
 }: AdminDonationPageProps) {
   const resolvedSearchParams = (await searchParams) ?? {};
-  const filters = {
-    status: getStringParam(resolvedSearchParams.status),
-    q: getStringParam(resolvedSearchParams.q),
-    from: getStringParam(resolvedSearchParams.from),
-    to: getStringParam(resolvedSearchParams.to),
-    page: normalizePage(getNumberParam(resolvedSearchParams.page)),
-    pageSize: normalizePageSize(getNumberParam(resolvedSearchParams.pageSize)),
-    sort: getDonationSort(getStringParam(resolvedSearchParams.sort)),
-    direction: getSortDirection(getStringParam(resolvedSearchParams.direction)),
-  };
+  const filters = resolveDonationFilters(resolvedSearchParams);
   const donations = await getAdminDonations(filters);
   const pageQuery = buildPageQuery(resolvedSearchParams);
   const csvExportHref = buildExportHref(pageQuery, "csv");
@@ -222,14 +226,10 @@ function ExportIconLink({
 function TableToolbar({
   filters,
 }: {
-  filters: {
-    status: string | null;
-    q: string | null;
-    from: string | null;
-    to: string | null;
-    sort: DonationSortField;
-    direction: AdminSortDirection;
-  };
+  filters: Pick<
+    AdminDonationFilters,
+    "status" | "q" | "from" | "to" | "sort" | "direction"
+  >;
 }) {
   return (
     <form className="grid gap-3 border-b border-slate-100 bg-white p-5 lg:grid-cols-12">
@@ -386,7 +386,22 @@ function PaginationLink({
   );
 }
 
-function buildPageQuery(params: Record<string, string | string[] | undefined>) {
+function resolveDonationFilters(
+  params: AdminDonationSearchParams,
+): AdminDonationFilters {
+  return {
+    status: getStringParam(params.status),
+    q: getStringParam(params.q),
+    from: getStringParam(params.from),
+    to: getStringParam(params.to),
+    page: normalizePage(getNumberParam(params.page)),
+    pageSize: normalizePageSize(getNumberParam(params.pageSize)),
+    sort: getDonationSort(getStringParam(params.sort)),
+    direction: getSortDirection(getStringParam(params.direction)),
+  };
+}
+
+function buildPageQuery(params: AdminDonationSearchParams) {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (typeof value === "string" && value.length > 0 && key !== "page")

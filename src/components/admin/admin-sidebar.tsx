@@ -100,6 +100,90 @@ type AdminSidebarProps = {
   onMobileClose: () => void;
 };
 
+type SidebarNavProps = {
+  expanded: boolean;
+  openGroups: Record<string, boolean>;
+  onToggleGroup: (groupLabel: string) => void;
+  onItemClick?: () => void;
+};
+
+function SidebarNav({
+  expanded,
+  openGroups,
+  onToggleGroup,
+  onItemClick,
+}: SidebarNavProps) {
+  return (
+    <div className="space-y-2">
+      <Link
+        href={dashboardNavItem.href}
+        title={dashboardNavItem.description}
+        onClick={onItemClick}
+        className="group/link flex min-h-11 items-center gap-2 rounded-md px-2 text-slate-700 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50"
+      >
+        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-slate-100 text-xs font-bold text-slate-500 ring-1 ring-slate-200 group-hover/link:bg-green-50 group-hover/link:text-green-700 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700">
+          {dashboardNavItem.icon}
+        </span>
+        <span className={`min-w-0 ${expanded ? "" : "lg:hidden"}`}>
+          <span className="block truncate text-sm font-bold leading-5">
+            {dashboardNavItem.label}
+          </span>
+          <span className="sr-only">{dashboardNavItem.description}</span>
+        </span>
+      </Link>
+
+      {adminNavGroups.map((group) => {
+        const isOpen = openGroups[group.label] ?? true;
+        return (
+          <section key={group.label}>
+            <button
+              type="button"
+              onClick={() => onToggleGroup(group.label)}
+              className="group flex min-h-11 w-full items-center gap-2 rounded-md px-2 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+              title={group.label}
+              aria-expanded={isOpen}
+            >
+              <span className="grid size-8 shrink-0 place-items-center rounded-md bg-slate-100 text-xs text-slate-500 group-hover:bg-green-50 group-hover:text-green-700 dark:bg-slate-800 dark:text-slate-400">
+                {group.icon}
+              </span>
+              <span
+                className={`min-w-0 flex-1 truncate text-left ${
+                  expanded ? "" : "lg:hidden"
+                }`}
+              >
+                {group.label}
+              </span>
+            </button>
+            {isOpen ? (
+              <div className="mt-1 grid grid-cols-1">
+                {group.items.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={item.description}
+                    onClick={onItemClick}
+                    className="group/link flex min-h-10 items-center gap-2 rounded-md px-2 text-slate-600 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50"
+                  >
+                    <span className="grid size-8 shrink-0 place-items-center rounded-md bg-white text-xs font-bold text-slate-400 ring-1 ring-slate-200 group-hover/link:bg-green-50 group-hover/link:text-green-700 dark:bg-slate-900 dark:text-slate-500 dark:ring-slate-700">
+                      {item.icon}
+                    </span>
+                    <span className={`min-w-0 ${expanded ? "" : "lg:hidden"}`}>
+                      <span className="block truncate text-sm font-semibold leading-5">
+                        {item.label}
+                      </span>
+                      <span className="sr-only">{item.description}</span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
 export function AdminSidebar({
   expanded,
   mobileOpen,
@@ -111,9 +195,15 @@ export function AdminSidebar({
     Pengaturan: false,
   });
 
+  function toggleGroup(groupLabel: string) {
+    setOpenGroups((current) => ({
+      ...current,
+      [groupLabel]: !(current[groupLabel] ?? true),
+    }));
+  }
+
   return (
     <>
-      {/* Mobile drawer overlay */}
       <div
         className={`fixed inset-0 z-50 bg-black/40 transition-opacity duration-300 lg:hidden ${
           mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"
@@ -122,7 +212,6 @@ export function AdminSidebar({
         aria-hidden="true"
       />
 
-      {/* Mobile drawer */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-63 bg-white shadow-xl transition-transform duration-300 ease-in-out dark:bg-slate-950 lg:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
@@ -155,71 +244,12 @@ export function AdminSidebar({
             aria-label="Navigasi admin"
             className="flex-1 overflow-y-auto px-3 py-4"
           >
-            <div className="space-y-2">
-              <Link
-                href={dashboardNavItem.href}
-                title={dashboardNavItem.description}
-                onClick={onMobileClose}
-                className="group/link flex min-h-11 items-center gap-2 rounded-md px-2 text-slate-700 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50"
-              >
-                <span className="grid size-8 shrink-0 place-items-center rounded-md bg-slate-100 text-xs font-bold text-slate-500 ring-1 ring-slate-200 group-hover/link:bg-green-50 group-hover/link:text-green-700 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700">
-                  {dashboardNavItem.icon}
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-bold leading-5">
-                    {dashboardNavItem.label}
-                  </span>
-                </span>
-              </Link>
-
-              {adminNavGroups.map((group) => {
-                const isOpen = openGroups[group.label] ?? true;
-                return (
-                  <section key={group.label}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOpenGroups((current) => ({
-                          ...current,
-                          [group.label]: !isOpen,
-                        }))
-                      }
-                      className="group flex min-h-11 w-full items-center gap-2 rounded-md px-2 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                      aria-expanded={isOpen}
-                    >
-                      <span className="grid size-8 shrink-0 place-items-center rounded-md bg-slate-100 text-xs text-slate-500 group-hover:bg-green-50 group-hover:text-green-700 dark:bg-slate-800 dark:text-slate-400">
-                        {group.icon}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-left">
-                        {group.label}
-                      </span>
-                    </button>
-                    {isOpen ? (
-                      <div className="mt-1 grid grid-cols-1">
-                        {group.items.map((item) => (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            title={item.description}
-                            onClick={onMobileClose}
-                            className="group/link flex min-h-10 items-center gap-2 rounded-md px-2 text-slate-600 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50"
-                          >
-                            <span className="grid size-8 shrink-0 place-items-center rounded-md bg-white text-xs font-bold text-slate-400 ring-1 ring-slate-200 group-hover/link:bg-green-50 group-hover/link:text-green-700 dark:bg-slate-900 dark:text-slate-500 dark:ring-slate-700">
-                              {item.icon}
-                            </span>
-                            <span className="min-w-0">
-                              <span className="block truncate text-sm font-semibold leading-5">
-                                {item.label}
-                              </span>
-                            </span>
-                          </Link>
-                        ))}
-                      </div>
-                    ) : null}
-                  </section>
-                );
-              })}
-            </div>
+            <SidebarNav
+              expanded={true}
+              openGroups={openGroups}
+              onToggleGroup={toggleGroup}
+              onItemClick={onMobileClose}
+            />
           </nav>
 
           <div className="border-t border-slate-200 p-4 dark:border-slate-800">
@@ -228,7 +258,6 @@ export function AdminSidebar({
         </div>
       </aside>
 
-      {/* Desktop sidebar */}
       <aside
         className={`hidden transition-[width] duration-200 lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:block lg:border-r lg:border-slate-200 lg:bg-white lg:dark:border-slate-800 lg:dark:bg-slate-950 ${
           expanded ? "lg:w-63" : "lg:w-21"
@@ -250,82 +279,11 @@ export function AdminSidebar({
           </div>
 
           <nav aria-label="Navigasi admin" className="flex-1 px-3 py-4">
-            <div className="space-y-2">
-              <Link
-                href={dashboardNavItem.href}
-                title={dashboardNavItem.description}
-                className="group/link flex min-h-11 items-center gap-2 rounded-md px-2 text-slate-700 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50"
-              >
-                <span className="grid size-8 shrink-0 place-items-center rounded-md bg-slate-100 text-xs font-bold text-slate-500 ring-1 ring-slate-200 group-hover/link:bg-green-50 group-hover/link:text-green-700">
-                  {dashboardNavItem.icon}
-                </span>
-                <span className={`min-w-0 ${expanded ? "" : "lg:hidden"}`}>
-                  <span className="block truncate text-sm font-bold leading-5">
-                    {dashboardNavItem.label}
-                  </span>
-                  <span className="sr-only">
-                    {dashboardNavItem.description}
-                  </span>
-                </span>
-              </Link>
-
-              {adminNavGroups.map((group) => {
-                const isOpen = openGroups[group.label] ?? true;
-                return (
-                  <section key={group.label}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOpenGroups((current) => ({
-                          ...current,
-                          [group.label]: !isOpen,
-                        }))
-                      }
-                      className="group flex min-h-11 w-full items-center gap-2 rounded-md px-2 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                      title={group.label}
-                      aria-expanded={isOpen}
-                    >
-                      <span className="grid size-8 shrink-0 place-items-center rounded-md bg-slate-100 text-xs text-slate-500 group-hover:bg-green-50 group-hover:text-green-700">
-                        {group.icon}
-                      </span>
-                      <span
-                        className={`min-w-0 flex-1 truncate text-left ${
-                          expanded ? "" : "lg:hidden"
-                        }`}
-                      >
-                        {group.label}
-                      </span>
-                    </button>
-                    {isOpen ? (
-                      <div className="mt-1 grid grid-cols-1">
-                        {group.items.map((item) => (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            title={item.description}
-                            className="group/link flex min-h-10 items-center gap-2 rounded-md px-2 text-slate-600 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50"
-                          >
-                            <span className="grid size-8 shrink-0 place-items-center rounded-md bg-white text-xs font-bold text-slate-400 ring-1 ring-slate-200 group-hover/link:bg-green-50 group-hover/link:text-green-700">
-                              {item.icon}
-                            </span>
-                            <span
-                              className={`min-w-0 ${expanded ? "" : "lg:hidden"}`}
-                            >
-                              <span className="block truncate text-sm font-semibold leading-5">
-                                {item.label}
-                              </span>
-                              <span className="sr-only">
-                                {item.description}
-                              </span>
-                            </span>
-                          </Link>
-                        ))}
-                      </div>
-                    ) : null}
-                  </section>
-                );
-              })}
-            </div>
+            <SidebarNav
+              expanded={expanded}
+              openGroups={openGroups}
+              onToggleGroup={toggleGroup}
+            />
           </nav>
 
           <div className="border-t border-slate-200 p-4 dark:border-slate-800">

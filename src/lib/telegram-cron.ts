@@ -6,6 +6,7 @@ import {
 import { getPrisma } from "@/lib/db";
 import { safeSendAdminAlertEmail } from "@/lib/email";
 import { getCurrentFridayCycleRange } from "@/lib/friday-cycle";
+import { runWeeklyCycleTransition } from "@/lib/weekly-cycle-transition";
 import { getWeeklyTargetProgress } from "@/lib/weekly-target";
 import {
   formatJakartaDateTime,
@@ -272,6 +273,10 @@ export async function runDailyTelegramCron(now = new Date()) {
   });
 
   return { sent: true, messageCount: messages.length };
+}
+
+export async function runWeeklyCycleTransitionCron(now = new Date()) {
+  return runWeeklyCycleTransition(now);
 }
 
 export async function runWeeklyTelegramCron(now = new Date()) {

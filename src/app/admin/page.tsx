@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { CycleCountdown } from "@/components/cycle-countdown";
 import {
   formatAdminDate,
   formatRupiah,
@@ -120,7 +121,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       {progressPercent}%
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <div className="mt-3">
+                    <CycleCountdown
+                      deadlineAtIso={progress.cycle.deadlineAtIso}
+                      label="Sisa waktu siklus"
+                      tone="admin"
+                    />
+                  </div>
+                  <p className="mt-3 text-xs text-slate-500">
                     Periode {progress.cycle.label}
                   </p>
                   <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/80 ring-1 ring-slate-200">

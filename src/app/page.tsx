@@ -35,7 +35,6 @@ export default async function Home() {
 
         <LandingTargetProgress
           progress={progress}
-          metrics={metrics}
           collectedPercent={collectedPercent}
         />
 

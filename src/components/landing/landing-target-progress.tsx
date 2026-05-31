@@ -1,14 +1,12 @@
-import type { LandingMetrics } from "@/lib/landing";
+import { CycleCountdown } from "@/components/cycle-countdown";
 import type { WeeklyTargetProgress } from "@/lib/weekly-target";
 import { formatRupiah } from "@/lib/format";
 
 export function LandingTargetProgress({
   progress,
-  metrics,
   collectedPercent,
 }: {
   progress: WeeklyTargetProgress;
-  metrics: LandingMetrics;
   collectedPercent: number;
 }) {
   const targetAmount = progress.target?.targetAmount ?? 0;
@@ -27,9 +25,21 @@ export function LandingTargetProgress({
           <h2 className="mt-4 text-2xl font-bold leading-tight sm:text-3xl">
             Pantau pencapaian dana siklus Jumat.
           </h2>
+          {progress.cycle.isNewCycle ? (
+            <span className="mt-3 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+              Siklus baru dimulai
+            </span>
+          ) : null}
+          <div className="mt-4">
+            <CycleCountdown
+              deadlineAtIso={progress.cycle.deadlineAtIso}
+              label="Sisa waktu donasi siklus ini"
+              tone="public"
+            />
+          </div>
           <p className="mt-3 max-w-md text-sm leading-6 text-[color:var(--craft-ink-soft)]">
-            Periode {progress.cycle.label}. Sisa {metrics.daysToFriday} hari
-            menuju Jumat berikutnya.
+            Periode {progress.cycle.label}. Donasi yang masuk sampai Kamis malam
+            akan dihitung ke siklus ini.
           </p>
         </div>
 

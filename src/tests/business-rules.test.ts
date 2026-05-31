@@ -11,7 +11,10 @@ import { validatePasswordChangePayload } from "@/lib/account-password";
 import { validateProfilePayload } from "@/lib/account-profile";
 import { validateDonationInput } from "@/lib/donations";
 import { validateExpenseImportCsv } from "@/lib/expenses";
-import { getCurrentFridayCycleRange } from "@/lib/friday-cycle";
+import {
+  getCurrentFridayCycleRange,
+  isWithinNewCycleWindow,
+} from "@/lib/friday-cycle";
 import {
   calculateWeeklyTargetProgress,
   validateWeeklyTargetInput,
@@ -800,6 +803,45 @@ test("Friday cycle flips at Jakarta Friday midnight", () => {
 
   assert.equal(beforeFriday.fromDate, "2026-05-22");
   assert.equal(afterFriday.fromDate, "2026-05-29");
+});
+
+test("friday cycle exposes Thursday deadline in Jakarta time", () => {
+  const cycle = getCurrentFridayCycleRange(
+    new Date("2026-06-01T03:00:00.000Z"),
+  );
+
+  assert.equal(cycle.fromDate, "2026-05-29");
+  assert.equal(cycle.toDate, "2026-06-04");
+  assert.equal(cycle.deadlineAtIso, "2026-06-04T23:59:59.999+07:00");
+});
+
+test("new-cycle window lasts first 24 hours of Friday cycle", () => {
+  assert.equal(
+    isWithinNewCycleWindow(new Date("2026-06-05T00:30:00.000+07:00")),
+    true,
+  );
+  assert.equal(
+    isWithinNewCycleWindow(new Date("2026-06-05T23:30:00.000+07:00")),
+    true,
+  );
+  assert.equal(
+    isWithinNewCycleWindow(new Date("2026-06-06T00:00:00.000+07:00")),
+    false,
+  );
+});
+
+test("weekly target progress preserves countdown metadata", () => {
+  const cycle = getCurrentFridayCycleRange(
+    new Date("2026-06-01T03:00:00.000Z"),
+  );
+  const progress = calculateWeeklyTargetProgress({
+    cycle,
+    target: null,
+    collected: 0,
+  });
+
+  assert.equal(progress.cycle.deadlineAtIso, "2026-06-04T23:59:59.999+07:00");
+  assert.equal(progress.cycle.isNewCycle, false);
 });
 
 test("weekly target validation requires Jumat cycle start and positive integer", () => {

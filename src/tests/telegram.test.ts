@@ -28,6 +28,10 @@ import {
   verifyCronSecret,
 } from "@/lib/telegram-cron";
 import {
+  buildCycleTransitionBroadcastMessage,
+  shouldCreateNextCycleTarget,
+} from "@/lib/weekly-cycle-transition";
+import {
   getFailedLoginAlertThreshold,
   getFailedLoginAlertWindowMinutes,
   getLargeExpenseAlertThreshold,
@@ -56,6 +60,47 @@ import {
   parseTelegramUpdate,
   verifyTelegramSecretToken,
 } from "@/lib/telegram";
+
+test("next cycle target is created only when previous target exists and new target missing", () => {
+  assert.equal(
+    shouldCreateNextCycleTarget({
+      hasPreviousTarget: true,
+      hasCurrentTarget: false,
+    }),
+    true,
+  );
+  assert.equal(
+    shouldCreateNextCycleTarget({
+      hasPreviousTarget: true,
+      hasCurrentTarget: true,
+    }),
+    false,
+  );
+  assert.equal(
+    shouldCreateNextCycleTarget({
+      hasPreviousTarget: false,
+      hasCurrentTarget: false,
+    }),
+    false,
+  );
+});
+
+test("cycle transition broadcast includes previous and new cycle summary", () => {
+  const text = buildCycleTransitionBroadcastMessage({
+    previousCycleLabel: "2026-05-29 s.d. 2026-06-04",
+    previousTargetAmount: 1_500_000,
+    previousCollected: 1_200_000,
+    previousPercent: 80,
+    currentCycleLabel: "2026-06-05 s.d. 2026-06-11",
+    currentTargetAmount: 1_500_000,
+    donationUrl: "https://jumatberkah.example/donasi",
+  });
+
+  assert.match(text, /Siklus Jumat Berkah Selesai/i);
+  assert.match(text, /80%/);
+  assert.match(text, /2026-06-05 s.d. 2026-06-11/);
+  assert.match(text, /https:\/\/jumatberkah\.example\/donasi/);
+});
 
 test("parseDonorCommand handles donor self-service commands", () => {
   assert.deepEqual(parseDonorCommand("/mulai ABC123"), {

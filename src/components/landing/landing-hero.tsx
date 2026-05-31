@@ -56,7 +56,7 @@ export function LandingHero({
         <div className="flex items-center justify-between gap-3">
           <span className="craft-pill">Siklus berjalan</span>
           <span className="text-xs font-semibold tracking-widest text-[color:var(--craft-ink-soft)]">
-            {metrics.cycle.label}
+            Progress aktif
           </span>
         </div>
         <div className="grid gap-4">

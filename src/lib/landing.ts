@@ -1,8 +1,5 @@
 import { getPrisma } from "@/lib/db";
-import {
-  type FridayCycleRange,
-  getCurrentFridayCycleRange,
-} from "@/lib/friday-cycle";
+import { type FridayCycleRange } from "@/lib/friday-cycle";
 import { getCurrentFridayCycleReport } from "@/lib/reports";
 import {
   type WeeklyTargetProgress,
@@ -15,7 +12,6 @@ export type LandingMetrics = {
   expenses: number;
   periodBalance: number;
   currentBalance: number;
-  daysToFriday: number;
   lastUpdatedAt: Date;
 };
 
@@ -41,7 +37,6 @@ export async function getLandingMetrics(
     expenses: report.summary.expenses,
     periodBalance: report.summary.periodBalance,
     currentBalance: report.summary.currentBalance,
-    daysToFriday: getDaysToNextFriday(now),
     lastUpdatedAt: now,
   };
 }
@@ -80,18 +75,6 @@ export async function getLandingStories(limit = 3): Promise<LandingStory[]> {
     packageCount: record.packageCount,
     locationSummary: record.locationSummary,
   }));
-}
-
-function getDaysToNextFriday(now: Date): number {
-  const cycle = getCurrentFridayCycleRange(now);
-  const today = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  );
-  const cycleEnd = new Date(`${cycle.toDate}T00:00:00.000Z`);
-  const diffDays = Math.round(
-    (cycleEnd.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
-  );
-  return Math.max(0, diffDays);
 }
 
 function pickFirstHttpsUrl(value: unknown): string | null {

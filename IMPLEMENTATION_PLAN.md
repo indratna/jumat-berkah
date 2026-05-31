@@ -13,7 +13,7 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 Current Phase: Phase 43 — Donor Auth & Session Hygiene  
 Overall Progress: 100%  
 Last Updated: 2026-05-31  
-Current Focus: Added cycle countdown system across admin dashboard and landing page, plus cron-driven weekly target rollover for Jumat→Kamis cycles. Dashboard and public target card now show live countdown to Kamis 23:59:59 WIB, landing cycle messaging is consolidated into one urgency block, and a new Telegram cron endpoint can auto-copy weekly target plus send idempotent public transition broadcast. Validation passed (`npx eslint` on touched files, `npm test` 155/155, `npm run build` with existing local low-entropy `BETTER_AUTH_SECRET` warning).
+Current Focus: Improved mobile navigation and donation status recovery flow. Admin dashboard now uses a mobile slide-in drawer instead of horizontal top navigation, landing page now exposes `Laporan` and `Tentang` through a mobile hamburger menu while keeping `Donasi Sekarang` visible, and admin donation rows with `pending` status now include a per-row `Cek Status` action that calls Midtrans status API through an admin-only endpoint to recover from missed/delayed webhook sync. Validation passed (`npm test` 155/155; targeted `npx tsc --noEmit` check showed only pre-existing `src/tests/business-rules.test.ts` errors unrelated to this change).
 Blockers: Live provider smoke remains required: Telegram public channel broadcast needs `TELEGRAM_PUBLIC_CHANNEL_ID=-100...` plus bot admin/post permission; production `BETTER_AUTH_SECRET` must be high entropy; Midtrans live QRIS and WhatsApp live send need provider credentials/templates; backup/restore production evidence remains required before stable launch.
 
 ### Phase Progress
@@ -79,6 +79,8 @@ Done
 ## 3. Work Log
 
 ### 2026-05-31
+
+- Improved mobile navigation and Midtrans recovery tooling. `src/components/admin/admin-shell.tsx` and `src/components/admin/admin-sidebar.tsx` now use a mobile hamburger-triggered slide-in drawer with overlay/backdrop and visible mobile logout instead of the old horizontal top nav. `src/components/landing/public-header.tsx` now adds a mobile hamburger dropdown so `Laporan` and `Tentang` stay reachable on small screens while preserving desktop pill navigation. Added `checkMidtransTransactionStatus()` in `src/lib/midtrans.ts`, admin-only endpoint `src/app/api/admin/donations/check-status/route.ts`, and per-row `pending` action `src/app/admin/donasi/check-status-button.tsx` wired into `src/app/admin/donasi/page.tsx` so admins can manually sync a stuck donation directly from Midtrans when webhook delivery is delayed or missed. Validation passed: `npm test` (155/155); targeted `npx tsc --noEmit` confirmed no new type errors beyond pre-existing failures in `src/tests/business-rules.test.ts`.
 
 - Adjusted `LandingTargetProgress` copy and stats. Replaced periode/Kamis sentence with `Donasi yang masuk akan digunakan untuk Nasi Jumat Berkah <Jumat distribusi>`, computed by adding one day to `progress.cycle.toDate` (cycle ends Thursday WIB, distribution is the next day Friday) and formatting in `id-ID` long-date with `Asia/Jakarta`. Removed the `Status` stat tile so the progress block now shows only `Target` and `Terkumpul` in a 2-column grid. No backend, payment, webhook, donor privacy, or financial logic changed. Validation passed: `npx eslint` on `src/components/landing/landing-target-progress.tsx` and `npm run build`.
 

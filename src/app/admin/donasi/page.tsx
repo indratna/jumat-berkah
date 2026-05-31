@@ -43,6 +43,9 @@ const donationSortOptions: Array<{ value: DonationSortField; label: string }> =
     { value: "donorName", label: "Donatur" },
   ];
 
+const stickyHeadCellClassName =
+  "sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 font-semibold shadow-[0_1px_0_0_rgba(226,232,240,1)]";
+
 export default async function AdminDonationsPage({
   searchParams,
 }: AdminDonationPageProps) {
@@ -85,7 +88,7 @@ export default async function AdminDonationsPage({
             <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
               <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 font-semibold shadow-[0_1px_0_0_rgba(226,232,240,1)]">
+                  <th className={stickyHeadCellClassName}>
                     <SortHeader
                       query={pageQuery}
                       field="orderId"
@@ -95,7 +98,7 @@ export default async function AdminDonationsPage({
                       Order ID
                     </SortHeader>
                   </th>
-                  <th className="sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 font-semibold shadow-[0_1px_0_0_rgba(226,232,240,1)]">
+                  <th className={stickyHeadCellClassName}>
                     <SortHeader
                       query={pageQuery}
                       field="donorName"
@@ -105,7 +108,7 @@ export default async function AdminDonationsPage({
                       Donatur
                     </SortHeader>
                   </th>
-                  <th className="sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 font-semibold shadow-[0_1px_0_0_rgba(226,232,240,1)]">
+                  <th className={stickyHeadCellClassName}>
                     <SortHeader
                       query={pageQuery}
                       field="amount"
@@ -115,7 +118,7 @@ export default async function AdminDonationsPage({
                       Nominal
                     </SortHeader>
                   </th>
-                  <th className="sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 font-semibold shadow-[0_1px_0_0_rgba(226,232,240,1)]">
+                  <th className={stickyHeadCellClassName}>
                     <SortHeader
                       query={pageQuery}
                       field="status"
@@ -125,10 +128,8 @@ export default async function AdminDonationsPage({
                       Status
                     </SortHeader>
                   </th>
-                  <th className="sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 font-semibold shadow-[0_1px_0_0_rgba(226,232,240,1)]">
-                    Metode
-                  </th>
-                  <th className="sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 font-semibold shadow-[0_1px_0_0_rgba(226,232,240,1)]">
+                  <th className={stickyHeadCellClassName}>Metode</th>
+                  <th className={stickyHeadCellClassName}>
                     <SortHeader
                       query={pageQuery}
                       field="createdAt"
@@ -138,9 +139,7 @@ export default async function AdminDonationsPage({
                       Dibuat
                     </SortHeader>
                   </th>
-                  <th className="sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 font-semibold shadow-[0_1px_0_0_rgba(226,232,240,1)]">
-                    Catatan
-                  </th>
+                  <th className={stickyHeadCellClassName}>Catatan</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">

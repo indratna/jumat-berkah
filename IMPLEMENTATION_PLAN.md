@@ -13,7 +13,7 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 Current Phase: Phase 44 — Targeted Refactor  
 Overall Progress: 100%  
 Last Updated: 2026-06-01  
-Current Focus: Continued Phase 44 with four bounded no-behavior-change refactors. `src/components/admin/admin-sidebar.tsx` centralizes duplicated mobile/desktop nav rendering into shared `SidebarNav`; `src/lib/midtrans.ts` centralizes repeated Basic auth header generation; `src/app/admin/donasi/page.tsx` centralizes donation-list query parsing via typed `resolveDonationFilters()`; and Midtrans status transition guard is now centralized in `src/lib/donation-status.ts` then reused by both webhook and admin check-status endpoints to avoid duplicated transition logic drift. Build instability was traced to stale generated `.next/dev/types/validator.ts`; after clearing `.next`, full validation passed. Validation passed (`npm run lint`, `npm test` 155/155, `npm run build`) with existing local `BETTER_AUTH_SECRET` low-entropy warning only.
+Current Focus: Continued Phase 44 with five bounded no-behavior-change refactors. `src/components/admin/admin-sidebar.tsx` centralizes duplicated mobile/desktop nav rendering into shared `SidebarNav`; `src/lib/midtrans.ts` centralizes repeated Basic auth header generation; `src/app/admin/donasi/page.tsx` centralizes donation-list query parsing via typed `resolveDonationFilters()` and now reuses a shared sticky header class constant for table `<th>` cells; and Midtrans status transition guard is centralized in `src/lib/donation-status.ts` reused by webhook + admin check-status endpoints. Build instability was traced to stale generated `.next/dev/types/validator.ts`; after clearing `.next`, full validation passed. Validation passed (`npm run lint`, `npm test` 155/155, `npm run build`) with existing local `BETTER_AUTH_SECRET` low-entropy warning only.
 Blockers: Live provider smoke remains required: Telegram public channel broadcast needs `TELEGRAM_PUBLIC_CHANNEL_ID=-100...` plus bot admin/post permission; production `BETTER_AUTH_SECRET` must be high entropy; Midtrans live QRIS and WhatsApp live send need provider credentials/templates; backup/restore production evidence remains required before stable launch.
 
 ### Phase Progress
@@ -64,7 +64,7 @@ Blockers: Live provider smoke remains required: Telegram public channel broadcas
 | Phase 41 | Dashboard Layout Final Polish | Done | 100% |
 | Phase 42 | Donation Checkout UX Enhancement | Done | 100% |
 | Phase 43 | Donor Auth & Session Hygiene | Done | 100% |
-| Phase 44 | Targeted Refactor | In Progress | 75% |
+| Phase 44 | Targeted Refactor | In Progress | 85% |
 | Phase 45 | Stable MVP Launch Validation | Not Started | 0% |
 
 Status values:
@@ -95,6 +95,10 @@ Done
 - Completed fourth bounded refactor by extracting duplicated donation status transition guard into `src/lib/donation-status.ts` (`getSafeNextDonationStatus`) and reusing it in both `src/app/api/webhooks/midtrans/route.ts` and `src/app/api/admin/donations/check-status/route.ts`. This keeps settlement/refund transition behavior unchanged while reducing duplicated rule definitions across payment sync paths.
 
 - Full validation rerun after fourth refactor passed: `npm run lint`, `npm test` (155/155), and `npm run build`.
+
+- Completed fifth bounded refactor in `src/app/admin/donasi/page.tsx` by extracting duplicated sticky table-header Tailwind class into `stickyHeadCellClassName` and reusing it across all donation header cells. This keeps donation admin UI behavior unchanged while reducing repeated class-string maintenance risk.
+
+- Full validation rerun after fifth refactor passed: `npm run lint`, `npm test` (155/155), and `npm run build`.
 
 ### 2026-05-31
 

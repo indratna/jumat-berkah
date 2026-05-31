@@ -50,3 +50,11 @@ dev-server*.log
 ui-mockup-*.html
 
 /src/generated/prisma
+
+# Uploaded local receipt files
+/public/uploads/receipts/*
+!/public/uploads/receipts/.gitkeep
+
+# Uploaded local distribution photos
+/public/uploads/distribution/*
+!/public/uploads/distribution/.gitkeep

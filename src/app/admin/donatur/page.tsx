@@ -1,6 +1,12 @@
 import Link from "next/link";
 
-import { AdminSummaryFooter } from "@/components/admin/admin-summary-footer";
+import { AdminDataPageShell } from "@/components/admin/admin-data-page-shell";
+import { AdminStickyPageBar } from "@/components/admin/admin-sticky-page-bar";
+import { AdminTableActionButton } from "@/components/admin/admin-table-action-button";
+import { AdminTableCard } from "@/components/admin/admin-table-card";
+import { AdminTableFooter } from "@/components/admin/admin-table-footer";
+import { adminTableStyles } from "@/components/admin/admin-table-styles";
+import { AutoSubmitSelect } from "../auto-submit-select";
 import { DonorManagementForm } from "@/app/admin/donatur/donor-management-form";
 import { DonorMergeForm } from "@/app/admin/donatur/donor-merge-form";
 import {
@@ -48,123 +54,165 @@ export default async function AdminDonorPage({
   );
 
   return (
-    <main className="mx-auto max-w-6xl space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="kicker">Database Donatur</p>
-        <h1 className="mt-4 text-2xl font-bold">
-          Kontak operasional donatur untuk admin.
-        </h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          Email dan nomor WhatsApp hanya tampil di admin. Total donasi hanya
-          menghitung status settlement agar tidak mencampur pembayaran pending
-          atau gagal.
-        </p>
-      </div>
+    <AdminDataPageShell>
+      <AdminStickyPageBar
+        title="Kontak operasional donatur."
+        actions={
+          <>
+            <a
+              href={`/api/admin/donors/export?${buildDonorExportHref(filters, "pdf")}`}
+              className="inline-flex h-10 min-w-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-black tracking-wide text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+              download="donatur.pdf"
+              target="_blank"
+              rel="noopener"
+              aria-label="Export PDF donatur"
+              title="Export PDF donatur"
+            >
+              PDF
+            </a>
+            <a
+              href={`/api/admin/donors/export?${buildDonorExportHref(filters, "csv")}`}
+              className="inline-flex h-10 min-w-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-black tracking-wide text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+              download="donatur.csv"
+              target="_blank"
+              rel="noopener"
+              aria-label="Export CSV donatur"
+              title="Export CSV donatur"
+            >
+              CSV
+            </a>
+          </>
+        }
+      />
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <AdminTableCard>
         <TableToolbar filters={filters} />
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 text-sm text-slate-600">
-          <span>Total {donors.total} donatur</span>
-          <span>
-            Halaman {donors.page} dari {donors.totalPages}
-          </span>
-        </div>
         {donors.items.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-              <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">Donatur</th>
-                  <th className="px-4 py-3 font-semibold">Kontak</th>
-                  <th className="px-4 py-3 font-semibold">Settlement</th>
-                  <th className="px-4 py-3 font-semibold">Label</th>
-                  <th className="px-4 py-3 font-semibold">Consent WA</th>
-                  <th className="px-4 py-3 font-semibold">Aktivitas</th>
-                  <th className="px-4 py-3 font-semibold">Aksi</th>
+          <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className={adminTableStyles.stickyHeadCell}>
+                  <SortHeader
+                    query={pageQuery}
+                    field="name"
+                    activeSort={filters.sort}
+                    direction={filters.direction}
+                  >
+                    Donatur
+                  </SortHeader>
+                </th>
+                <th className={adminTableStyles.stickyHeadCell}>Kontak</th>
+                <th className={adminTableStyles.stickyHeadCell}>
+                  <SortHeader
+                    query={pageQuery}
+                    field="totalSettlementAmount"
+                    activeSort={filters.sort}
+                    direction={filters.direction}
+                  >
+                    Settlement
+                  </SortHeader>
+                </th>
+                <th className={adminTableStyles.stickyHeadCell}>Label</th>
+                <th className={adminTableStyles.stickyHeadCell}>Consent WA</th>
+                <th className={adminTableStyles.stickyHeadCell}>
+                  <SortHeader
+                    query={pageQuery}
+                    field="lastDonationAt"
+                    activeSort={filters.sort}
+                    direction={filters.direction}
+                  >
+                    Aktivitas
+                  </SortHeader>
+                </th>
+                <th className={adminTableStyles.stickyHeadCell}>Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {donors.items.map((donor) => (
+                <tr key={donor.key} className="align-top">
+                  <td className={adminTableStyles.bodyCell}>
+                    <p className="font-semibold text-slate-950">{donor.name}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {donor.userId ? "Akun terdaftar" : "Donatur tamu"}
+                    </p>
+                  </td>
+                  <td className="px-4 py-4 text-slate-700">
+                    <p>{donor.email ?? "Email kosong"}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {donor.phone ?? "WhatsApp kosong"}
+                    </p>
+                  </td>
+                  <td className={adminTableStyles.bodyCell}>
+                    <p className="font-semibold">
+                      {formatRupiah(donor.totalSettlementAmount)}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {donor.settlementCount} settlement dari{" "}
+                      {donor.donationCount} donasi
+                    </p>
+                  </td>
+                  <td className="px-4 py-4 text-slate-700">
+                    <LabelList labels={donor.labels} />
+                    {donor.internalNote ? (
+                      <p className="mt-2 text-xs font-semibold text-amber-700">
+                        Ada catatan
+                      </p>
+                    ) : null}
+                  </td>
+                  <td className="px-4 py-4 text-slate-700">
+                    <ConsentBadge donor={donor} />
+                  </td>
+                  <td className="px-4 py-4 text-slate-700">
+                    {donor.lastDonationAt
+                      ? formatAdminDate(donor.lastDonationAt)
+                      : "Belum ada donasi"}
+                  </td>
+                  <td className={adminTableStyles.bodyCell}>
+                    <DonorActionButtons
+                      query={pageQuery}
+                      donorKey={donor.key}
+                    />
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {donors.items.map((donor) => (
-                  <tr key={donor.key} className="align-top">
-                    <td className="px-4 py-4">
-                      <p className="font-semibold text-slate-950">
-                        {donor.name}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {donor.userId ? "Akun terdaftar" : "Donatur tamu"}
-                      </p>
-                    </td>
-                    <td className="px-4 py-4 text-slate-700">
-                      <p>{donor.email ?? "Email kosong"}</p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {donor.phone ?? "WhatsApp kosong"}
-                      </p>
-                    </td>
-                    <td className="px-4 py-4">
-                      <p className="font-semibold">
-                        {formatRupiah(donor.totalSettlementAmount)}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {donor.settlementCount} settlement dari{" "}
-                        {donor.donationCount} donasi
-                      </p>
-                    </td>
-                    <td className="px-4 py-4 text-slate-700">
-                      <LabelList labels={donor.labels} />
-                      {donor.internalNote ? (
-                        <p className="mt-2 text-xs font-semibold text-amber-700">
-                          Ada catatan
-                        </p>
-                      ) : null}
-                    </td>
-                    <td className="px-4 py-4 text-slate-700">
-                      <ConsentBadge donor={donor} />
-                    </td>
-                    <td className="px-4 py-4 text-slate-700">
-                      {donor.lastDonationAt
-                        ? formatAdminDate(donor.lastDonationAt)
-                        : "Belum ada donasi"}
-                    </td>
-                    <td className="px-4 py-4">
-                      <DonorActionButtons
-                        query={pageQuery}
-                        donorKey={donor.key}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         ) : (
-          <div className="p-6 text-sm text-slate-500">
+          <div className={adminTableStyles.emptyState}>
             Belum ada donatur yang cocok dengan filter ini.
           </div>
         )}
-        <AdminSummaryFooter
-          items={[
-            { label: "Total cocok", value: String(donors.total) },
-            {
-              label: "Halaman",
-              value: `${donors.page}/${donors.totalPages}`,
-            },
-            { label: "Baris", value: String(filters.pageSize) },
-            { label: "Aktivitas", value: filters.activity ?? "Semua" },
-          ]}
-        />
-        <TableFooter
+        <AdminTableFooter
           page={donors.page}
           totalPages={donors.totalPages}
-          query={pageQuery}
+          hrefBuilder={(page) => buildPageHref(pageQuery, page)}
+          pageSizeControl={
+            <AutoSubmitSelect
+              name="pageSize"
+              label="Baris"
+              defaultValue={String(filters.pageSize)}
+              hiddenFields={Array.from(pageQuery.entries()).map(
+                ([name, value]) => ({
+                  name,
+                  value,
+                }),
+              )}
+              options={[10, 25, 50, 100].map((size) => ({
+                value: String(size),
+                label: String(size),
+              }))}
+            />
+          }
+          totalLabel={`Total ${donors.total} donatur · Aktivitas ${filters.activity ?? "Semua"}`}
         />
-      </section>
+      </AdminTableCard>
 
       <DonorDetail
         donor={donors.selectedDonor}
         query={pageQuery}
         mode={detailMode}
       />
-    </main>
+    </AdminDataPageShell>
   );
 }
 
@@ -174,75 +222,61 @@ function TableToolbar({
   filters: {
     q: string | null;
     activity: string | null;
-    pageSize: number;
-    sort: DonorSortField;
-    direction: AdminSortDirection;
-    label: string | null;
   };
 }) {
-  const exportQuery = new URLSearchParams();
-  if (filters.q) exportQuery.set("q", filters.q);
-  if (filters.activity) exportQuery.set("activity", filters.activity);
-  if (filters.label) exportQuery.set("label", filters.label);
-  exportQuery.set("sort", filters.sort);
-  exportQuery.set("direction", filters.direction);
   return (
-    <form className="grid gap-3 border-b border-slate-100 bg-white p-5 lg:grid-cols-7">
+    <form className={`${adminTableStyles.toolbar} lg:grid-cols-12`}>
       <input
         name="q"
         defaultValue={filters.q ?? ""}
         placeholder="Cari nama, email, WhatsApp"
-        className="field lg:col-span-2"
+        className="field lg:col-span-5"
       />
       <select
         name="activity"
         defaultValue={filters.activity ?? ""}
-        className="field"
+        className="field lg:col-span-3"
       >
         <option value="">Semua aktivitas</option>
         <option value="settlement">Pernah settlement</option>
         <option value="no_settlement">Belum settlement</option>
       </select>
-      <input
-        name="label"
-        defaultValue={filters.label ?? ""}
-        placeholder="Filter label"
-        className="field"
-      />
-      <select name="sort" defaultValue={filters.sort} className="field">
-        {donorSortOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            Urut: {option.label}
-          </option>
-        ))}
-      </select>
-      <select
-        name="direction"
-        defaultValue={filters.direction}
-        className="field"
-      >
-        <option value="desc">Terbesar/terbaru</option>
-        <option value="asc">Terkecil/terlama</option>
-      </select>
-      <select
-        name="pageSize"
-        defaultValue={String(filters.pageSize)}
-        className="field"
-      >
-        {[10, 25, 50, 100].map((size) => (
-          <option key={size} value={size}>
-            {size} baris
-          </option>
-        ))}
-      </select>
-      <button className="btn-primary">Filter</button>
-      <Link
-        href={`/api/admin/donors/export?${exportQuery.toString()}`}
-        className="btn-outline text-center"
-      >
-        Export CSV
-      </Link>
+      <button className="btn-primary lg:col-span-4">Filter</button>
     </form>
+  );
+}
+
+function SortHeader({
+  query,
+  field,
+  activeSort,
+  direction,
+  children,
+}: {
+  query: URLSearchParams;
+  field: DonorSortField;
+  activeSort: DonorSortField;
+  direction: AdminSortDirection;
+  children: React.ReactNode;
+}) {
+  const isActive = activeSort === field;
+  const nextDirection = isActive && direction === "desc" ? "asc" : "desc";
+  const nextQuery = new URLSearchParams(query);
+  nextQuery.set("sort", field);
+  nextQuery.set("direction", nextDirection);
+  nextQuery.delete("page");
+
+  return (
+    <Link
+      href={`?${nextQuery.toString()}`}
+      scroll={false}
+      className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-950"
+    >
+      <span>{children}</span>
+      <span aria-hidden="true" className="text-[10px]">
+        {isActive ? (direction === "desc" ? "↓" : "↑") : "↕"}
+      </span>
+    </Link>
   );
 }
 
@@ -255,44 +289,78 @@ function DonorActionButtons({
 }) {
   return (
     <div className="flex flex-wrap gap-2">
-      <ActionLink
+      <AdminTableActionButton
         href={`?${buildDetailHref(query, donorKey, "view")}`}
-        label="Lihat"
-        icon="👁️"
-      />
-      <ActionLink
+        ariaLabel="Lihat"
+      >
+        <ActionIconView />
+      </AdminTableActionButton>
+      <AdminTableActionButton
         href={`?${buildDetailHref(query, donorKey, "edit")}`}
-        label="Edit"
-        icon="✏️"
-      />
-      <ActionLink
+        ariaLabel="Edit"
+        variant="primary"
+      >
+        <ActionIconEdit />
+      </AdminTableActionButton>
+      <AdminTableActionButton
         href={`?${buildDetailHref(query, donorKey, "merge")}`}
-        label="Gabungkan"
-        icon="🔗"
-      />
+        ariaLabel="Gabungkan"
+      >
+        <ActionIconMerge />
+      </AdminTableActionButton>
     </div>
   );
 }
 
-function ActionLink({
-  href,
-  label,
-  icon,
-}: {
-  href: string;
-  label: string;
-  icon: string;
-}) {
+function ActionIconView() {
   return (
-    <Link
-      href={href}
-      scroll={false}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-base shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
-      title={label}
-      aria-label={label}
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      className="size-4 stroke-current"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     >
-      <span aria-hidden="true">{icon}</span>
-    </Link>
+      <path d="M1.75 10s3-5.25 8.25-5.25S18.25 10 18.25 10 15.25 15.25 10 15.25 1.75 10 1.75 10Z" />
+      <circle cx="10" cy="10" r="2.5" />
+    </svg>
+  );
+}
+
+function ActionIconEdit() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      className="size-4 stroke-current"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3.75 13.75v2.5h2.5L15 7.5 12.5 5l-8.75 8.75Z" />
+      <path d="m11.75 5.75 2.5 2.5" />
+    </svg>
+  );
+}
+
+function ActionIconMerge() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      className="size-4 stroke-current"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M7 4.5H5.75A2.25 2.25 0 0 0 3.5 6.75v.5A2.25 2.25 0 0 0 5.75 9.5h8.5a2.25 2.25 0 0 1 2.25 2.25v.5a2.25 2.25 0 0 1-2.25 2.25H13" />
+      <path d="m11 2.75-4 4 4 4" />
+      <path d="m9 9.25 4 4-4 4" />
+    </svg>
   );
 }
 
@@ -427,7 +495,7 @@ function LabelList({ labels }: { labels: string[] }) {
       {labels.slice(0, 3).map((label) => (
         <span
           key={label}
-          className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100"
+          className="rounded-full bg-emerald-50 px-1.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100"
         >
           {label}
         </span>
@@ -442,7 +510,7 @@ function LabelList({ labels }: { labels: string[] }) {
 }
 
 function ConsentBadge({ donor }: { donor: AdminDonor }) {
-  const label = formatConsentStatus(donor);
+  const label = formatConsentBadgeLabel(donor);
   const tone = donor.whatsappReminderOptIn
     ? "bg-green-50 text-green-700 ring-green-100"
     : "bg-slate-50 text-slate-600 ring-slate-200";
@@ -454,6 +522,18 @@ function ConsentBadge({ donor }: { donor: AdminDonor }) {
       {label}
     </span>
   );
+}
+
+function formatConsentBadgeLabel(donor: AdminDonor) {
+  if (donor.whatsappReminderOptIn) {
+    return "Opt-in WA";
+  }
+
+  if (!donor.phone) {
+    return "WA kosong";
+  }
+
+  return "Belum opt-in";
 }
 
 function formatConsentStatus(donor: AdminDonor) {
@@ -479,61 +559,30 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function TableFooter({
-  page,
-  totalPages,
-  query,
-}: {
-  page: number;
-  totalPages: number;
-  query: URLSearchParams;
-}) {
-  return (
-    <div className="flex gap-2 border-t border-slate-100 px-5 py-4 text-sm">
-      <PaginationLink page={page - 1} disabled={page <= 1} query={query}>
-        Sebelumnya
-      </PaginationLink>
-      <PaginationLink
-        page={page + 1}
-        disabled={page >= totalPages}
-        query={query}
-      >
-        Berikutnya
-      </PaginationLink>
-    </div>
-  );
+function buildDonorExportHref(
+  filters: {
+    q: string | null;
+    activity: string | null;
+    label: string | null;
+    sort: DonorSortField;
+    direction: AdminSortDirection;
+  },
+  format: "csv" | "pdf",
+) {
+  const exportQuery = new URLSearchParams();
+  if (filters.q) exportQuery.set("q", filters.q);
+  if (filters.activity) exportQuery.set("activity", filters.activity);
+  if (filters.label) exportQuery.set("label", filters.label);
+  exportQuery.set("sort", filters.sort);
+  exportQuery.set("direction", filters.direction);
+  exportQuery.set("format", format);
+  return exportQuery.toString();
 }
 
-function PaginationLink({
-  page,
-  disabled,
-  query,
-  children,
-}: {
-  page: number;
-  disabled: boolean;
-  query: URLSearchParams;
-  children: React.ReactNode;
-}) {
-  if (disabled) {
-    return (
-      <span className="rounded-lg border border-slate-200 px-4 py-2 font-semibold text-slate-300">
-        {children}
-      </span>
-    );
-  }
-
+function buildPageHref(query: URLSearchParams, page: number) {
   const nextQuery = new URLSearchParams(query);
   nextQuery.set("page", String(page));
-  return (
-    <Link
-      href={`?${nextQuery.toString()}`}
-      scroll={false}
-      className="btn-outline"
-    >
-      {children}
-    </Link>
-  );
+  return nextQuery.toString();
 }
 
 function buildDetailHref(

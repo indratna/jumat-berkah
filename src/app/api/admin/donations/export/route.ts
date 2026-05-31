@@ -2,6 +2,7 @@ import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { Prisma } from "@/generated/prisma/client";
+import { buildAdminDonationPdf } from "@/lib/admin-donation-pdf";
 import { ADMIN_SESSION_COOKIE, requireAdminUser } from "@/lib/auth";
 import { requireBetterAuthAdminUser } from "@/lib/better-auth-guards";
 import { getPrisma } from "@/lib/db";
@@ -9,7 +10,6 @@ import {
   type AdminSortDirection,
   type DonationSortField,
   formatAdminDate,
-  formatRupiah,
   getAdminDonations,
   getAdminDonorName,
   normalizePage,
@@ -72,7 +72,8 @@ export async function GET(request: Request) {
   });
 
   if (format === "csv") {
-    return new Response(buildDonationCsv(donations.items), {
+    const csv = buildDonationCsv(donations.items);
+    return new Response(`\ufeff${csv}`, {
       headers: {
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Content-Type": "text/csv; charset=utf-8",
@@ -82,13 +83,25 @@ export async function GET(request: Request) {
   }
 
   if (format === "pdf") {
-    return new Response(buildDonationPdf(donations.items), {
-      headers: {
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Content-Type": "application/pdf",
-        "Cache-Control": "no-store",
+    return new Response(
+      buildDonationPdf({
+        donations: donations.items,
+        total: donations.total,
+        filters: {
+          status: filters.status,
+          q: filters.q,
+          from: filters.from,
+          to: filters.to,
+        },
+      }),
+      {
+        headers: {
+          "Content-Disposition": `attachment; filename="${filename}"`,
+          "Content-Type": "application/pdf",
+          "Cache-Control": "no-store",
+        },
       },
-    });
+    );
   }
 
   return NextResponse.json(
@@ -125,7 +138,7 @@ function buildDonationCsv(
       donation.orderId,
       getAdminDonorName(donation),
       donation.donorEmail ?? "",
-      donation.donorPhone ?? "",
+      formatPhoneForExcel(donation.donorPhone),
       String(donation.amount),
       donation.status,
       donation.paymentMethod,
@@ -138,78 +151,37 @@ function buildDonationCsv(
   return `${rows.map((row) => row.map(escapeCsvCell).join(",")).join("\n")}\n`;
 }
 
-function buildDonationPdf(
-  donations: Awaited<ReturnType<typeof getAdminDonations>>["items"],
-) {
-  const lines = [
-    "Export Donasi Admin",
-    `Dibuat: ${formatAdminDate(new Date())}`,
-    `Total baris: ${donations.length}`,
-    "",
-    ...donations
-      .slice(0, 45)
-      .map((donation) =>
-        [
-          donation.orderId,
-          getAdminDonorName(donation),
-          formatRupiah(donation.amount),
-          donation.status,
-          formatAdminDate(donation.createdAt),
-        ].join(" - "),
-      ),
-  ];
+function formatPhoneForExcel(value: string | null | undefined) {
+  if (!value) {
+    return "";
+  }
 
-  return buildSimplePdf(lines);
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  // Excel/LibreOffice treat values like 6281234567890 as numbers and switch
+  // them to scientific notation. Wrapping with a leading `=` plus quoted text
+  // pins the cell as a literal string regardless of column type detection.
+  return `="${trimmed.replaceAll('"', '""')}"`;
 }
 
-function buildSimplePdf(lines: string[]) {
-  const content = [
-    "BT",
-    "/F1 10 Tf",
-    "40 790 Td",
-    "12 TL",
-    ...lines.flatMap((line, index) => {
-      const text = `(${escapePdfText(line.slice(0, 112))}) Tj`;
-      return index === 0 ? [text] : ["T*", text];
-    }),
-    "ET",
-  ].join("\n");
-
-  const objects = [
-    "<< /Type /Catalog /Pages 2 0 R >>",
-    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
-    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-    `<< /Length ${Buffer.byteLength(content, "utf8")} >>\nstream\n${content}\nendstream`,
-  ];
-
-  let pdf = "%PDF-1.4\n";
-  const offsets = [0];
-  for (const [index, object] of objects.entries()) {
-    offsets.push(Buffer.byteLength(pdf, "utf8"));
-    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
-  }
-
-  const xrefOffset = Buffer.byteLength(pdf, "utf8");
-  pdf += `xref\n0 ${objects.length + 1}\n`;
-  pdf += "0000000000 65535 f \n";
-  for (const offset of offsets.slice(1)) {
-    pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
-  }
-  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
-
-  return Buffer.from(pdf, "utf8");
+function buildDonationPdf(input: {
+  donations: Awaited<ReturnType<typeof getAdminDonations>>["items"];
+  total: number;
+  filters: {
+    status: string | null;
+    q: string | null;
+    from: string | null;
+    to: string | null;
+  };
+}) {
+  return buildAdminDonationPdf(input);
 }
 
 function escapeCsvCell(value: string) {
   return `"${value.replaceAll('"', '""')}"`;
-}
-
-function escapePdfText(value: string) {
-  return value
-    .replaceAll("\\", "\\\\")
-    .replaceAll("(", "\\(")
-    .replaceAll(")", "\\)");
 }
 
 function buildFilename(from: string | null, to: string | null, format: string) {

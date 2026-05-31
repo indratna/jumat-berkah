@@ -1,81 +1,169 @@
+import { AdminDataPageShell } from "@/components/admin/admin-data-page-shell";
+import { AdminStickyPageBar } from "@/components/admin/admin-sticky-page-bar";
+import { AdminTableCard } from "@/components/admin/admin-table-card";
+import { AdminTableFooter } from "@/components/admin/admin-table-footer";
 import {
+  formatAdminDateOnly,
+  normalizePage,
+  normalizePageSize,
+} from "@/lib/admin";
+import {
+  getAdminDistributionReports,
   getDistributionReportForCurrentCycle,
-  listDistributionReports,
 } from "@/lib/distribution-report";
-import { DistributionReportForm } from "./distribution-report-form";
 
-export default async function DistributionReportPage() {
-  const current = await getDistributionReportForCurrentCycle();
-  const recent = await listDistributionReports(10);
+import { DistributionManager } from "./distribution-manager";
+import {
+  buildDistributionModalQuery,
+  resolveDistributionModalState,
+} from "./distribution-manager-state";
+
+type DistributionReportPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function DistributionReportPage({
+  searchParams,
+}: DistributionReportPageProps) {
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const page = normalizePage(getNumberParam(resolvedSearchParams.page));
+  const pageSize = normalizePageSize(
+    getNumberParam(resolvedSearchParams.pageSize),
+  );
+  const modalState = resolveDistributionModalState({
+    modal: getStringParam(resolvedSearchParams.modal),
+    editReportId: getStringParam(resolvedSearchParams.editReportId),
+    deleteReportId: getStringParam(resolvedSearchParams.deleteReportId),
+  });
+
+  const [current, reports] = await Promise.all([
+    getDistributionReportForCurrentCycle(),
+    getAdminDistributionReports({ page, pageSize }),
+  ]);
+  const pageQuery = buildPageQuery(resolvedSearchParams);
+  const activeCycleReport = current.report;
 
   return (
-    <main className="mx-auto max-w-5xl space-y-4">
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-green-700">
-          Cerita Penyaluran Siklus Jumat
-        </p>
-        <h1 className="mt-3 text-2xl font-bold tracking-tight">
-          Periode {current.cycle.label}
-        </h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Cerita publik dipakai untuk menjelaskan penyaluran nasi dan kegiatan
-          Jumat ke jamaah serta donatur. Hindari menampilkan wajah penerima
-          manfaat tanpa izin.
-        </p>
-        <div className="mt-5">
-          <DistributionReportForm
-            cycleStart={current.cycle.fromDate}
-            initial={current.report}
-          />
-        </div>
-      </section>
+    <AdminDataPageShell>
+      <AdminStickyPageBar
+        title="Cerita penyaluran"
+        actions={
+          <div className="flex items-center gap-2">
+            <LinkAction
+              href={`?${buildDistributionModalQuery({
+                query: pageQuery,
+                modal: activeCycleReport ? "edit" : "add",
+                reportId: activeCycleReport?.id,
+              })}`}
+              label={
+                activeCycleReport
+                  ? "Edit cerita siklus aktif"
+                  : "Buat cerita siklus ini"
+              }
+            >
+              <PlusIcon />
+            </LinkAction>
+          </div>
+        }
+      />
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-green-700">
-          Riwayat Cerita
-        </p>
-        <p className="mt-2 text-sm text-slate-500">
-          10 cerita terbaru.
-        </p>
-        <div className="mt-4 space-y-3">
-          {recent.length === 0 ? (
-            <p className="text-sm text-slate-500">
-              Belum ada cerita penyaluran tersimpan.
-            </p>
-          ) : (
-            recent.map((report) => (
-              <div
-                key={report.id}
-                className="rounded-xl border border-slate-200 p-4"
-              >
-                <div className="flex flex-wrap items-baseline justify-between gap-3">
-                  <p className="text-sm font-semibold">
-                    {report.title}{" "}
-                    <span className="ml-1 rounded-lg bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
-                      {report.publishedAt ? "Publik" : "Draft"}
-                    </span>
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Mulai {report.cycleStart.toISOString().slice(0, 10)}
-                  </p>
-                </div>
-                <p className="mt-2 text-sm text-slate-700">
-                  {report.summary}
-                </p>
-                <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
-                  {report.packageCount !== null ? (
-                    <span>{report.packageCount} paket</span>
-                  ) : null}
-                  {report.locationSummary ? (
-                    <span>Lokasi: {report.locationSummary}</span>
-                  ) : null}
-                  <span>Foto: {report.photoUrls.length}</span>
-                </div>
-              </div>
-            ))
-          )}
+      <AdminTableCard>
+        <div className="border-b border-slate-100 p-5">
+          <h2 className="text-xl font-bold">Riwayat cerita penyaluran</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Satu cerita per siklus Jumat. Cerita publik dipakai untuk laporan
+            penyaluran ke jamaah dan donatur.
+          </p>
         </div>
-      </section>
-    </main>
+
+        <DistributionManager
+          reports={reports.items.map((report) => ({
+            id: report.id,
+            cycleStartLabel: formatAdminDateOnly(report.cycleStart),
+            cycleStartIso: report.cycleStart.toISOString().slice(0, 10),
+            title: report.title,
+            summary: report.summary,
+            packageCount: report.packageCount,
+            locationSummary: report.locationSummary,
+            photoUrls: report.photoUrls,
+            publishedAt: report.publishedAt?.toISOString() ?? null,
+          }))}
+          query={pageQuery}
+          modalState={modalState}
+          currentCycleStart={current.cycle.fromDate}
+          currentCycleLabel={current.cycle.label}
+        />
+
+        <AdminTableFooter
+          page={reports.page}
+          totalPages={reports.totalPages}
+          hrefBuilder={(nextPage) => buildPageHref(pageQuery, nextPage)}
+          totalLabel={`Total ${reports.total} cerita · Siklus aktif ${current.cycle.label}`}
+        />
+      </AdminTableCard>
+    </AdminDataPageShell>
+  );
+}
+
+function LinkAction({
+  href,
+  label,
+  children,
+}: {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      className="inline-flex h-10 min-w-12 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-xs font-black tracking-wide text-emerald-700 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+      aria-label={label}
+      title={label}
+    >
+      {children}
+    </a>
+  );
+}
+
+function buildPageHref(query: URLSearchParams, page: number) {
+  const next = new URLSearchParams(query);
+  next.set("page", String(page));
+  return next.toString();
+}
+
+function buildPageQuery(params: Record<string, string | string[] | undefined>) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === "string" && value.length > 0 && key !== "page") {
+      query.set(key, value);
+    }
+  }
+  return query;
+}
+
+function getStringParam(value: string | string[] | undefined) {
+  return typeof value === "string" ? value : null;
+}
+
+function getNumberParam(value: string | string[] | undefined) {
+  const parsed = Number(getStringParam(value));
+  return Number.isInteger(parsed) ? parsed : 1;
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      className="size-5 stroke-current"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M10 4.25v11.5" />
+      <path d="M4.25 10h11.5" />
+    </svg>
   );
 }

@@ -175,6 +175,41 @@ export async function listDistributionReports(limit = 20) {
   return records.map(mapDistributionReport);
 }
 
+export async function getAdminDistributionReports(input: {
+  page: number;
+  pageSize: number;
+}) {
+  const prisma = getPrisma();
+  const page = Math.max(1, input.page);
+  const pageSize = Math.max(1, Math.min(input.pageSize, 100));
+  const [records, total] = await Promise.all([
+    prisma.distributionReport.findMany({
+      orderBy: { cycleStart: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.distributionReport.count(),
+  ]);
+
+  return {
+    items: records.map(mapDistributionReport),
+    total,
+    page,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+  };
+}
+
+export async function getDistributionReportById(id: string) {
+  const prisma = getPrisma();
+  const record = await prisma.distributionReport.findUnique({ where: { id } });
+  return record ? mapDistributionReport(record) : null;
+}
+
+export async function deleteDistributionReport(id: string) {
+  const prisma = getPrisma();
+  return prisma.distributionReport.delete({ where: { id } });
+}
+
 export type DistributionReportWithCycle = {
   cycle: FridayCycleRange;
   report: DistributionReportRecord | null;
@@ -279,6 +314,9 @@ function sanitizePhotoUrl(value: string): string | null {
   const trimmed = value.trim();
   if (trimmed.length === 0) {
     return null;
+  }
+  if (trimmed.startsWith("/uploads/distribution/")) {
+    return trimmed;
   }
   try {
     const url = new URL(trimmed);

@@ -6,6 +6,8 @@ import { ADMIN_SESSION_COOKIE, requireAdminUser } from "@/lib/auth";
 import { requireBetterAuthAdminUser } from "@/lib/better-auth-guards";
 import { getPrisma } from "@/lib/db";
 import {
+  deleteDistributionReport,
+  getDistributionReportById,
   upsertDistributionReport,
   validateDistributionReportInput,
 } from "@/lib/distribution-report";
@@ -96,4 +98,67 @@ export async function POST(request: Request) {
     photoUrls: report.photoUrls,
     publishedAt: report.publishedAt?.toISOString() ?? null,
   });
+}
+
+export async function DELETE(request: Request) {
+  const admin = await getAdminFromHeadersAndCookies();
+
+  if (!admin) {
+    return NextResponse.json(
+      { errors: { auth: "Unauthorized" } },
+      { status: 401 },
+    );
+  }
+
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id")?.trim();
+
+  if (!id) {
+    return NextResponse.json(
+      { errors: { id: "ID cerita wajib diisi." } },
+      { status: 400 },
+    );
+  }
+
+  const existing = await getDistributionReportById(id);
+
+  if (!existing) {
+    return NextResponse.json(
+      { errors: { report: "Cerita penyaluran tidak ditemukan." } },
+      { status: 404 },
+    );
+  }
+
+  await deleteDistributionReport(id);
+
+  const prisma = getPrisma();
+  await prisma.auditLog.create({
+    data: {
+      actorUserId: admin.id,
+      action: "distribution_report.deleted",
+      entityType: "distribution_report",
+      entityId: id,
+      before: {
+        id: existing.id,
+        cycleStart: existing.cycleStart.toISOString().slice(0, 10),
+        title: existing.title,
+        summary: existing.summary,
+        packageCount: existing.packageCount,
+        locationSummary: existing.locationSummary,
+        photoUrls: existing.photoUrls,
+        publishedAt: existing.publishedAt?.toISOString() ?? null,
+      },
+      after: Prisma.JsonNull,
+    },
+  });
+
+  return NextResponse.json({ ok: true });
+}
+
+async function getAdminFromHeadersAndCookies() {
+  const cookieStore = await cookies();
+  const legacyAdmin = await requireAdminUser(
+    cookieStore.get(ADMIN_SESSION_COOKIE)?.value,
+  );
+  return legacyAdmin ?? requireBetterAuthAdminUser(await headers());
 }

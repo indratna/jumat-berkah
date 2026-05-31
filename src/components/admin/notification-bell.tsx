@@ -28,6 +28,7 @@ export function NotificationBell({
   const [count, setCount] = useState(unreadCount);
   const [isPending, startTransition] = useTransition();
   const markedReadRef = useRef(false);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,6 +80,36 @@ export function NotificationBell({
     };
   }, []);
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+      if (!rootRef.current?.contains(target)) {
+        setOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
   function openPanel() {
     setOpen((value) => !value);
     if (count > 0) {
@@ -91,7 +122,7 @@ export function NotificationBell({
   }
 
   return (
-    <div className="relative">
+    <div ref={rootRef} className="relative">
       <button
         type="button"
         onClick={openPanel}
@@ -107,7 +138,7 @@ export function NotificationBell({
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-11 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+        <div className="absolute right-0 top-11 z-[70] w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
           <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-700">
             <p className="text-sm font-bold text-slate-950 dark:text-slate-50">
               Notifikasi

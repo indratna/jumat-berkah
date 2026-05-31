@@ -36,6 +36,17 @@ set LOCAL_DB_USER=jumat_berkah_user
 set LOCAL_DB_PASSWORD=jumat_berkah_password
 set LOCAL_DB_PORT=54329
 
+node scripts\resolve-local-db-env.cjs > "%TEMP%\jumat-berkah-local-db-env.cmd"
+if errorlevel 1 (
+  echo ERROR: Gagal membaca DATABASE_URL dari .env.local.
+  goto :fail
+)
+call "%TEMP%\jumat-berkah-local-db-env.cmd"
+if errorlevel 1 (
+  echo ERROR: Gagal menerapkan konfigurasi database lokal.
+  goto :fail
+)
+
 where docker >nul 2>nul
 if errorlevel 1 (
   echo WARNING: Docker tidak tersedia di PATH. Lewati auto-start PostgreSQL lokal.
@@ -43,13 +54,21 @@ if errorlevel 1 (
   echo Cek PostgreSQL lokal Docker container %LOCAL_DB_CONTAINER%...
   docker inspect %LOCAL_DB_CONTAINER% >nul 2>nul
   if errorlevel 1 (
-    echo Container %LOCAL_DB_CONTAINER% belum ada. Membuat PostgreSQL lokal di port %LOCAL_DB_PORT%...
+    echo Container %LOCAL_DB_CONTAINER% belum ada. Membuat PostgreSQL lokal di port %LOCAL_DB_PORT% dengan user %LOCAL_DB_USER%...
     docker run --name %LOCAL_DB_CONTAINER% -e POSTGRES_DB=%LOCAL_DB_NAME% -e POSTGRES_USER=%LOCAL_DB_USER% -e POSTGRES_PASSWORD=%LOCAL_DB_PASSWORD% -p %LOCAL_DB_PORT%:5432 -d postgres:16
     if errorlevel 1 (
       echo ERROR: Gagal membuat container PostgreSQL lokal. Pastikan Docker Desktop hidup.
       goto :fail
     )
   ) else (
+    docker inspect --format "{{range .Config.Env}}{{println .}}{{end}}" %LOCAL_DB_CONTAINER% | findstr /b /c:"POSTGRES_USER=%LOCAL_DB_USER%" >nul 2>nul
+    if errorlevel 1 (
+      echo ERROR: Container %LOCAL_DB_CONTAINER% sudah ada, tapi user PostgreSQL tidak cocok dengan DATABASE_URL di .env.local.
+      echo DATABASE_URL sekarang memakai user %LOCAL_DB_USER% pada port %LOCAL_DB_PORT%.
+      echo Jika data lokal boleh dihapus, jalankan command ini lalu ulangi run.bat:
+      echo docker rm -f %LOCAL_DB_CONTAINER%
+      goto :fail
+    )
     echo Menyalakan container %LOCAL_DB_CONTAINER% jika belum jalan...
     docker start %LOCAL_DB_CONTAINER% >nul 2>nul
     if errorlevel 1 (

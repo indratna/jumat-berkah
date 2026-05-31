@@ -55,10 +55,18 @@ export default async function AdminDonationsPage({
           Daftar donasi dan status pembayaran.
         </h1>
         <div className="flex items-center gap-2">
-          <ExportIconLink href={pdfExportHref} label="Export PDF">
+          <ExportIconLink
+            href={pdfExportHref}
+            label="Export PDF"
+            download="donasi.pdf"
+          >
             PDF
           </ExportIconLink>
-          <ExportIconLink href={csvExportHref} label="Export CSV">
+          <ExportIconLink
+            href={csvExportHref}
+            label="Export CSV"
+            download="donasi.csv"
+          >
             CSV
           </ExportIconLink>
           <DonationAutoRefresh />
@@ -185,20 +193,25 @@ function ExportIconLink({
   href,
   label,
   children,
+  download,
 }: {
   href: string;
   label: string;
   children: React.ReactNode;
+  download?: string;
 }) {
   return (
-    <Link
+    <a
       href={href}
       className="inline-flex h-10 min-w-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-black tracking-wide text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
       aria-label={label}
       title={label}
+      download={download}
+      target="_blank"
+      rel="noopener"
     >
       {children}
-    </Link>
+    </a>
   );
 }
 

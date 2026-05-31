@@ -12,6 +12,7 @@ import {
   normalizePage,
   normalizePageSize,
 } from "@/lib/admin";
+import { buildAdminDonorPdf } from "@/lib/admin-donor-pdf";
 
 const donorSortFields = new Set<DonorSortField>([
   "lastDonationAt",
@@ -31,6 +32,7 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
+  const format = url.searchParams.get("format") === "pdf" ? "pdf" : "csv";
   const filters = {
     q: url.searchParams.get("q"),
     activity: url.searchParams.get("activity"),
@@ -58,12 +60,33 @@ export async function GET(request: Request) {
         sort: filters.sort,
         direction: filters.direction,
         total: donors.total,
+        format,
       },
     },
   });
 
+  if (format === "pdf") {
+    const pdf = buildAdminDonorPdf({
+      donors: donors.items,
+      total: donors.total,
+      filters: {
+        q: filters.q,
+        activity: filters.activity,
+        label: filters.label,
+      },
+    });
+
+    return new NextResponse(pdf, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": 'attachment; filename="donatur.pdf"',
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+
   const csv = buildDonorCsv(donors.items);
-  return new NextResponse(csv, {
+  return new Response(`\ufeff${csv}`, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": 'attachment; filename="donatur.csv"',
@@ -102,7 +125,7 @@ function buildDonorCsv(
       donor.key,
       donor.name,
       donor.email ?? "",
-      donor.phone ?? "",
+      formatPhoneForExcel(donor.phone),
       donor.labels.join("; "),
       donor.internalNote ?? "",
       donor.whatsappReminderOptIn ? "opt-in" : "belum opt-in",
@@ -115,6 +138,19 @@ function buildDonorCsv(
   ];
 
   return `${rows.map((row) => row.map(escapeCsvCell).join(",")).join("\n")}\n`;
+}
+
+function formatPhoneForExcel(value: string | null | undefined) {
+  if (!value) {
+    return "";
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  return `="${trimmed.replaceAll('"', '""')}"`;
 }
 
 function escapeCsvCell(value: string) {

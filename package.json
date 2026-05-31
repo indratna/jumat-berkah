@@ -12,6 +12,7 @@
     "test": "node --import tsx --test src/tests/**/*.test.ts",
     "postinstall": "prisma generate",
     "seed:admin": "tsx prisma/seed-admin.ts",
+    "seed:dummy": "tsx prisma/seed-dummy.ts",
     "seed:better-auth-admin": "tsx scripts/provision-better-auth-admin.ts"
   },
   "dependencies": {

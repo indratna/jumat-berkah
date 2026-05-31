@@ -1,29 +1,35 @@
 import Link from "next/link";
 
-import { AdminSummaryFooter } from "@/components/admin/admin-summary-footer";
-import { AdminTopTabs } from "@/components/admin/admin-top-tabs";
+import { AdminDataPageShell } from "@/components/admin/admin-data-page-shell";
+import { AdminStickyPageBar } from "@/components/admin/admin-sticky-page-bar";
+import { AdminTableCard } from "@/components/admin/admin-table-card";
+import { AdminTableFooter } from "@/components/admin/admin-table-footer";
+import { adminTableStyles } from "@/components/admin/admin-table-styles";
 import { AutoSubmitSelect } from "../auto-submit-select";
 import { EXPENSE_CATEGORIES } from "@/lib/expenses";
 import {
   type AdminSortDirection,
   type ExpenseSortField,
-  formatAdminDateOnly,
   formatDateInput,
   getAdminExpenses,
   normalizePage,
   normalizePageSize,
 } from "@/lib/admin";
 import { ExpenseManager } from "./expense-manager";
+import {
+  buildExpenseModalQuery,
+  resolveExpenseModalState,
+} from "./expense-manager-state";
 
 type AdminExpensesPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-const expenseSortOptions: Array<{ value: ExpenseSortField; label: string }> = [
-  { value: "expenseDate", label: "Tanggal" },
-  { value: "amount", label: "Nominal" },
-  { value: "category", label: "Kategori" },
-  { value: "createdAt", label: "Waktu input" },
+const expenseSortOptions: ExpenseSortField[] = [
+  "expenseDate",
+  "amount",
+  "category",
+  "createdAt",
 ];
 
 export default async function AdminExpensesPage({
@@ -40,69 +46,145 @@ export default async function AdminExpensesPage({
     sort: getExpenseSort(getStringParam(resolvedSearchParams.sort)),
     direction: getSortDirection(getStringParam(resolvedSearchParams.direction)),
   };
+  const modalState = resolveExpenseModalState({
+    modal: getStringParam(resolvedSearchParams.modal),
+    editExpenseId: getStringParam(resolvedSearchParams.editExpenseId),
+    deleteExpenseId: getStringParam(resolvedSearchParams.deleteExpenseId),
+  });
+
   const expenses = await getAdminExpenses(filters);
   const pageQuery = buildPageQuery(resolvedSearchParams);
-  const categoryTabs = buildCategoryTabs(
-    resolvedSearchParams,
-    filters.category,
-  );
 
   return (
-    <main className="mx-auto max-w-6xl space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="kicker">
-          Pengeluaran Admin
-        </p>
-        <h1 className="mt-4 text-2xl font-bold">Kelola pengeluaran program.</h1>
-        <p className="mt-3 leading-7 text-slate-700">
-          Catat bahan makanan, beras, gas, kemasan, transportasi, dan
-          operasional lain. Semua perubahan masuk audit log dan langsung
-          memengaruhi laporan publik.
-        </p>
-      </div>
+    <AdminDataPageShell>
+      <AdminStickyPageBar
+        title="Kelola pengeluaran program."
+        actions={
+          <div className="flex items-center gap-2">
+            <ExportIconLink
+              href={`/api/admin/expenses/export?${buildExpenseExportHref(filters, "pdf")}`}
+              label="Export PDF pengeluaran"
+              download="pengeluaran.pdf"
+            >
+              PDF
+            </ExportIconLink>
+            <ExportIconLink
+              href={`/api/admin/expenses/export?${buildExpenseExportHref(filters, "csv")}`}
+              label="Export CSV pengeluaran"
+              download="pengeluaran.csv"
+            >
+              CSV
+            </ExportIconLink>
 
-      <AdminTopTabs tabs={categoryTabs} />
+            <TopActionLink
+              href={`?${buildExpenseModalQuery({ query: pageQuery, modal: "add" })}`}
+              label="Tambah pengeluaran"
+              variant="primary"
+            >
+              <PlusIcon />
+            </TopActionLink>
+          </div>
+        }
+      />
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <AdminTableCard>
         <TableToolbar filters={filters} />
-        <TableMeta
-          total={expenses.total}
-          page={expenses.page}
-          totalPages={expenses.totalPages}
-        />
-        <div className="p-0">
-          <ExpenseManager
-            expenses={expenses.items.map((expense) => ({
-              id: expense.id,
-              expenseDate: formatDateInput(expense.expenseDate),
-              category: expense.category,
-              description: expense.description,
-              amount: expense.amount,
-              vendorName: expense.vendorName,
-              receiptUrl: expense.receiptUrl,
-              displayDate: formatAdminDateOnly(expense.expenseDate),
-            }))}
-          />
-        </div>
-        <AdminSummaryFooter
-          items={[
-            { label: "Total cocok", value: String(expenses.total) },
-            {
-              label: "Halaman",
-              value: `${expenses.page}/${expenses.totalPages}`,
-            },
-            { label: "Baris", value: String(filters.pageSize) },
-            { label: "Kategori", value: filters.category ?? "Semua" },
-          ]}
-        />
-        <TableFooter
-          page={expenses.page}
-          totalPages={expenses.totalPages}
+        <ExpenseManager
+          expenses={expenses.items.map((expense) => ({
+            id: expense.id,
+            expenseDate: formatDateInput(expense.expenseDate),
+            category: expense.category,
+            description: expense.description,
+            amount: expense.amount,
+            vendorName: expense.vendorName,
+            receiptUrl: expense.receiptUrl,
+            createdAt: expense.createdAt.toISOString(),
+            displayDate: formatDateInput(expense.expenseDate),
+          }))}
+          sort={filters.sort}
+          direction={filters.direction}
           query={pageQuery}
-          pageSize={filters.pageSize}
+          modalState={modalState}
         />
-      </div>
-    </main>
+        <AdminTableFooter
+          page={expenses.page}
+          totalPages={expenses.totalPages}
+          hrefBuilder={(page) => buildPageHref(pageQuery, page)}
+          pageSizeControl={
+            <AutoSubmitSelect
+              name="pageSize"
+              label="Baris"
+              defaultValue={String(filters.pageSize)}
+              hiddenFields={Array.from(pageQuery.entries()).map(
+                ([name, value]) => ({ name, value }),
+              )}
+              options={[10, 25, 50, 100].map((size) => ({
+                value: String(size),
+                label: String(size),
+              }))}
+            />
+          }
+          totalLabel={`Total ${expenses.total} pengeluaran · Kategori ${filters.category ?? "Semua"}`}
+        />
+      </AdminTableCard>
+    </AdminDataPageShell>
+  );
+}
+
+function ExportIconLink({
+  href,
+  label,
+  children,
+  download,
+}: {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+  download?: string;
+}) {
+  return (
+    <a
+      href={href}
+      className="inline-flex h-10 min-w-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-xs font-black tracking-wide text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+      aria-label={label}
+      title={label}
+      download={download}
+      target="_blank"
+      rel="noopener"
+    >
+      {children}
+    </a>
+  );
+}
+
+function TopActionLink({
+  href,
+  label,
+  children,
+  variant = "neutral",
+}: {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+  variant?: "neutral" | "primary";
+}) {
+  const base =
+    "inline-flex h-10 min-w-12 items-center justify-center rounded-xl border px-3 text-xs font-black tracking-wide shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600";
+  const classes =
+    variant === "primary"
+      ? `${base} border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100`
+      : `${base} border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700`;
+
+  return (
+    <Link
+      href={href}
+      scroll={false}
+      aria-label={label}
+      title={label}
+      className={classes}
+    >
+      {children}
+    </Link>
   );
 }
 
@@ -114,23 +196,20 @@ function TableToolbar({
     category: string | null;
     from: string | null;
     to: string | null;
-    pageSize: number;
-    sort: ExpenseSortField;
-    direction: AdminSortDirection;
   };
 }) {
   return (
-    <form className="grid gap-3 border-b border-slate-100 bg-white p-5 lg:grid-cols-6">
+    <form className={`${adminTableStyles.toolbar} lg:grid-cols-12`}>
       <input
         name="q"
         defaultValue={filters.q ?? ""}
         placeholder="Cari deskripsi atau vendor"
-        className="field lg:col-span-2"
+        className="field lg:col-span-3"
       />
       <select
         name="category"
         defaultValue={filters.category ?? ""}
-        className="field"
+        className="field lg:col-span-2"
       >
         <option value="">Semua kategori</option>
         {EXPENSE_CATEGORIES.map((category) => (
@@ -143,185 +222,55 @@ function TableToolbar({
         name="from"
         type="date"
         defaultValue={filters.from ?? ""}
-        className="field"
+        className="field lg:col-span-2"
       />
       <input
         name="to"
         type="date"
         defaultValue={filters.to ?? ""}
-        className="field"
+        className="field lg:col-span-2"
       />
-      <button className="btn-primary">
-        Filter
-      </button>
-      <select
-        name="sort"
-        defaultValue={filters.sort}
-        className="field"
-      >
-        {expenseSortOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            Urut: {option.label}
-          </option>
-        ))}
-      </select>
-      <select
-        name="direction"
-        defaultValue={filters.direction}
-        className="field"
-      >
-        <option value="desc">Terbesar/terbaru</option>
-        <option value="asc">Terkecil/terlama</option>
-      </select>
-      <select
-        name="pageSize"
-        defaultValue={String(filters.pageSize)}
-        className="field"
-      >
-        {[10, 25, 50, 100].map((size) => (
-          <option key={size} value={size}>
-            {size} baris
-          </option>
-        ))}
-      </select>
+      <button className="btn-primary lg:col-span-3">Filter</button>
     </form>
   );
-}
-
-function TableMeta({
-  total,
-  page,
-  totalPages,
-}: {
-  total: number;
-  page: number;
-  totalPages: number;
-}) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 text-sm text-slate-600">
-      <span>Total {total} pengeluaran</span>
-      <span>
-        Halaman {page} dari {totalPages}
-      </span>
-    </div>
-  );
-}
-
-function TableFooter({
-  page,
-  totalPages,
-  query,
-  pageSize,
-}: {
-  page: number;
-  totalPages: number;
-  query: URLSearchParams;
-  pageSize: number;
-}) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 text-sm">
-      <div className="flex gap-2">
-        <PaginationLink page={page - 1} disabled={page <= 1} query={query}>
-          Sebelumnya
-        </PaginationLink>
-        <PaginationLink
-          page={page + 1}
-          disabled={page >= totalPages}
-          query={query}
-        >
-          Berikutnya
-        </PaginationLink>
-      </div>
-      <AutoSubmitSelect
-        name="pageSize"
-        label="Baris"
-        defaultValue={String(pageSize)}
-        hiddenFields={Array.from(query.entries()).map(([name, value]) => ({
-          name,
-          value,
-        }))}
-        options={[10, 25, 50, 100].map((size) => ({
-          value: String(size),
-          label: String(size),
-        }))}
-      />
-    </div>
-  );
-}
-
-function PaginationLink({
-  page,
-  disabled,
-  query,
-  children,
-}: {
-  page: number;
-  disabled: boolean;
-  query: URLSearchParams;
-  children: React.ReactNode;
-}) {
-  if (disabled)
-    return (
-      <span className="rounded-lg border border-slate-200 px-4 py-2 font-semibold text-slate-300">
-        {children}
-      </span>
-    );
-  return (
-    <Link
-      href={`?${buildPageHref(query, page)}`}
-      scroll={false}
-      className="btn-outline"
-    >
-      {children}
-    </Link>
-  );
-}
-
-function buildCategoryTabs(
-  params: Record<string, string | string[] | undefined>,
-  activeCategory: string | null,
-) {
-  const primaryCategories = EXPENSE_CATEGORIES.slice(0, 4);
-  return [
-    {
-      href: buildCategoryHref(params, null),
-      label: "Semua kategori",
-      active: !activeCategory,
-    },
-    ...primaryCategories.map((category) => ({
-      href: buildCategoryHref(params, category),
-      label: category,
-      active: activeCategory === category,
-    })),
-  ];
-}
-
-function buildCategoryHref(
-  params: Record<string, string | string[] | undefined>,
-  category: string | null,
-) {
-  const query = buildPageQuery(params);
-  query.delete("category");
-  if (category) {
-    query.set("category", category);
-  }
-  const queryString = query.toString();
-  return queryString ? `?${queryString}` : "?";
-}
-
-function buildPageQuery(params: Record<string, string | string[] | undefined>) {
-  const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (typeof value === "string" && value.length > 0 && key !== "page")
-      query.set(key, value);
-  }
-  return query;
 }
 
 function buildPageHref(query: URLSearchParams, page: number) {
   const nextQuery = new URLSearchParams(query);
   nextQuery.set("page", String(page));
   return nextQuery.toString();
+}
+
+function buildExpenseExportHref(
+  filters: {
+    q: string | null;
+    category: string | null;
+    from: string | null;
+    to: string | null;
+    sort: ExpenseSortField;
+    direction: AdminSortDirection;
+  },
+  format: "csv" | "pdf",
+) {
+  const query = new URLSearchParams();
+  if (filters.q) query.set("q", filters.q);
+  if (filters.category) query.set("category", filters.category);
+  if (filters.from) query.set("from", filters.from);
+  if (filters.to) query.set("to", filters.to);
+  query.set("sort", filters.sort);
+  query.set("direction", filters.direction);
+  query.set("format", format);
+  return query.toString();
+}
+
+function buildPageQuery(params: Record<string, string | string[] | undefined>) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === "string" && value.length > 0 && key !== "page") {
+      query.set(key, value);
+    }
+  }
+  return query;
 }
 
 function getStringParam(value: string | string[] | undefined) {
@@ -338,7 +287,24 @@ function getSortDirection(value: string | null): AdminSortDirection {
 }
 
 function getExpenseSort(value: string | null): ExpenseSortField {
-  return expenseSortOptions.some((option) => option.value === value)
+  return expenseSortOptions.includes(value as ExpenseSortField)
     ? (value as ExpenseSortField)
     : "expenseDate";
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="none"
+      className="size-5 stroke-current"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M10 4.25v11.5" />
+      <path d="M4.25 10h11.5" />
+    </svg>
+  );
 }

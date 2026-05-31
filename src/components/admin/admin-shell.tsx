@@ -41,7 +41,7 @@ export function AdminShell({ children, notifications }: AdminShellProps) {
       <AdminSidebar expanded={expanded} />
 
       <div className="min-h-screen">
-        <header className="sticky top-0 z-20 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+        <header className="sticky top-0 z-[60] border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
           <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <button

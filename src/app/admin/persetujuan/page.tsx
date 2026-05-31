@@ -1,6 +1,9 @@
 import Link from "next/link";
 
-import { AdminSummaryFooter } from "@/components/admin/admin-summary-footer";
+import { AdminDataPageShell } from "@/components/admin/admin-data-page-shell";
+import { AdminStickyPageBar } from "@/components/admin/admin-sticky-page-bar";
+import { AdminTableCard } from "@/components/admin/admin-table-card";
+import { adminTableStyles } from "@/components/admin/admin-table-styles";
 import {
   formatAdminDate,
   formatAdminDateOnly,
@@ -12,19 +15,13 @@ export default async function AdminApprovalsPage() {
   const approvals = await getAdminExpenseApprovals();
 
   return (
-    <main className="mx-auto max-w-6xl space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="kicker">
-          Persetujuan Pengeluaran
-        </p>
-        <h1 className="mt-4 text-2xl font-bold">Pantau approval besar.</h1>
-        <p className="mt-3 leading-7 text-slate-700">
-          Daftar ini read-only. Approval tetap berjalan lewat tombol Telegram
-          multi-admin supaya guard yang sudah ada tetap konsisten.
-        </p>
-      </div>
+    <AdminDataPageShell>
+      <AdminStickyPageBar
+        title="Pantau approval besar."
+        description="Daftar ini read-only. Approval tetap berjalan lewat tombol Telegram multi-admin supaya guard yang sudah ada tetap konsisten."
+      />
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <AdminTableCard>
         <div className="border-b border-slate-100 p-5">
           <h2 className="text-xl font-bold">Menunggu persetujuan</h2>
           <p className="mt-1 text-sm text-slate-600">
@@ -33,7 +30,7 @@ export default async function AdminApprovalsPage() {
         </div>
         <div className="divide-y divide-slate-100">
           {approvals.pending.length === 0 ? (
-            <div className="p-6 text-center text-slate-600">
+            <div className={adminTableStyles.emptyState}>
               Tidak ada pengeluaran pending approval.
             </div>
           ) : (
@@ -62,16 +59,14 @@ export default async function AdminApprovalsPage() {
             })
           )}
         </div>
-        <AdminSummaryFooter
-          items={[
-            { label: "Pending", value: String(approvals.pending.length) },
-            { label: "Mode", value: "Read-only" },
-            { label: "Sumber aksi", value: "Telegram" },
-          ]}
-        />
-      </section>
+        <div className={adminTableStyles.footer}>
+          <span className={adminTableStyles.meta}>
+            Pending {approvals.pending.length} · Mode read-only · Sumber aksi Telegram
+          </span>
+        </div>
+      </AdminTableCard>
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <AdminTableCard>
         <div className="border-b border-slate-100 p-5">
           <h2 className="text-xl font-bold">Timeline approval terbaru</h2>
           <p className="mt-1 text-sm text-slate-600">
@@ -80,7 +75,7 @@ export default async function AdminApprovalsPage() {
         </div>
         <div className="divide-y divide-slate-100">
           {approvals.recentApprovals.length === 0 ? (
-            <div className="p-6 text-center text-slate-600">
+            <div className={adminTableStyles.emptyState}>
               Belum ada approval tercatat.
             </div>
           ) : (
@@ -103,7 +98,7 @@ export default async function AdminApprovalsPage() {
             Lihat audit approval
           </Link>
         </div>
-      </section>
-    </main>
+      </AdminTableCard>
+    </AdminDataPageShell>
   );
 }

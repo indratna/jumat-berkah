@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { AdminDataPageShell } from "@/components/admin/admin-data-page-shell";
-import { AdminStickyPageBar } from "@/components/admin/admin-sticky-page-bar";
 import { AdminTableCard } from "@/components/admin/admin-table-card";
 import { AdminTableFooter } from "@/components/admin/admin-table-footer";
 import { adminTableStyles } from "@/components/admin/admin-table-styles";
@@ -39,7 +38,9 @@ export default async function AdminAuditPage({
 
   return (
     <AdminDataPageShell>
-      <AdminStickyPageBar title="Jejak audit perubahan sistem." />
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold">Jejak audit perubahan sistem.</h1>
+      </div>
 
       <AdminTableCard>
         <AuditToolbar
@@ -192,12 +193,10 @@ function AuditTableHeader({
   direction: AdminSortDirection;
 }) {
   const headerCellClass =
-    "sticky top-[8.75rem] z-20 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[0_1px_0_0_rgba(226,232,240,1)]";
+    "px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500";
 
   return (
-    <div
-      className={`grid border-b border-slate-200 bg-slate-50 lg:grid-cols-[1fr_11rem_10rem_11rem]`}
-    >
+    <div className="sticky top-16 z-20 grid border-b border-slate-200 bg-slate-50 shadow-[0_1px_0_0_rgba(226,232,240,1)] lg:grid-cols-[1fr_11rem_10rem_11rem]">
       <div className={headerCellClass}>
         <SortHeader
           query={query}

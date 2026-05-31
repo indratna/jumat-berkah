@@ -3,7 +3,10 @@ import test from "node:test";
 
 import {
   buildDistributionBaseQuery,
+  buildDistributionExportQuery,
   buildDistributionModalQuery,
+  normalizeDistributionDirection,
+  normalizeDistributionSort,
   resolveDistributionModalState,
 } from "@/app/admin/penyaluran/distribution-manager-state";
 import {
@@ -69,6 +72,45 @@ test("buildDistributionBaseQuery clears all modal flags but keeps filters", () =
   );
 
   assert.equal(buildDistributionBaseQuery(query), "q=hi");
+});
+
+test("buildDistributionExportQuery clears modal and pagination state", () => {
+  const query = new URLSearchParams(
+    "page=3&pageSize=25&modal=add&editReportId=rep-1&deleteReportId=rep-2&q=hi&status=published",
+  );
+
+  assert.equal(buildDistributionExportQuery(query), "q=hi&status=published");
+});
+
+test("buildDistributionBaseQuery keeps page size and active filters for page UI", () => {
+  const query = new URLSearchParams(
+    "page=3&pageSize=25&modal=add&q=sekolah&status=draft",
+  );
+
+  assert.equal(
+    buildDistributionBaseQuery(query),
+    "page=3&pageSize=25&q=sekolah&status=draft",
+  );
+});
+
+test("normalizeDistributionSort defaults to cycleStart for unknown values", () => {
+  assert.equal(normalizeDistributionSort(null), "cycleStart");
+  assert.equal(normalizeDistributionSort(""), "cycleStart");
+  assert.equal(normalizeDistributionSort("unknown"), "cycleStart");
+});
+
+test("normalizeDistributionSort accepts known fields", () => {
+  assert.equal(normalizeDistributionSort("title"), "title");
+  assert.equal(normalizeDistributionSort("publishedAt"), "publishedAt");
+  assert.equal(normalizeDistributionSort("packageCount"), "packageCount");
+});
+
+test("normalizeDistributionDirection defaults to desc and accepts asc", () => {
+  assert.equal(normalizeDistributionDirection(null), "desc");
+  assert.equal(normalizeDistributionDirection(""), "desc");
+  assert.equal(normalizeDistributionDirection("asc"), "asc");
+  assert.equal(normalizeDistributionDirection("desc"), "desc");
+  assert.equal(normalizeDistributionDirection("weird"), "desc");
 });
 
 test("validateDistributionPhotoFile accepts JPG/PNG/WebP up to 1 MB", () => {

@@ -11,6 +11,8 @@ import {
   buildDistributionBaseQuery,
   buildDistributionModalQuery,
   type DistributionModalState,
+  type DistributionSortDirection,
+  type DistributionSortField,
 } from "./distribution-manager-state";
 import {
   generateExpenseDeleteCaptcha,
@@ -49,12 +51,16 @@ export function DistributionManager({
   modalState,
   currentCycleStart,
   currentCycleLabel,
+  sort,
+  direction,
 }: {
   reports: DistributionRow[];
   query: URLSearchParams;
   modalState: DistributionModalState;
   currentCycleStart: string;
   currentCycleLabel: string;
+  sort: DistributionSortField;
+  direction: DistributionSortDirection;
 }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
@@ -148,17 +154,53 @@ export function DistributionManager({
           <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
             <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
-                <th className={adminTableStyles.stickyHeadCell}>Siklus</th>
-                <th className={adminTableStyles.stickyHeadCell}>Cerita</th>
-                <th className={adminTableStyles.stickyHeadCell}>Status</th>
+                <th className={adminTableStyles.stickyHeadCell}>
+                  <SortHeader
+                    query={query}
+                    field="cycleStart"
+                    activeSort={sort}
+                    direction={direction}
+                  >
+                    Siklus
+                  </SortHeader>
+                </th>
+                <th className={adminTableStyles.stickyHeadCell}>
+                  <SortHeader
+                    query={query}
+                    field="title"
+                    activeSort={sort}
+                    direction={direction}
+                  >
+                    Cerita
+                  </SortHeader>
+                </th>
+                <th className={adminTableStyles.stickyHeadCell}>
+                  <SortHeader
+                    query={query}
+                    field="publishedAt"
+                    activeSort={sort}
+                    direction={direction}
+                  >
+                    Status
+                  </SortHeader>
+                </th>
                 <th className={adminTableStyles.stickyHeadCell}>Foto</th>
-                <th className={adminTableStyles.stickyHeadCell}>Paket</th>
+                <th className={adminTableStyles.stickyHeadCell}>
+                  <SortHeader
+                    query={query}
+                    field="packageCount"
+                    activeSort={sort}
+                    direction={direction}
+                  >
+                    Paket
+                  </SortHeader>
+                </th>
                 <th className={adminTableStyles.stickyHeadCell}>Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
               {reports.map((report) => (
-                <tr key={report.id} className="align-top">
+                <tr key={report.id}>
                   <td className={adminTableStyles.bodyCell}>
                     <p className="font-semibold text-slate-950">
                       {report.cycleStartLabel}
@@ -292,12 +334,12 @@ function DistributionModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-80 grid place-items-center bg-slate-950/55 px-4 py-6 backdrop-blur-sm"
+      className="fixed inset-0 z-80 grid place-items-center overflow-y-auto bg-slate-950/55 px-4 py-6 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="distribution-modal-title"
     >
-      <div className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white shadow-2xl">
+      <div className="flex max-h-[calc(100vh-3rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
           <div>
             <p
@@ -326,7 +368,7 @@ function DistributionModal({
           </Link>
         </div>
 
-        <div className="scrollbar-none max-h-[80vh] overflow-y-auto px-6 py-5 [&::-webkit-scrollbar]:hidden">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           {modalState.type === "delete" ? (
             <DistributionDeletePanel
               key={modalState.reportId}
@@ -710,6 +752,41 @@ function FieldError({ message }: { message?: string }) {
   return message ? (
     <p className="mt-1 text-xs text-red-600">{message}</p>
   ) : null;
+}
+
+function SortHeader({
+  query,
+  field,
+  activeSort,
+  direction,
+  children,
+}: {
+  query: URLSearchParams;
+  field: DistributionSortField;
+  activeSort: DistributionSortField;
+  direction: DistributionSortDirection;
+  children: React.ReactNode;
+}) {
+  const isActive = activeSort === field;
+  const nextDirection: DistributionSortDirection =
+    isActive && direction === "desc" ? "asc" : "desc";
+  const nextQuery = new URLSearchParams(query);
+  nextQuery.set("sort", field);
+  nextQuery.set("direction", nextDirection);
+  nextQuery.delete("page");
+
+  return (
+    <Link
+      href={`?${nextQuery.toString()}`}
+      scroll={false}
+      className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-950"
+    >
+      <span>{children}</span>
+      <span aria-hidden="true" className="text-[10px]">
+        {isActive ? (direction === "desc" ? "\u2193" : "\u2191") : "\u2195"}
+      </span>
+    </Link>
+  );
 }
 
 function useLockBodyScroll(active: boolean) {

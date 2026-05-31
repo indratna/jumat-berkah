@@ -178,17 +178,43 @@ export async function listDistributionReports(limit = 20) {
 export async function getAdminDistributionReports(input: {
   page: number;
   pageSize: number;
+  q?: string | null;
+  status?: "published" | "draft" | null;
+  sort?: "cycleStart" | "title" | "publishedAt" | "packageCount";
+  direction?: "asc" | "desc";
 }) {
   const prisma = getPrisma();
   const page = Math.max(1, input.page);
   const pageSize = Math.max(1, Math.min(input.pageSize, 100));
+  const q = input.q?.trim() ?? "";
+  const status = input.status ?? null;
+  const sort = input.sort ?? "cycleStart";
+  const direction = input.direction ?? "desc";
+  const where: Prisma.DistributionReportWhereInput = {
+    ...(status === "published"
+      ? { publishedAt: { not: null } }
+      : status === "draft"
+        ? { publishedAt: null }
+        : {}),
+    ...(q.length > 0
+      ? {
+          OR: [
+            { title: { contains: q, mode: "insensitive" } },
+            { summary: { contains: q, mode: "insensitive" } },
+            { locationSummary: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+  const orderBy = buildDistributionOrderBy(sort, direction);
   const [records, total] = await Promise.all([
     prisma.distributionReport.findMany({
-      orderBy: { cycleStart: "desc" },
+      where,
+      orderBy,
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),
-    prisma.distributionReport.count(),
+    prisma.distributionReport.count({ where }),
   ]);
 
   return {
@@ -197,6 +223,31 @@ export async function getAdminDistributionReports(input: {
     page,
     totalPages: Math.max(1, Math.ceil(total / pageSize)),
   };
+}
+
+function buildDistributionOrderBy(
+  sort: "cycleStart" | "title" | "publishedAt" | "packageCount",
+  direction: "asc" | "desc",
+): Prisma.DistributionReportOrderByWithRelationInput[] {
+  if (sort === "publishedAt") {
+    return [
+      { publishedAt: { sort: direction, nulls: "last" } },
+      { cycleStart: "desc" },
+    ];
+  }
+
+  if (sort === "packageCount") {
+    return [
+      { packageCount: { sort: direction, nulls: "last" } },
+      { cycleStart: "desc" },
+    ];
+  }
+
+  if (sort === "title") {
+    return [{ title: direction }, { cycleStart: "desc" }];
+  }
+
+  return [{ cycleStart: direction }];
 }
 
 export async function getDistributionReportById(id: string) {

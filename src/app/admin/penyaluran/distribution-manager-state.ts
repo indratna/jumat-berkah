@@ -1,5 +1,34 @@
 export type DistributionModalType = "add" | "edit" | "delete";
 
+export type DistributionSortField =
+  | "cycleStart"
+  | "title"
+  | "publishedAt"
+  | "packageCount";
+
+export type DistributionSortDirection = "asc" | "desc";
+
+const DISTRIBUTION_SORT_FIELDS: ReadonlySet<DistributionSortField> = new Set([
+  "cycleStart",
+  "title",
+  "publishedAt",
+  "packageCount",
+]);
+
+export function normalizeDistributionSort(
+  value: string | null,
+): DistributionSortField {
+  return value && DISTRIBUTION_SORT_FIELDS.has(value as DistributionSortField)
+    ? (value as DistributionSortField)
+    : "cycleStart";
+}
+
+export function normalizeDistributionDirection(
+  value: string | null,
+): DistributionSortDirection {
+  return value === "asc" ? "asc" : "desc";
+}
+
 export type DistributionModalState =
   | { type: "add" }
   | { type: "edit"; reportId: string }
@@ -56,6 +85,16 @@ export function buildDistributionModalQuery(input: {
 
 export function buildDistributionBaseQuery(query: URLSearchParams) {
   const next = new URLSearchParams(query);
+  next.delete("modal");
+  next.delete("editReportId");
+  next.delete("deleteReportId");
+  return next.toString();
+}
+
+export function buildDistributionExportQuery(query: URLSearchParams) {
+  const next = new URLSearchParams(query);
+  next.delete("page");
+  next.delete("pageSize");
   next.delete("modal");
   next.delete("editReportId");
   next.delete("deleteReportId");

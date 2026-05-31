@@ -5,6 +5,7 @@ import { DonationStatus, Prisma } from "@/generated/prisma/client";
 import { ADMIN_SESSION_COOKIE, requireAdminUser } from "@/lib/auth";
 import { requireBetterAuthAdminUser } from "@/lib/better-auth-guards";
 import { getPrisma } from "@/lib/db";
+import { getSafeNextDonationStatus } from "@/lib/donation-status";
 import {
   checkMidtransTransactionStatus,
   mapMidtransStatus,
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const nextStatus = getSafeNextStatus(donation.status, mappedStatus);
+  const nextStatus = getSafeNextDonationStatus(donation.status, mappedStatus);
   const statusChanged = nextStatus !== donation.status;
 
   if (!statusChanged) {
@@ -161,18 +162,4 @@ export async function POST(request: Request) {
     statusUpdated: true,
     message: `Status diperbarui dari ${donation.status} ke ${updated.status}.`,
   });
-}
-
-function getSafeNextStatus(
-  currentStatus: DonationStatus,
-  requestedStatus: DonationStatus,
-): DonationStatus {
-  if (
-    currentStatus === DonationStatus.settlement &&
-    requestedStatus !== DonationStatus.refund
-  ) {
-    return currentStatus;
-  }
-
-  return requestedStatus;
 }

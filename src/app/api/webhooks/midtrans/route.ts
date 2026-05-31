@@ -1,5 +1,6 @@
 import { DonationStatus, Prisma } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/db";
+import { getSafeNextDonationStatus } from "@/lib/donation-status";
 import {
   mapMidtransStatus,
   parseMidtransNotification,
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
       };
     }
 
-    const nextStatus = getSafeNextStatus(donation.status, mappedStatus);
+    const nextStatus = getSafeNextDonationStatus(donation.status, mappedStatus);
 
     if (nextStatus === donation.status) {
       return {
@@ -223,18 +224,4 @@ async function maybeSendSettlementNotification(
   const text = formatDonationSettlementMessage(input);
 
   await safeSendTelegramMessage({ chatId, text });
-}
-
-function getSafeNextStatus(
-  currentStatus: DonationStatus,
-  requestedStatus: DonationStatus,
-) {
-  if (
-    currentStatus === DonationStatus.settlement &&
-    requestedStatus !== DonationStatus.refund
-  ) {
-    return currentStatus;
-  }
-
-  return requestedStatus;
 }

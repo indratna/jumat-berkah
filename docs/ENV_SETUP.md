@@ -2,6 +2,8 @@
 
 Panduan env untuk local dan production. Gunakan nilai placeholder di contoh. Jangan simpan secret asli di repo, chat, tiket publik, screenshot, atau dokumentasi.
 
+Untuk rotasi secret setelah kebocoran, pergantian operator, atau pre-launch, gunakan `docs/SECRET_ROTATION_RUNBOOK.md`.
+
 ## File env
 
 Local development:

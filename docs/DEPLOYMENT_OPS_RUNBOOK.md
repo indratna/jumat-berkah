@@ -2,6 +2,8 @@
 
 Runbook ini khusus resource Jumat Berkah di server bersama. Jangan menjalankan command global yang dapat mengganggu aplikasi lain.
 
+Untuk rotasi secret/token sebelum stable launch atau setelah kebocoran, gunakan `docs/SECRET_ROTATION_RUNBOOK.md`.
+
 ## Runtime Resources
 
 - Public URL: `https://berkahkaryo.my.id`

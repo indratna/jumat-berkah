@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 
 import "./globals.css";
+import { PublicFloatingWhatsApp } from "@/components/public-floating-whatsapp";
 
 const display = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -18,7 +19,7 @@ const body = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Jumat Berkah",
+  title: "Jumat Berkah Karyo",
   description: "Aplikasi donasi Jumat Berkah via QRIS dan laporan transparan.",
 };
 
@@ -37,6 +38,7 @@ export default function RootLayout({
           Lewati ke konten utama
         </a>
         {children}
+        <PublicFloatingWhatsApp />
       </body>
     </html>
   );

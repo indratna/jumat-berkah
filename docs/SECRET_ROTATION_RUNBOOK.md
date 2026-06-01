@@ -1,4 +1,4 @@
-# Secret Rotation Runbook — Jumat Berkah
+# Secret Rotation Runbook â€” Jumat Berkah
 
 Panduan ini dipakai saat secret pernah bocor, admin/operator berganti, atau sebelum stable/live launch. Jangan tulis secret asli di repo, chat, tiket publik, screenshot, atau dokumentasi.
 
@@ -65,7 +65,7 @@ Restart tunnel setelah token Cloudflare berubah:
 ```bash
 cd /var/www/jumat-berkah
 docker compose -f docker-compose.tunnel.yml --env-file .env.production up -d
-docker logs jumat-berkah-cloudflared --tail 30
+docker logs your-ingress-container --tail 30
 ```
 
 Expected tunnel log:
@@ -106,9 +106,9 @@ docker compose -f docker-compose.staging.yml --env-file .env.production up -d
 4. Smoke test:
 
 ```bash
-curl -I http://127.0.0.1:3010
-curl -I https://berkahkaryo.my.id/login
-curl -I https://berkahkaryo.my.id/admin
+curl -I http://127.0.0.1:3000
+curl -I https://your-domain.example.com/login
+curl -I https://your-domain.example.com/admin
 ```
 
 Expected:
@@ -123,7 +123,7 @@ If `TELEGRAM_WEBHOOK_SECRET` changes, run Telegram webhook setup again (see sect
 Use this when tunnel token may be exposed.
 
 1. Open Cloudflare Zero Trust.
-2. Go to Networks → Tunnels.
+2. Go to Networks â†’ Tunnels.
 3. Select the Jumat Berkah tunnel.
 4. Rotate/regenerate connector token.
 5. Copy new token.
@@ -144,14 +144,14 @@ CLOUDFLARED_TOKEN=...
 
 ```bash
 docker compose -f docker-compose.tunnel.yml --env-file .env.production up -d
-docker logs jumat-berkah-cloudflared --tail 30
+docker logs your-ingress-container --tail 30
 ```
 
 9. Smoke test public URL:
 
 ```bash
-curl --max-time 15 -I https://berkahkaryo.my.id
-curl --max-time 15 -I https://berkahkaryo.my.id/login
+curl --max-time 15 -I https://your-domain.example.com
+curl --max-time 15 -I https://your-domain.example.com/login
 ```
 
 ## 3. Rotate Telegram Bot Token and Webhook Secret
@@ -234,19 +234,19 @@ If broadcast returns `Bad Request: chat not found`, verify `TELEGRAM_PUBLIC_CHAN
 
 ## 4. Rotate Google OAuth Client Secret
 
-1. Open Google Cloud Console → APIs & Services → Credentials.
+1. Open Google Cloud Console â†’ APIs & Services â†’ Credentials.
 2. Select the OAuth 2.0 client used by Jumat Berkah.
 3. Reset/rotate client secret.
 4. Confirm authorized origin:
 
 ```txt
-https://berkahkaryo.my.id
+https://your-domain.example.com
 ```
 
 5. Confirm redirect URI:
 
 ```txt
-https://berkahkaryo.my.id/api/auth/callback/google
+https://your-domain.example.com/api/auth/callback/google
 ```
 
 6. Update `.env.production`:
@@ -265,7 +265,7 @@ docker compose -f docker-compose.staging.yml --env-file .env.production up -d
 8. Smoke test Google login at:
 
 ```txt
-https://berkahkaryo.my.id/login
+https://your-domain.example.com/login
 ```
 
 ## 5. Rotate Resend API Key
@@ -293,7 +293,7 @@ Use sandbox first.
 
 1. Open Midtrans dashboard.
 2. Switch to Sandbox or Production intentionally.
-3. Go to Settings → Access Keys.
+3. Go to Settings â†’ Access Keys.
 4. Copy matching Server Key, Client Key, and Merchant ID.
 5. Update `.env.production`:
 
@@ -360,7 +360,7 @@ For an existing Better Auth admin:
 2. Open:
 
 ```txt
-https://berkahkaryo.my.id/admin/profil
+https://your-domain.example.com/admin/profil
 ```
 
 3. Use password change form.
@@ -380,29 +380,22 @@ docker compose -f docker-compose.staging.yml --env-file .env.production up -d
 
 ## Post-Rotation Checklist
 
-Run:
+Run route smoke checks against your deployment URL:
 
 ```bash
-curl -I http://127.0.0.1:3010
-curl -I https://berkahkaryo.my.id
-curl -I https://berkahkaryo.my.id/login
-curl -I https://berkahkaryo.my.id/admin
+curl -I https://your-domain.example.com
+curl -I https://your-domain.example.com/login
+curl -I https://your-domain.example.com/admin
 ```
 
 Expected:
 
-- local origin returns `200`.
 - public `/` and `/login` return `200`.
-- guest `/admin` returns `307`.
+- guest `/admin` redirects to login.
 
-Check logs:
+Check application and ingress logs through your hosting provider without printing secrets.
 
-```bash
-docker logs jumat-berkah-app --since 5m
-docker logs jumat-berkah-cloudflared --tail 50
-```
-
-Update `IMPLEMENTATION_PLAN.md` Work Log with:
+Record private rotation evidence outside the public repository:
 
 - which secret class was rotated,
 - validation command results,

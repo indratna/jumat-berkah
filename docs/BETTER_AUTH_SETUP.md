@@ -1,4 +1,4 @@
-# Better Auth Setup — Jumat Berkah
+# Better Auth Setup â€” Jumat Berkah
 
 Phase 22 memakai Better Auth untuk Google OAuth dan email/password. Akses admin tetap ditentukan oleh role di tabel domain `users`, bukan keberhasilan login Google saja.
 
@@ -16,7 +16,7 @@ GOOGLE_CLIENT_SECRET=<google-oauth-client-secret>
 Production `.env.production`:
 
 ```env
-BETTER_AUTH_URL=https://berkahkaryo.my.id
+BETTER_AUTH_URL=https://your-domain.example.com
 BETTER_AUTH_SECRET=<random-production-secret>
 GOOGLE_CLIENT_ID=<google-oauth-client-id>
 GOOGLE_CLIENT_SECRET=<google-oauth-client-secret>
@@ -42,14 +42,14 @@ Authorized JavaScript origins:
 
 ```txt
 http://localhost:3000
-https://berkahkaryo.my.id
+https://your-domain.example.com
 ```
 
 Authorized redirect URIs:
 
 ```txt
 http://localhost:3000/api/auth/callback/google
-https://berkahkaryo.my.id/api/auth/callback/google
+https://your-domain.example.com/api/auth/callback/google
 ```
 
 ## Provision Admin Email/Password
@@ -77,13 +77,13 @@ The script creates a Better Auth email/password account through `/api/auth/sign-
 Admin flow:
 
 ```txt
-Google/email-password login succeeds → app checks domain users.email → role must be admin → /admin allowed
+Google/email-password login succeeds â†’ app checks domain users.email â†’ role must be admin â†’ /admin allowed
 ```
 
 Donor flow:
 
 ```txt
-Google/email-password login succeeds → existing donor role allowed, missing user is created as donor, admin role is denied donor area
+Google/email-password login succeeds â†’ existing donor role allowed, missing user is created as donor, admin role is denied donor area
 ```
 
 Legacy fallback remains temporarily available:

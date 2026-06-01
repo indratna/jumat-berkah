@@ -1,22 +1,34 @@
 # Jumat Berkah
 
-Aplikasi web donasi Jumat Berkah untuk donasi QRIS Midtrans dan laporan pemasukan/pengeluaran transparan.
+Jumat Berkah is an open-source web application for community donation management. It helps a program accept QRIS donations through Midtrans, reconcile payment status through webhooks, manage expenses, and publish transparent income/expense reports.
 
-## Documentation
+The app is built for Indonesian donation workflows where public trust, donor privacy, and simple admin operations matter.
 
-- `AGENTS.md` — aturan kerja AI builder.
-- `PRD.md` — scope produk dan acceptance criteria.
-- `TECHNICAL_SPEC.md` — arsitektur, database, API, payment, security.
-- `IMPLEMENTATION_PLAN.md` — phase checklist dan progress tracker.
-- `docs/FEATURES.md` — ringkasan fitur, route, dan smoke test.
-- `docs/ENV_SETUP.md` — referensi env local/production dan setup provider.
-- `docs/PRODUCTION_CHECKLIST.md` — checklist readiness sebelum production sign-off.
-- `docs/BETTER_AUTH_SETUP.md` — setup Better Auth dan Google OAuth.
-- `docs/BACKUP_RESTORE_RUNBOOK.md` — backup PostgreSQL dan restore drill.
-- `docs/DEPLOYMENT_OPS_RUNBOOK.md` — operasi deploy/tunnel shared server.
-- `docs/REPORT_EXPORTS.md` — catatan export laporan publik.
+## Features
 
-## Getting Started
+- Public landing page and donation flow.
+- QRIS payment through Midtrans Snap with redirect fallback.
+- Midtrans webhook verification and idempotent status handling.
+- Public transparency report with income, expenses, balance, exports, and print view.
+- Admin dashboard for donations, donors, expenses, approvals, audit logs, weekly targets, and distribution stories.
+- Optional donor login and private donation history.
+- Telegram bot notifications, admin commands, public report broadcast, and scheduled alerts.
+- Optional Resend email notifications and password reset.
+- Optional WhatsApp Cloud API donation reminders with explicit consent.
+- PostgreSQL backup and restore-drill scripts.
+
+## Tech Stack
+
+- Next.js App Router
+- React
+- TypeScript
+- Tailwind CSS
+- PostgreSQL
+- Prisma
+- Better Auth
+- Midtrans Snap/Core API
+
+## Quick Start
 
 Install dependencies:
 
@@ -24,385 +36,88 @@ Install dependencies:
 npm install
 ```
 
-Run development server:
+Copy environment placeholders:
+
+```bash
+cp .env.example .env.local
+```
+
+Generate Prisma client:
+
+```bash
+npm run db:generate
+```
+
+Run the development server:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-## Main Routes
-
-- `/` — landing program.
-- `/donasi` — form donasi publik.
-- `/donasi/status/[orderId]` — status pembayaran donasi.
-- `/laporan` — laporan publik pemasukan, pengeluaran, dan saldo.
-- `/masuk` — login opsional donatur.
-- `/akun/donasi` — riwayat donasi pribadi.
-- `/login` — login admin.
-- `/admin` — dashboard admin.
-- `/admin/donasi` — daftar dan filter donasi admin.
-- `/admin/pengeluaran` — manajemen pengeluaran.
-- `/api/admin/reports/export` — export CSV admin.
+See `docs/ENV_SETUP.md` for full local, sandbox, and production environment guidance.
 
 ## Validation
 
+Run before deploying or opening a pull request:
+
 ```bash
 npm run lint
-npm run build
 npm test
+npm run build
 ```
 
-## Environment
-
-Copy `.env.example` to `.env.local` for local development and replace placeholders with real local/sandbox values.
-
-Never commit real `.env` files.
-
-Full env reference, provider setup steps, and smoke tests live in `docs/ENV_SETUP.md`. Production readiness checklist lives in `docs/PRODUCTION_CHECKLIST.md`.
-
-Required deployment values:
-
-- `DATABASE_URL`
-- `MIDTRANS_SERVER_KEY`
-- `MIDTRANS_CLIENT_KEY`
-- `MIDTRANS_IS_PRODUCTION`
-- `MIDTRANS_MERCHANT_ID`
-- `MIDTRANS_ENABLED_PAYMENTS`
-- `NEXT_PUBLIC_APP_URL`
-- `AUTH_SECRET`
-- `ADMIN_EMAIL`
-- `ADMIN_NAME`
-- `DONOR_LOGIN_CODE`
-- `TELEGRAM_BOT_TOKEN` (optional, required for Telegram features)
-- `TELEGRAM_WEBHOOK_SECRET` (optional, required for Telegram features)
-- `TELEGRAM_ADMIN_CHAT_IDS` (optional, comma-separated allowlist)
-- `TELEGRAM_NOTIFY_CHAT_ID` (optional, single chat for settlement notifications)
-- `TELEGRAM_NOTIFY_ENABLED` (optional, set to `true` to enable settlement notifications and cron alerts)
-- `TELEGRAM_PUBLIC_CHANNEL_ID` (optional, public channel ID for `/broadcast_laporan`, must use `-100...` format)
-- `CRON_SECRET` (optional, required for Telegram cron endpoints)
-- `TELEGRAM_LOW_BALANCE_THRESHOLD_RUPIAH` (optional, integer Rupiah threshold for low-balance alert)
-- `TELEGRAM_INVALID_SIGNATURE_ALERT_WINDOW_MINUTES` (optional, default `30`)
-- `RECEIPT_STORAGE_BUCKET` (optional, private receipt bucket name)
-- `RECEIPT_STORAGE_BASE_URL` (optional, app base URL for signed receipt links)
-- `RECEIPT_SIGNED_URL_SECRET` (optional, required for signed receipt links)
-- `RECEIPT_STORAGE_PUT_URL` (optional, storage PUT URL template containing `{key}`)
-- `EXPENSE_APPROVAL_THRESHOLD_RUPIAH` (optional, large expense approval threshold)
-- `EXPENSE_APPROVAL_REQUIRED_COUNT` (optional, default `2`)
-- `EMAIL_PROVIDER` (optional, set to `resend` to enable transactional email)
-- `EMAIL_FROM` (optional, verified sender address)
-- `RESEND_API_KEY` (optional, required when `EMAIL_PROVIDER=resend`)
-- `ADMIN_EMAIL_NOTIFICATIONS` (optional, comma-separated admin recipients)
-- `WHATSAPP_REMINDER_ENABLED` (optional, set to `true` to enable WhatsApp reminder sends)
-- `WHATSAPP_CLOUD_ACCESS_TOKEN` (optional, server-only Meta WhatsApp Cloud API token)
-- `WHATSAPP_CLOUD_PHONE_NUMBER_ID` (optional, Meta WhatsApp phone number ID)
-- `WHATSAPP_REMINDER_TEMPLATE_NAME` (optional, approved WhatsApp template name)
-- `WHATSAPP_REMINDER_TEMPLATE_LANGUAGE` (optional, default `id`)
-- `WHATSAPP_REMINDER_BATCH_LIMIT` (optional, default `20`, max `100`)
-
-## WhatsApp Donation Reminders
-
-Phase 35 uses Meta WhatsApp Cloud API only. Token stays server-only. Reminders send only to donation records with explicit WhatsApp reminder opt-in and a phone number.
-
-```env
-WHATSAPP_REMINDER_ENABLED=false
-WHATSAPP_CLOUD_ACCESS_TOKEN=replace-with-whatsapp-cloud-token
-WHATSAPP_CLOUD_PHONE_NUMBER_ID=replace-with-phone-number-id
-WHATSAPP_REMINDER_TEMPLATE_NAME=jumat_berkah_reminder
-WHATSAPP_REMINDER_TEMPLATE_LANGUAGE=id
-WHATSAPP_REMINDER_BATCH_LIMIT=20
-```
-
-Admin dry-run endpoint:
-
-```bash
-curl -X POST https://your-domain.example.com/api/admin/whatsapp-reminders \
-  -H "Content-Type: application/json" \
-  -d '{"dryRun":true,"limit":10}'
-```
-
-Cron endpoint:
-
-```bash
-curl -H "X-Cron-Secret: YOUR_CRON_SECRET" \
-  https://your-domain.example.com/api/cron/whatsapp/reminders
-```
-
-Rules:
-
-- Dry-run is default for admin endpoint unless `dryRun:false` is sent.
-- Live send requires `WHATSAPP_REMINDER_ENABLED=true`, token, and phone number ID.
-- Failed WhatsApp requests are logged in audit and do not crash batch/cron.
-- Response masks phone numbers; raw token is never returned to client.
-
-## Email Notifications
-
-Phase 24 uses Resend HTTP API for transactional email. Email sending is server-only and opt-in; leaving email env empty disables delivery safely.
-
-```env
-EMAIL_PROVIDER=resend
-EMAIL_FROM="Jumat Berkah <noreply@example.com>"
-RESEND_API_KEY=replace-with-resend-api-key
-ADMIN_EMAIL_NOTIFICATIONS=admin@example.com,ops@example.com
-```
-
-Current email events:
-
-- Password reset email via Better Auth.
-- Admin email when donation changes to `settlement`.
-- Admin email copies for repeated failed admin login alerts.
-- Admin email copies for large expense/delete expense alerts.
-- Admin email copies for invalid Midtrans signature alerts.
-- Backup failure email from `scripts/backup-postgres.sh` when Resend env is available.
-
-Rules:
-
-- Email failure must not break password reset request or Midtrans webhook response.
-- Admin settlement email uses public donor display rules (`Anonim` for anonymous/hidden donors).
-- Admin recipients are read from server env only.
-
-## Telegram Bot Setup
-
-The Telegram bot delivers donation settlement notifications, accepts admin
-commands from allowlisted chats, and can send cron-based summaries/alerts. All
-Telegram features are opt-in: leaving the related env vars empty disables them
-safely.
-
-1. Create a bot with [@BotFather](https://t.me/BotFather), copy the token to
-   `TELEGRAM_BOT_TOKEN`.
-2. Generate a strong random `TELEGRAM_WEBHOOK_SECRET`. Telegram echoes this
-   value in the `X-Telegram-Bot-Api-Secret-Token` request header so the server
-   can verify the source.
-3. Get every admin chat ID (numeric) and put them in `TELEGRAM_ADMIN_CHAT_IDS`,
-   comma-separated. Only these chats may run write commands.
-4. Pick the chat that should receive donation settlement notifications and set
-   `TELEGRAM_NOTIFY_CHAT_ID` to that chat ID. To turn notifications on, set
-   `TELEGRAM_NOTIFY_ENABLED="true"`.
-5. For `/broadcast_laporan`, add the bot as admin in the public channel with
-   permission to post messages. Set `TELEGRAM_PUBLIC_CHANNEL_ID` to the numeric
-   channel ID in `-100...` format.
-6. Register the webhook with Telegram (run once after deploy):
-
-   ```bash
-   curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "url": "https://your-domain.example.com/api/webhooks/telegram",
-       "secret_token": "YOUR_TELEGRAM_WEBHOOK_SECRET",
-       "allowed_updates": ["message"]
-     }'
-   ```
-
-7. Test from an allowlisted admin chat:
-
-   ```
-   /pengeluaran 2026-05-22 | Beras | 300000 | 30 kg beras | Pasar Senen
-   ```
-
-   The bot replies with a confirmation and creates an expense plus audit log.
-
-8. Test public channel broadcast from an allowlisted admin chat:
-
-   ```
-   /broadcast_laporan
-   ```
-
-   If sending fails, verify `TELEGRAM_PUBLIC_CHANNEL_ID=-100...`, bot admin
-   status in the channel, and post permission.
-
-### Telegram Cron Setup
-
-Phase 14 uses HTTP cron endpoints protected by `X-Cron-Secret` or Vercel Cron `Authorization: Bearer $CRON_SECRET`. Decision:
-prefer Vercel Cron for hosted Next.js deployment because it can call App Router
-endpoints directly and keep scheduling config near deployment. Cloudflare Cron
-can also call the same URLs if deployment platform is not Vercel.
-
-Cron endpoints:
-
-- `GET /api/cron/telegram/daily` — daily summary plus low-balance, pending donation, and invalid Midtrans signature alerts.
-- `GET /api/cron/telegram/weekly` — weekly Friday-morning recap.
-- `GET /api/cron/telegram/donor-reminder` — Friday donor reminder for opted-in donors.
-- `GET /api/cron/telegram/health` — health check and operational alert.
-
-Required env for cron alerts:
-
-- `CRON_SECRET`
-- `TELEGRAM_BOT_TOKEN`
-- `TELEGRAM_NOTIFY_CHAT_ID`
-- `TELEGRAM_NOTIFY_ENABLED=true`
-
-Optional env:
-
-- `TELEGRAM_LOW_BALANCE_THRESHOLD_RUPIAH=500000`
-- `TELEGRAM_INVALID_SIGNATURE_ALERT_WINDOW_MINUTES=30`
-
-Manual trigger example:
-
-```bash
-curl -H "X-Cron-Secret: YOUR_CRON_SECRET" \
-  https://your-domain.example.com/api/cron/telegram/daily
-```
-
-Suggested Vercel cron schedule:
-
-```json
-{
-  "crons": [
-    { "path": "/api/cron/telegram/daily", "schedule": "0 0 * * *" },
-    { "path": "/api/cron/telegram/weekly", "schedule": "0 0 * * 5" }
-  ]
-}
-```
-
-Times are UTC. `0 0` UTC is 07:00 WIB.
-
-Alert behavior:
-
-- Daily summary sends at most once per Jakarta date, tracked in `audit_logs`.
-- Low-balance alert sends once after balance is below configured threshold.
-- Pending donation alert sends once per donation when status stays `pending` for more than 1 hour.
-- Invalid Midtrans signature alert is rate-limited by `TELEGRAM_INVALID_SIGNATURE_ALERT_WINDOW_MINUTES`.
-
-### Telegram Donor Self-Service
-
-Phase 16 lets logged-in donors opt in to Telegram self-service.
-
-Donor setup:
-
-1. Donor logs in and opens `/akun/donasi`.
-2. Page shows one-time command `/mulai <kode>`.
-3. Donor sends command to bot. Bot binds Telegram chat to donor account.
-
-Supported donor commands:
-
-- `/mulai <kode>` — bind Telegram chat to donor account.
-- `/donasi <nominal>` — create Midtrans QRIS/Snap transaction linked to donor account.
-- `/status <orderId>` — check own donation only.
-- `/riwayat` — show latest own donations only.
-- `/reminder on` — opt in Friday informational reminder.
-- `/reminder off` — opt out.
-
-Reminder cron:
-
-- `GET /api/cron/telegram/donor-reminder`
-- Protected by `X-Cron-Secret` / `CRON_SECRET`.
-- Sends only on Friday in Asia/Jakarta and once per date.
-- Reminder is informational only; donor still must create/pay donation manually via Midtrans.
-
-Suggested Vercel cron addition:
-
-```json
-{ "path": "/api/cron/telegram/donor-reminder", "schedule": "0 0 * * 5" }
-```
-
-### Receipt Photo & Approval Setup
-
-Phase 15 supports Telegram receipt photos and approval for large expenses.
-
-Receipt flow:
-
-1. Admin creates expense via `/pengeluaran`.
-2. Admin sends photo with caption `/struk <expenseId>` or replies to bot message that contains `ID: <expenseId>`.
-3. App stores private receipt reference in `expenses.receipt_url` and writes `expense.receipt_attached` audit log.
-
-Approval flow:
-
-- Set `EXPENSE_APPROVAL_THRESHOLD_RUPIAH` to require approval for large expenses.
-- Set `EXPENSE_APPROVAL_REQUIRED_COUNT` for distinct Telegram admin approvals needed.
-- Large Telegram-created expense starts as `pending_approval` and does not count in public reports, dashboard balance, CSV export, or Telegram balance until approved.
-- Approval callback writes `expense.approved` audit logs.
-
-Storage notes:
-
-- `RECEIPT_STORAGE_PUT_URL` may contain `{key}` for a private object-storage upload endpoint/presigned PUT template.
-- If `RECEIPT_STORAGE_PUT_URL` is empty, app stores a private receipt pointer only. Use real R2/S3 PUT URL in staging/production for actual file upload.
-- Signed receipt URL helpers use `RECEIPT_SIGNED_URL_SECRET`; admin receipt proxy route can be added later if dashboard preview needs direct file access.
-
-### Privacy notes
-
-- Settlement notifications use public-safe donor names (`Anonim` for anonymous
-  or hidden donors) and never include email or phone.
-- Telegram outages do not affect Midtrans webhook processing or donation
-  status; notifications are fire-and-forget.
-
-## Cloudflare Setup Notes
-
-Use Cloudflare in front of the deployed app to terminate TLS, manage DNS, and
-harden webhook endpoints. Decisions specific to platform credentials (Vercel,
-Fly.io, etc.) belong with the operator; the notes below are platform-agnostic.
-
-### DNS
-
-- Create an A or CNAME record pointing the production domain (e.g. `app.example.com`) to the hosting platform.
-- Keep the record proxied (orange cloud) to gain TLS, caching, and WAF.
-- For the Midtrans webhook, no separate subdomain is required; reuse the main app domain.
-- For Telegram, Telegram only requires HTTPS on port 443/8443; the proxied Cloudflare endpoint satisfies this.
-
-### TLS / SSL Mode
-
-- Set SSL mode to `Full (strict)`. Cloudflare and the origin both use valid certificates.
-- Enable `Always Use HTTPS` so HTTP webhook attempts are upgraded.
-- Enable `HTTP Strict Transport Security` after verifying the site works on HTTPS.
-
-### Webhook URLs
-
-- Midtrans webhook URL to register in Midtrans dashboard:
-  `https://app.example.com/api/webhooks/midtrans`
-- Telegram webhook URL to register via `setWebhook`:
-  `https://app.example.com/api/webhooks/telegram`
-
-### Security Notes for Bot/Webhook Endpoints
-
-- Do not place webhooks behind Cloudflare Access or Bot Fight Mode aggressive rules; both providers must be able to call the endpoint without challenge.
-- Use Cloudflare Page Rules or WAF custom rules to disable the JS challenge and "Bot Fight Mode" for `/api/webhooks/*` paths.
-- Allow `POST` only on webhook routes via WAF if desired.
-- Both webhooks already verify their own signatures/secrets server-side, so do not rely on Cloudflare alone for trust.
-- Forward only `X-Telegram-Bot-Api-Secret-Token` and standard headers; some hosts require explicit allowlisting.
-
-## Production Deployment Checklist
-
-1. Configure production database and apply Prisma migrations.
-2. Configure production Midtrans keys on host.
-3. Set `NEXT_PUBLIC_APP_URL` to public HTTPS app URL.
-4. Register Midtrans webhook URL: `/api/webhooks/midtrans`.
-5. Generate strong `AUTH_SECRET`.
-6. Create first admin with `npm run seed:admin` after setting admin env values.
-7. Run `npm run lint`, `npm run build`, and `npm test` before release.
-8. Test public donation, webhook settlement, public report, admin login, expense management, and CSV export on staging.
-9. Before production QRIS launch, test small payment if allowed by Midtrans account policy.
-
-## Telegram Operational & Security Alerts
-
-Phase 18 adds opt-in Telegram alerts using the existing notify chat. Required base env remains:
-
-```env
-TELEGRAM_NOTIFY_ENABLED=true
-TELEGRAM_BOT_TOKEN=replace-with-bot-token
-TELEGRAM_NOTIFY_CHAT_ID=-1000000000000
-CRON_SECRET=replace-with-strong-secret
-```
-
-Optional alert tuning:
-
-```env
-TELEGRAM_FAILED_LOGIN_ALERT_THRESHOLD=5
-TELEGRAM_FAILED_LOGIN_ALERT_WINDOW_MINUTES=15
-TELEGRAM_ALERT_COOLDOWN_MINUTES=30
-TELEGRAM_LARGE_EXPENSE_ALERT_THRESHOLD_RUPIAH=500000
-```
-
-Alert behavior:
-
-- Repeated failed admin login writes `admin.login.failed` audit rows and sends Telegram alert after configured threshold/window.
-- Expense delete always triggers critical audit alert.
-- Expense create triggers critical audit alert only when amount is at or above `TELEGRAM_LARGE_EXPENSE_ALERT_THRESHOLD_RUPIAH`.
-- Health check endpoint `GET /api/cron/telegram/health` requires `X-Cron-Secret: $CRON_SECRET` and alerts on database access failure or missing required env (`MIDTRANS_SERVER_KEY`, `ADMIN_LOGIN_CODE`).
-- All alerts use `TELEGRAM_ALERT_COOLDOWN_MINUTES` to avoid spam.
-
-Manual health trigger example:
-
-```bash
-curl -H "X-Cron-Secret: replace-with-strong-secret" https://your-domain.example/api/cron/telegram/health
-```
-
+## Main Routes
+
+| Route | Purpose |
+|---|---|
+| `/` | Public landing page |
+| `/donasi` | Public donation form |
+| `/donasi/status/[orderId]` | Donation payment status |
+| `/laporan` | Public transparency report |
+| `/tentang` | Program information |
+| `/masuk` | Optional donor login |
+| `/akun/donasi` | Donor donation history |
+| `/login` | Admin login |
+| `/admin` | Admin dashboard |
+| `/admin/donasi` | Admin donation management |
+| `/admin/donatur` | Admin donor database |
+| `/admin/pengeluaran` | Expense management |
+| `/admin/penyaluran` | Distribution story management |
+| `/admin/audit` | Audit log viewer |
+
+## Documentation
+
+Start with `docs/README.md` for the full documentation index.
+
+Key documents:
+
+- `docs/FEATURES.md` — feature overview and smoke tests.
+- `docs/ENV_SETUP.md` — environment variables and provider setup.
+- `docs/PRODUCTION_CHECKLIST.md` — production readiness checklist.
+- `docs/BETTER_AUTH_SETUP.md` — Better Auth and Google OAuth setup.
+- `docs/BACKUP_RESTORE_RUNBOOK.md` — PostgreSQL backup and restore drill.
+- `docs/SECRET_ROTATION_RUNBOOK.md` — secret rotation checklist.
+- `docs/REPORT_EXPORTS.md` — report export behavior.
+- `PRD.md` — product requirements.
+- `TECHNICAL_SPEC.md` — technical architecture and business rules.
+
+## Security and Privacy
+
+- Never commit real `.env` files or provider secrets.
+- Midtrans server key, Telegram token, Google OAuth secret, Resend API key, WhatsApp token, cron secret, and database credentials must stay server-only.
+- Public reports must never expose donor email or phone.
+- Anonymous or hidden donors must display as `Anonim`.
+- Money is stored as integer Rupiah.
+- Final payment status comes from verified Midtrans webhooks, not client callbacks.
+
+See `SECURITY.md` for vulnerability reporting and secret handling policy.
+
+## Contributing
+
+Contributions are welcome. Please read `CONTRIBUTING.md` before opening issues or pull requests.
+
+## License
+
+MIT License. See `LICENSE`.

@@ -1,4 +1,4 @@
-# Backup & Restore Runbook — Jumat Berkah
+# Backup & Restore Runbook â€” Jumat Berkah
 
 Runbook ini hanya untuk database PostgreSQL Jumat Berkah. Jangan menyentuh container, volume, atau backup aplikasi lain.
 
@@ -112,8 +112,8 @@ It does not overwrite production database.
 
 ```bash
 docker ps --format 'table {{.Names}}\t{{.Status}}' | grep jumat-berkah
-curl -I http://127.0.0.1:3010
-curl -I https://berkahkaryo.my.id
+curl -I http://127.0.0.1:3000
+curl -I https://your-domain.example.com
 ```
 
 Expected:

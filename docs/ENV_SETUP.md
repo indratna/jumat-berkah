@@ -250,7 +250,7 @@ sh -n scripts/restore-drill-postgres.sh
 
 Then follow `docs/BACKUP_RESTORE_RUNBOOK.md` for live backup and restore drill.
 
-## Deployment / Cloudflare Tunnel
+## Deployment
 
 Common production env:
 
@@ -259,29 +259,15 @@ Common production env:
 - Strong `BETTER_AUTH_SECRET`, `AUTH_SECRET`, `CRON_SECRET`, webhook secrets.
 - `NEXT_PUBLIC_APP_URL` set to public HTTPS origin.
 
-Cloudflare Tunnel env:
+Deployment smoke:
 
-| Env var | Required | Source | Notes | Smoke test |
-|---|---:|---|---|---|
-| `JUMAT_BERKAH_PUBLIC_URL` | Optional | Public domain | Default `https://berkahkaryo.my.id/` in tunnel watch script. | Public URL returns `200`. |
-| `JUMAT_BERKAH_LOCAL_URL` | Optional | Server local origin | Default `http://127.0.0.1:3010/`. | Local origin returns `200`. |
-| `JUMAT_BERKAH_TUNNEL_CONTAINER` | Optional | Docker runtime | Default `jumat-berkah-cloudflared`. | Auto-heal restarts correct container. |
-| `JUMAT_BERKAH_TUNNEL_LOG` | Optional | Server path | Default `/var/log/jumat-berkah-tunnel-watch.log`. | Watch log written. |
-| `JUMAT_BERKAH_TUNNEL_LOG_MAX_BYTES` | Optional | App owner decision | Default `1048576`, compact keeps last 200 lines. | Large log compacts safely. |
-
-Cloudflare Tunnel smoke:
-
-1. Local app health returns OK.
-2. Public URL returns homepage with `200`.
+1. Public HTTPS homepage returns `200`.
+2. `/donasi`, `/laporan`, `/tentang`, `/login`, and `/masuk` return `200`.
 3. `/admin` redirects guest to login.
-4. Midtrans webhook URL reachable from internet.
-5. Telegram webhook registration returns `ok:true`.
+4. Midtrans webhook URL is reachable from the internet.
+5. Enabled provider integrations pass their smoke tests from this guide.
 
-See:
-
-- `docs/DEPLOYMENT_OPS_RUNBOOK.md`
-- `docs/SERVER_DEPLOYMENT_UBUNTU_CLOUDFLARE_DOCKER.md`
-- `docs/SSH_DEPLOY_SERVER_KANTOR_DOCKER.md`
+Keep provider credentials, server IPs, tunnel tokens, private runbooks, and operator-only smoke evidence outside the public repository.
 
 ## Env completeness checklist
 

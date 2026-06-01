@@ -43,6 +43,31 @@ next-env.d.ts
 # local agent worktrees
 /.worktrees/
 
+# Local developer helpers
+run.bat
+push-github.bat
+
+# Editor settings
+.zed/
+
+# AI working notes
+docs/superpowers/
+
+# Internal project/operator notes kept local
+AGENTS.md
+IMPLEMENTATION_PLAN.md
+DEPLOYMENT_READINESS.md
+docs/LIVE_PROVIDER_SMOKE_*
+docs/PRELIVE_AUDIT_MATRIX_2026-06-01.md
+docs/STABLE_LAUNCH_TAG_DECISION_DRAFT_2026-06-01.md
+docs/RELEASE_NOTES_STABLE_MVP_DRAFT_2026-06-01.md
+docs/SSH_DEPLOY_SERVER_KANTOR_DOCKER.md
+docs/SERVER_DEPLOYMENT_UBUNTU_CLOUDFLARE_DOCKER.md
+docs/DEPLOYMENT_OPS_RUNBOOK.md
+docs/FINAL_QA_REVIEW.md
+docs/MVP_LAUNCH_READINESS_AUDIT.md
+docs/RELEASE_NOTES_*.md
+
 # Local development artifacts
 .playwright-mcp/
 dev-server*.log

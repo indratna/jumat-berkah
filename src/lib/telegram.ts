@@ -1,7 +1,12 @@
+import { request } from "node:https";
+import type { LookupFunction } from "node:net";
+
 import { EXPENSE_CATEGORIES, type ExpenseCategory } from "@/lib/expenses";
 import { getPublicDonorName } from "@/lib/reports";
 
 const TELEGRAM_API_BASE = "https://api.telegram.org";
+const TELEGRAM_API_HOST = "api.telegram.org";
+const TELEGRAM_API_IPV4 = "149.154.166.110";
 
 export type TelegramConfig = {
   botToken: string;
@@ -829,18 +834,11 @@ export async function sendTelegramMessage(
     body.reply_markup = input.replyMarkup;
   }
 
-  const response = await fetch(`${TELEGRAM_API_BASE}/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+  await postTelegramJson({
+    token,
+    methodName: "sendMessage",
+    body,
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Telegram sendMessage failed: ${response.status} ${errorText}`,
-    );
-  }
 }
 
 export async function sendTelegramDocument(
@@ -891,25 +889,82 @@ export async function answerTelegramCallbackQuery(input: {
     throw new TelegramConfigurationError("TELEGRAM_BOT_TOKEN is required.");
   }
 
-  const response = await fetch(
-    `${TELEGRAM_API_BASE}/bot${token}/answerCallbackQuery`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        callback_query_id: input.callbackQueryId,
-        ...(input.text ? { text: input.text } : {}),
-      }),
+  await postTelegramJson({
+    token,
+    methodName: "answerCallbackQuery",
+    body: {
+      callback_query_id: input.callbackQueryId,
+      ...(input.text ? { text: input.text } : {}),
     },
-  );
+  });
+}
 
-  if (!response.ok) {
-    const errorText = await response.text();
+async function postTelegramJson(input: {
+  token: string;
+  methodName: string;
+  body: Record<string, unknown>;
+}): Promise<void> {
+  const body = JSON.stringify(input.body);
+  const response = await sendTelegramJsonRequest({
+    path: `/bot${input.token}/${input.methodName}`,
+    body,
+  });
+
+  if (response.statusCode < 200 || response.statusCode >= 300) {
     throw new Error(
-      `Telegram answerCallbackQuery failed: ${response.status} ${errorText}`,
+      `Telegram ${input.methodName} failed: ${response.statusCode} ${response.body}`,
     );
   }
 }
+
+function sendTelegramJsonRequest(input: {
+  path: string;
+  body: string;
+}): Promise<{ statusCode: number; body: string }> {
+  return new Promise((resolve, reject) => {
+    const timeoutMs = 15_000;
+    const req = request(
+      {
+        hostname: TELEGRAM_API_HOST,
+        servername: TELEGRAM_API_HOST,
+        path: input.path,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(input.body),
+        },
+        timeout: timeoutMs,
+        lookup: telegramIpv4Lookup,
+      },
+      (res) => {
+        let responseBody = "";
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => {
+          responseBody += chunk;
+        });
+        res.on("end", () => {
+          resolve({ statusCode: res.statusCode ?? 0, body: responseBody });
+        });
+      },
+    );
+
+    req.on("timeout", () => {
+      req.destroy(new Error(`Telegram request timed out after ${timeoutMs}ms`));
+    });
+    req.on("error", reject);
+    req.write(input.body);
+    req.end();
+  });
+}
+
+const telegramIpv4Lookup: LookupFunction = (_hostname, options, callback) => {
+  if (options?.all) {
+    callback(null, [{ address: TELEGRAM_API_IPV4, family: 4 }]);
+    return;
+  }
+
+  callback(null, TELEGRAM_API_IPV4, 4);
+};
 
 export async function safeAnswerTelegramCallbackQuery(input: {
   callbackQueryId: string;

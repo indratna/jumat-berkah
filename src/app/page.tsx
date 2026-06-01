@@ -14,6 +14,8 @@ import {
   getLandingStories,
 } from "@/lib/landing";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const [metrics, progress, stories] = await Promise.all([
     getLandingMetrics(),

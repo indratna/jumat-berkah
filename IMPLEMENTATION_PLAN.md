@@ -13,8 +13,8 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 Current Phase: Phase 45 — Stable MVP Launch Validation  
 Overall Progress: 100%  
 Last Updated: 2026-06-01  
-Current Focus: Phase 45 live deployment is now running at `https://berkahkaryo.my.id` on commit `cc0bf81`. Pre-flight app health, database migration, Better Auth admin login, Google login, and Telegram admin/public broadcast smoke have passed. Phase remains `HOLD` because Cloudflare Tunnel/server network instability caused intermittent `502/530` and Telegram webhook delivery failures during smoke, and WhatsApp live template, backup/restore production evidence, and Midtrans live QRIS settlement/idempotency smoke are still pending.
-Blockers: Cloudflare Tunnel/server network instability must be monitored or mitigated before stable launch; WhatsApp live template send, backup/restore production evidence, and Midtrans live QRIS settlement/idempotency smoke still require execution; production secrets that were exposed in a previous pushed personal notes file must be rotated before stable launch.
+Current Focus: Phase 45 live deployment is running at `https://berkahkaryo.my.id` on commit `cc0bf81`. Pre-flight app health, database migration, Better Auth admin login, Google login, Telegram admin/public broadcast smoke, and backup/restore production evidence have passed. Phase remains `HOLD` because Cloudflare Tunnel/server network instability caused intermittent `502/530` and Telegram webhook delivery failures during smoke, and WhatsApp live template plus Midtrans live QRIS settlement/idempotency smoke are still pending.
+Blockers: Cloudflare Tunnel/server network instability must be monitored or mitigated before stable launch; WhatsApp live template send and Midtrans live QRIS settlement/idempotency smoke still require execution; production secrets that were exposed in a previous pushed personal notes file must be rotated before stable launch.
 
 ### Phase Progress
 
@@ -65,7 +65,7 @@ Blockers: Cloudflare Tunnel/server network instability must be monitored or miti
 | Phase 42 | Donation Checkout UX Enhancement | Done | 100% |
 | Phase 43 | Donor Auth & Session Hygiene | Done | 100% |
 | Phase 44 | Targeted Refactor | Done | 100% |
-| Phase 45 | Stable MVP Launch Validation | Blocked | 65% |
+| Phase 45 | Stable MVP Launch Validation | Blocked | 75% |
 
 Status values:
 
@@ -86,7 +86,9 @@ Done
 
 - Completed Telegram smoke after live deploy. Verified Telegram env is present, webhook URL is `https://berkahkaryo.my.id/api/webhooks/telegram`, `/saldo` replies from the allowlisted admin chat, and `/broadcast_laporan` posts to the public channel after correcting channel access (`Bad Request: chat not found` was resolved by fixing bot/channel permission or channel ID). During smoke, Cloudflare Tunnel intermittently returned `530` to Telegram (`Wrong response from the webhook: 530 <none>`) while tunnel logs showed repeated `DialContext ...:7844 i/o timeout`; restarting `jumat-berkah-cloudflared` cleared pending updates, but tunnel/server network stability remains a launch blocker.
 
-- Re-ran validation after deployment fixes: `npm run lint` passed, `npm test` passed (`155/155`), and `npm run build` passed. Remaining Phase 45 evidence still pending: WhatsApp live template smoke, backup/restore production restore drill, Midtrans live QRIS settlement/idempotency smoke, production secret rotation confirmation, and final launch tag decision.
+- Re-ran validation after deployment fixes: `npm run lint` passed, `npm test` passed (`155/155`), and `npm run build` passed. Remaining Phase 45 evidence still pending: WhatsApp live template smoke, Midtrans live QRIS settlement/idempotency smoke, production secret rotation confirmation, and final launch tag decision.
+
+- Completed Phase 45 backup/restore production evidence on the live server. Fresh backup created at `/var/backups/jumat-berkah/jumat-berkah-postgres-20260601T085537Z.sql.gz`; checksum verification returned `OK`; restore drill succeeded against temporary container with verification counts `users=1`, `donations=1`, `expenses=0`; temporary restore container `jumat-berkah-postgres-restore-drill` was removed successfully.
 
 - Re-ran Phase 45 automated validation on current workspace to refresh launch evidence before any deploy handoff. `npm run lint` passed, `npm test` passed (`155/155`), and `npm run build` passed. Live-provider smoke remains blocked because no real production deployment, env handoff, or operator access exists yet. Test/build logs still surface local `BETTER_AUTH_SECRET` warning; treat as production env review item, not local code failure.
 
@@ -726,7 +728,7 @@ Done
 | Date | Blocker | Impact | Resolution |
 |---|---|---|---|
 | 2026-06-01 | Cloudflare Tunnel/server network instability during live Telegram smoke | Public app can intermittently return `502/530`, Telegram webhooks can receive `Wrong response from the webhook: 530 <none>`, and stable launch evidence is unreliable while tunnel connections repeatedly time out to Cloudflare edge `:7844` | App origin and local Docker containers are healthy; restarted `jumat-berkah-cloudflared` to clear pending Telegram updates. Monitor tunnel stability or move to a more stable public ingress/VPS before stable tag. |
-| 2026-05-28 | Stable MVP launch blocked by live provider and production environment checks | Cannot mark MVP stable until real production/payment/provider conditions are verified | Production deploy, high-entropy `BETTER_AUTH_SECRET`, admin login, Google login, and Telegram public broadcast smoke are now verified. Remaining: rotate exposed secrets, run Midtrans live QRIS smoke, run WhatsApp live template smoke, and record backup/restore production evidence. |
+| 2026-05-28 | Stable MVP launch blocked by live provider and production environment checks | Cannot mark MVP stable until real production/payment/provider conditions are verified | Production deploy, high-entropy `BETTER_AUTH_SECRET`, admin login, Google login, Telegram public broadcast smoke, and backup/restore evidence are now verified. Remaining: rotate exposed secrets, run Midtrans live QRIS smoke, and run WhatsApp live template smoke. |
 | 2026-05-20 | Midtrans sandbox credentials not configured | Cannot verify that transaction appears in Midtrans sandbox or that QRIS/Snap display opens | Resolved after sandbox keys were configured in `.env.local` and Phase 3 validation passed |
 | 2026-05-21 | Staging deployment target not configured in this environment | Cannot deploy staging from this environment | Prepared deploy checklist, completed ngrok-based public sandbox validation, added `DEPLOYMENT_READINESS.md`, added `vercel.json`, and revalidated local production package; needs user-provided staging host/project credentials |
 
@@ -2943,7 +2945,7 @@ Out-of-scope:
 - [ ] Run Midtrans live QRIS smoke and verify webhook settlement. Pending until tunnel/server network stability is acceptable.
 - [x] Run Telegram public channel smoke.
 - [ ] Run WhatsApp live template smoke. Pending until tunnel/server network stability is acceptable.
-- [ ] Confirm backup/restore readiness. Pending production restore drill evidence.
+- [x] Confirm backup/restore readiness.
 - [x] Create stable MVP release notes.
 - [ ] Decide and create stable launch tag. Blocked until all required live evidence passes.
 - [x] Update Work Log and Blockers.
@@ -2953,7 +2955,6 @@ Out-of-scope:
 - Cloudflare Tunnel/server network instability still needs monitoring or mitigation before stable launch.
 - Exposed production/provider secrets from the previously pushed private notes file still need rotation confirmation.
 - WhatsApp live smoke not executed.
-- Backup/restore production evidence not executed.
 - Midtrans live QRIS settlement/idempotency smoke not executed.
 - Stable launch tag cannot be created while decision remains `HOLD`.
 

@@ -13,8 +13,8 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 Current Phase: Phase 45 — Stable MVP Launch Validation  
 Overall Progress: 100%  
 Last Updated: 2026-06-01  
-Current Focus: Phase 45 live deployment is running at `https://berkahkaryo.my.id` on commit `cc0bf81`. Pre-flight app health, database migration, Better Auth admin login, Google login, Telegram admin/public broadcast smoke, backup/restore production evidence, Midtrans sandbox QRIS settlement smoke, and exposed-secret rotation are complete. WhatsApp live template smoke is intentionally skipped/blocked because WhatsApp Cloud API provider credentials and approved template are not provisioned yet. Phase remains `HOLD` because Cloudflare Tunnel/server network instability caused intermittent `502/530` and Telegram webhook delivery failures during smoke, and Midtrans production/live QRIS settlement/idempotency smoke is still pending.
-Blockers: Cloudflare Tunnel/server network instability must be monitored or mitigated before stable launch; Midtrans production/live QRIS settlement/idempotency smoke still requires execution. WhatsApp Cloud API remains optional/post-launch until provider billing/env/template are provisioned.
+Current Focus: Phase 45 paused until a more stable server/ingress is available. Current Cloudflare Tunnel deployment at `https://berkahkaryo.my.id` proved the app works but is not reliable enough for stable real-money launch because tunnel instability caused intermittent `502/530` and webhook delivery failures. Pre-flight app health, database migration, Better Auth admin login, Google login, Telegram admin/public broadcast smoke, backup/restore production evidence, Midtrans sandbox QRIS settlement smoke, and exposed-secret rotation are complete. WhatsApp live template smoke is intentionally skipped/blocked because WhatsApp Cloud API provider credentials and approved template are not provisioned yet.
+Blockers: Need redeploy to a more stable server/ingress, then run Midtrans production/live QRIS settlement/idempotency smoke before stable tag. WhatsApp Cloud API remains optional/post-launch until provider billing/env/template are provisioned.
 
 ### Phase Progress
 
@@ -95,6 +95,8 @@ Done
 - Completed Midtrans sandbox QRIS/payment settlement smoke on live deployment after correcting sandbox keys and client key env. Order `JB-20260601-8506D70D` was paid through Midtrans sandbox QRIS/Gopay simulator for Rp10.001; donation row reached `status='settlement'` with `paid_at=2026-06-01 09:51:17.064`; webhook logs recorded both `pending` and `settlement` notifications with `signature_valid=true`; settlement income query returned `20001`. Manual duplicate webhook replay was not executed; duplicate/idempotency behavior remains covered by automated tests and the report model counts donation rows, not webhook log rows.
 
 - Confirmed exposed-secret rotation completed after the accidental private notes push. User confirmed all secret categories were rotated: Cloudflare tunnel token, Telegram bot token/webhook secret, Google OAuth secret, Resend API key, internal app secrets, and admin password. No secret values were recorded in docs or chat.
+
+- Paused Phase 45 until a more stable server/ingress is available. Current Cloudflare Tunnel deployment is useful for verification and sandbox/demo, but not recommended for stable real-money launch because tunnel logs repeatedly showed Cloudflare edge connection timeouts and intermittent `502/530` during Telegram/Midtrans smoke. Next session should deploy to a more reliable server/ingress, configure live Midtrans keys and callbacks, then run final live QRIS smoke before any stable tag.
 
 - Re-ran Phase 45 automated validation on current workspace to refresh launch evidence before any deploy handoff. `npm run lint` passed, `npm test` passed (`155/155`), and `npm run build` passed. Live-provider smoke remains blocked because no real production deployment, env handoff, or operator access exists yet. Test/build logs still surface local `BETTER_AUTH_SECRET` warning; treat as production env review item, not local code failure.
 
@@ -733,8 +735,8 @@ Done
 
 | Date | Blocker | Impact | Resolution |
 |---|---|---|---|
-| 2026-06-01 | Cloudflare Tunnel/server network instability during live Telegram smoke | Public app can intermittently return `502/530`, Telegram webhooks can receive `Wrong response from the webhook: 530 <none>`, and stable launch evidence is unreliable while tunnel connections repeatedly time out to Cloudflare edge `:7844` | App origin and local Docker containers are healthy; restarted `jumat-berkah-cloudflared` to clear pending Telegram updates. Monitor tunnel stability or move to a more stable public ingress/VPS before stable tag. |
-| 2026-05-28 | Stable MVP launch blocked by live provider and production environment checks | Cannot mark MVP stable until real production/payment/provider conditions are verified | Production deploy, high-entropy `BETTER_AUTH_SECRET`, admin login, Google login, Telegram public broadcast smoke, backup/restore evidence, Midtrans sandbox settlement smoke, and exposed-secret rotation are now verified. WhatsApp Cloud API smoke is skipped/blocked until provider billing/env/template are provisioned. Remaining: run Midtrans production/live QRIS smoke and monitor/mitigate tunnel stability. |
+| 2026-06-01 | Cloudflare Tunnel/server network instability during live Telegram and Midtrans smoke | Public app can intermittently return `502/530`, Telegram/Midtrans webhooks can fail during tunnel edge outages, and stable launch evidence is unreliable while tunnel connections repeatedly time out to Cloudflare edge `:7844` | App origin and local Docker containers are healthy, and auto-heal cron is installed. Phase 45 is paused until deployment moves to a more stable server/ingress, then live Midtrans smoke can run. |
+| 2026-05-28 | Stable MVP launch blocked by live provider and production environment checks | Cannot mark MVP stable until real production/payment/provider conditions are verified | Production deploy, high-entropy `BETTER_AUTH_SECRET`, admin login, Google login, Telegram public broadcast smoke, backup/restore evidence, Midtrans sandbox settlement smoke, and exposed-secret rotation are now verified. WhatsApp Cloud API smoke is skipped/blocked until provider billing/env/template are provisioned. Remaining: redeploy on stable ingress and run Midtrans production/live QRIS smoke. |
 | 2026-05-20 | Midtrans sandbox credentials not configured | Cannot verify that transaction appears in Midtrans sandbox or that QRIS/Snap display opens | Resolved after sandbox keys were configured in `.env.local` and Phase 3 validation passed |
 | 2026-05-21 | Staging deployment target not configured in this environment | Cannot deploy staging from this environment | Prepared deploy checklist, completed ngrok-based public sandbox validation, added `DEPLOYMENT_READINESS.md`, added `vercel.json`, and revalidated local production package; needs user-provided staging host/project credentials |
 
@@ -2958,7 +2960,7 @@ Out-of-scope:
 
 ## Current Incomplete Items
 
-- Cloudflare Tunnel/server network instability still needs monitoring or mitigation before stable launch.
+- Redeploy to a more stable server/ingress before stable real-money launch.
 - Midtrans production/live QRIS settlement/idempotency smoke not executed.
 - Stable launch tag cannot be created while decision remains `HOLD`.
 

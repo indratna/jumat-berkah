@@ -58,3 +58,6 @@ ui-mockup-*.html
 # Uploaded local distribution photos
 /public/uploads/distribution/*
 !/public/uploads/distribution/.gitkeep
+
+# Private local notes with secrets
+all about berkah karyo.txt

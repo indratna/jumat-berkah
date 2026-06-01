@@ -88,13 +88,11 @@ export async function POST(request: Request) {
   const mappedStatus = mapMidtransStatus(notificationLike);
 
   if (!mappedStatus) {
-    return NextResponse.json({
-      ok: true,
+    return createStatusCheckNoChangeResponse({
       orderId,
       currentStatus: donation.status,
       midtransStatus: midtransResult.transactionStatus,
       mappedStatus: null,
-      statusUpdated: false,
       message: "Status Midtrans tidak dapat dipetakan.",
     });
   }
@@ -103,13 +101,11 @@ export async function POST(request: Request) {
   const statusChanged = nextStatus !== donation.status;
 
   if (!statusChanged) {
-    return NextResponse.json({
-      ok: true,
+    return createStatusCheckNoChangeResponse({
       orderId,
       currentStatus: donation.status,
       midtransStatus: midtransResult.transactionStatus,
       mappedStatus,
-      statusUpdated: false,
       message: "Status sudah sesuai, tidak ada perubahan.",
     });
   }
@@ -161,5 +157,27 @@ export async function POST(request: Request) {
     mappedStatus,
     statusUpdated: true,
     message: `Status diperbarui dari ${donation.status} ke ${updated.status}.`,
+  });
+}
+
+type StatusCheckNoChangeResponseInput = {
+  orderId: string;
+  currentStatus: DonationStatus;
+  midtransStatus: string;
+  mappedStatus: DonationStatus | null;
+  message: string;
+};
+
+function createStatusCheckNoChangeResponse(
+  input: StatusCheckNoChangeResponseInput,
+) {
+  return NextResponse.json({
+    ok: true,
+    orderId: input.orderId,
+    currentStatus: input.currentStatus,
+    midtransStatus: input.midtransStatus,
+    mappedStatus: input.mappedStatus,
+    statusUpdated: false,
+    message: input.message,
   });
 }

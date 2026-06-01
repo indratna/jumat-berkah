@@ -289,6 +289,54 @@ export async function getPublishedDistributionReportForCurrentCycle(
   return result;
 }
 
+export type PublishedDistributionStoryNav = {
+  previous: Pick<DistributionReportRecord, "id" | "title"> | null;
+  next: Pick<DistributionReportRecord, "id" | "title"> | null;
+};
+
+export async function getPublishedDistributionStoryNav(
+  id: string,
+): Promise<PublishedDistributionStoryNav> {
+  const prisma = getPrisma();
+
+  const current = await prisma.distributionReport.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      cycleStart: true,
+      publishedAt: true,
+    },
+  });
+
+  if (!current || !current.publishedAt) {
+    return { previous: null, next: null };
+  }
+
+  const [previous, next] = await Promise.all([
+    prisma.distributionReport.findFirst({
+      where: {
+        publishedAt: { not: null },
+        cycleStart: { lt: current.cycleStart },
+      },
+      orderBy: { cycleStart: "desc" },
+      select: { id: true, title: true },
+    }),
+    prisma.distributionReport.findFirst({
+      where: {
+        publishedAt: { not: null },
+        cycleStart: { gt: current.cycleStart },
+      },
+      orderBy: { cycleStart: "asc" },
+      select: { id: true, title: true },
+    }),
+  ]);
+
+  return {
+    previous: previous ?? null,
+    next: next ?? null,
+  };
+}
+
 type DistributionReportRow = {
   id: string;
   cycleStart: Date;

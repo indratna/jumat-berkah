@@ -12,10 +12,7 @@ export default function LoginPage() {
           Masuk dashboard admin.
         </h1>
         <p className="body-muted mt-3 text-sm">
-          Gunakan akun yang sudah diberi peran admin.
-        </p>
-        <p className="mt-2 text-xs text-slate-500">
-          Akses dan aktivitas login tercatat untuk keamanan operasional.
+          Gunakan akun admin terdaftar dengan Google atau email/password.
         </p>
         <AdminLoginForm />
       </section>

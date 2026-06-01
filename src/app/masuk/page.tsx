@@ -28,8 +28,13 @@ export default async function DonorLoginPage({
             href="/"
             className="inline-flex items-center gap-3 font-extrabold"
           >
-            <span className="grid size-10 place-items-center rounded-2xl bg-[color:var(--craft-leaf)] text-sm text-[color:var(--craft-cream)]">
-              JB
+            <span className="grid size-10 place-items-center overflow-hidden rounded-2xl ring-1 ring-[color:var(--craft-line-strong)]/40">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/branding/logo-mark.png"
+                alt="Logo Jumat Berkah"
+                className="size-full object-cover"
+              />
             </span>
             Jumat Berkah Karyo
           </Link>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { CycleCountdown } from "@/components/cycle-countdown";
 import { DONOR_SESSION_COOKIE, getDonorUser } from "@/lib/auth";
 import { getBetterAuthDonorUser } from "@/lib/better-auth-guards";
 import { getPrisma } from "@/lib/db";
@@ -85,8 +86,13 @@ export default async function DonorDonationHistoryPage() {
             href="/"
             className="inline-flex items-center gap-3 text-base font-extrabold tracking-tight text-[color:var(--craft-ink)]"
           >
-            <span className="grid size-10 place-items-center rounded-2xl bg-[color:var(--craft-leaf)] text-sm font-bold text-[color:var(--craft-cream)]">
-              JB
+            <span className="grid size-10 place-items-center overflow-hidden rounded-2xl ring-1 ring-[color:var(--craft-line-strong)]/40">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/branding/logo-mark.png"
+                alt="Logo Jumat Berkah"
+                className="size-full object-cover"
+              />
             </span>
             <span>Jumat Berkah Karyo</span>
           </Link>
@@ -139,6 +145,7 @@ export default async function DonorDonationHistoryPage() {
             targetAmount={targetAmount}
             collected={weeklyTargetProgress.collected}
             remaining={weeklyTargetProgress.remaining}
+            deadlineAtIso={weeklyTargetProgress.cycle.deadlineAtIso}
           />
         </section>
 
@@ -232,11 +239,13 @@ function TargetCard({
   targetAmount,
   collected,
   remaining,
+  deadlineAtIso,
 }: {
   targetCopy: { hasTarget: boolean; progressPercent: number; title: string };
   targetAmount: number;
   collected: number;
   remaining: number;
+  deadlineAtIso: string;
 }) {
   return (
     <article className="craft-card flex flex-col justify-between p-6">
@@ -258,7 +267,12 @@ function TargetCard({
         )}
       </div>
       <div className="mt-6">
-        <div className="h-3 overflow-hidden rounded-full bg-[color:var(--craft-paper)] ring-1 ring-[color:var(--craft-line)]">
+        <CycleCountdown
+          deadlineAtIso={deadlineAtIso}
+          label="Sisa waktu donasi siklus ini"
+          tone="public"
+        />
+        <div className="mt-4 h-3 overflow-hidden rounded-full bg-[color:var(--craft-paper)] ring-1 ring-[color:var(--craft-line)]">
           <div
             className="h-full rounded-full bg-[color:var(--craft-leaf)]"
             style={{ width: `${targetCopy.progressPercent}%` }}

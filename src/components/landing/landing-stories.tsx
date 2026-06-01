@@ -43,8 +43,14 @@ export function LandingStories({ stories }: { stories: LandingStory[] }) {
           Lihat semua cerita →
         </Link>
       </header>
-      <div className="grid gap-5 lg:grid-cols-3 lg:grid-rows-2">
-        <FeaturedStory story={main} />
+      <div
+        className={
+          sideStories.length > 0
+            ? "grid gap-5 lg:grid-cols-3 lg:grid-rows-2"
+            : "grid gap-5"
+        }
+      >
+        <FeaturedStory story={main} hasSideStories={sideStories.length > 0} />
         {sideStories.map((story) => (
           <SecondaryStory key={story.id} story={story} />
         ))}
@@ -53,40 +59,51 @@ export function LandingStories({ stories }: { stories: LandingStory[] }) {
   );
 }
 
-function FeaturedStory({ story }: { story: LandingStory }) {
+function FeaturedStory({
+  story,
+  hasSideStories,
+}: {
+  story: LandingStory;
+  hasSideStories: boolean;
+}) {
+  const coverImageUrl =
+    story.coverImageUrl ?? "/images/distribution-default.svg";
+
   return (
-    <article className="craft-card flex flex-col overflow-hidden lg:col-span-2 lg:row-span-2">
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-[color:var(--craft-cream-strong)]">
-        {story.coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
+    <article
+      className={
+        hasSideStories
+          ? "craft-card overflow-hidden lg:col-span-2 lg:row-span-2"
+          : "craft-card overflow-hidden"
+      }
+    >
+      <div className="grid lg:grid-cols-[1.15fr_1fr]">
+        <div className="relative aspect-[16/10] w-full overflow-hidden bg-[color:var(--craft-cream-strong)] lg:aspect-auto lg:max-h-[320px]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={story.coverImageUrl}
+            src={coverImageUrl}
             alt={`Foto penyaluran ${story.title}`}
             loading="lazy"
             className="size-full object-cover"
           />
-        ) : (
-          <div className="grid size-full place-items-center text-xs font-semibold tracking-widest uppercase text-[color:var(--craft-ink-soft)]">
-            Foto belum tersedia
-          </div>
-        )}
-        <span className="absolute left-4 top-4 craft-pill bg-[color:var(--craft-paper)]/90">
-          {formatStoryDate(story.cycleStart)}
-        </span>
-      </div>
-      <div className="flex flex-1 flex-col gap-3 p-6">
-        <h3 className="text-2xl font-bold leading-tight sm:text-[1.7rem]">
-          {story.title}
-        </h3>
-        <p className="text-sm leading-7 text-[color:var(--craft-ink-soft)]">
-          {story.summary}
-        </p>
-        <Link
-          href="/laporan?period=jumat"
-          className="mt-auto inline-flex items-center gap-2 text-sm font-bold text-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf-strong)]"
-        >
-          Baca cerita lengkap →
-        </Link>
+          <span className="absolute left-4 top-4 craft-pill bg-[color:var(--craft-paper)]/90">
+            {formatStoryDate(story.cycleStart)}
+          </span>
+        </div>
+        <div className="flex flex-1 flex-col gap-3 p-6">
+          <h3 className="text-2xl font-bold leading-tight sm:text-[1.7rem]">
+            {story.title}
+          </h3>
+          <p className="text-sm leading-7 text-[color:var(--craft-ink-soft)]">
+            {story.summary}
+          </p>
+          <Link
+            href={`/cerita/${story.id}`}
+            className="mt-auto inline-flex items-center gap-2 text-sm font-bold text-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf-strong)]"
+          >
+            Baca cerita lengkap →
+          </Link>
+        </div>
       </div>
     </article>
   );
@@ -96,19 +113,13 @@ function SecondaryStory({ story }: { story: LandingStory }) {
   return (
     <article className="craft-card flex flex-col overflow-hidden">
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-[color:var(--craft-cream-strong)]">
-        {story.coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={story.coverImageUrl}
-            alt={`Foto penyaluran ${story.title}`}
-            loading="lazy"
-            className="size-full object-cover"
-          />
-        ) : (
-          <div className="grid size-full place-items-center text-xs font-semibold tracking-widest uppercase text-[color:var(--craft-ink-soft)]">
-            Foto belum tersedia
-          </div>
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={story.coverImageUrl ?? "/images/distribution-default.svg"}
+          alt={`Foto penyaluran ${story.title}`}
+          loading="lazy"
+          className="size-full object-cover"
+        />
       </div>
       <div className="flex flex-1 flex-col gap-2 p-5">
         <span className="craft-pill self-start">

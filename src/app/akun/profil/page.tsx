@@ -25,8 +25,13 @@ export default async function AccountProfilePage() {
             href="/"
             className="inline-flex items-center gap-3 text-base font-extrabold tracking-tight text-[color:var(--craft-ink)]"
           >
-            <span className="grid size-10 place-items-center rounded-2xl bg-[color:var(--craft-leaf)] text-sm font-bold text-[color:var(--craft-cream)]">
-              JB
+            <span className="grid size-10 place-items-center overflow-hidden rounded-2xl ring-1 ring-[color:var(--craft-line-strong)]/40">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/branding/logo-mark.png"
+                alt="Logo Jumat Berkah"
+                className="size-full object-cover"
+              />
             </span>
             <span>Jumat Berkah Karyo</span>
           </Link>

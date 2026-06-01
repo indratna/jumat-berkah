@@ -12,7 +12,9 @@ type SignupPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function DonorSignupPage({ searchParams }: SignupPageProps) {
+export default async function DonorSignupPage({
+  searchParams,
+}: SignupPageProps) {
   const params = await searchParams;
   const email = readQuery(params.email);
   const name = readQuery(params.name);
@@ -22,9 +24,17 @@ export default async function DonorSignupPage({ searchParams }: SignupPageProps)
     <main className="landing-craft landing-noise min-h-screen px-4 py-10 text-[color:var(--craft-ink)]">
       <section className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
         <div className="space-y-5">
-          <Link href="/" className="inline-flex items-center gap-3 font-extrabold">
-            <span className="grid size-10 place-items-center rounded-2xl bg-[color:var(--craft-leaf)] text-sm text-[color:var(--craft-cream)]">
-              JB
+          <Link
+            href="/"
+            className="inline-flex items-center gap-3 font-extrabold"
+          >
+            <span className="grid size-10 place-items-center overflow-hidden rounded-2xl ring-1 ring-[color:var(--craft-line-strong)]/40">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/branding/logo-mark.png"
+                alt="Logo Jumat Berkah"
+                className="size-full object-cover"
+              />
             </span>
             Jumat Berkah Karyo
           </Link>
@@ -33,9 +43,13 @@ export default async function DonorSignupPage({ searchParams }: SignupPageProps)
             Daftar akun donatur
           </h1>
           <p className="text-base leading-7 text-[color:var(--craft-ink-soft)]">
-            Simpan riwayat donasi, kurangi isi ulang nama dan email, dan siapkan pengingat opsional saat program Jumat aktif.
+            Simpan riwayat donasi, kurangi isi ulang nama dan email, dan siapkan
+            pengingat opsional saat program Jumat aktif.
           </p>
-          <Link href="/donasi" className="inline-flex min-h-11 items-center rounded-full border border-[color:var(--craft-line-strong)] px-5 text-sm font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]">
+          <Link
+            href="/donasi"
+            className="inline-flex min-h-11 items-center rounded-full border border-[color:var(--craft-line-strong)] px-5 text-sm font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
+          >
             Donasi tanpa akun tetap bisa
           </Link>
         </div>
@@ -53,5 +67,7 @@ function readQuery(value: string | string[] | undefined) {
 }
 
 function sanitizeNext(value: string) {
-  return value.startsWith("/") && !value.startsWith("//") ? value : "/akun/donasi";
+  return value.startsWith("/") && !value.startsWith("//")
+    ? value
+    : "/akun/donasi";
 }

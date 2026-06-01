@@ -105,7 +105,10 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
         </section>
 
         {distribution.report ? (
-          <section className="craft-card overflow-hidden p-6 print:break-inside-avoid print:rounded-2xl print:border print:border-slate-200 print:shadow-none">
+          <section
+            id="cerita-penyaluran"
+            className="craft-card overflow-hidden p-6 print:break-inside-avoid print:rounded-2xl print:border print:border-slate-200 print:shadow-none"
+          >
             <span className="craft-pill print:hidden">Cerita Penyaluran</span>
             <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
               {distribution.report.title}

@@ -10,11 +10,11 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 
 ### Current Status
 
-Current Phase: Phase 44 — Targeted Refactor  
+Current Phase: Phase 45 — Stable MVP Launch Validation  
 Overall Progress: 100%  
 Last Updated: 2026-06-01  
-Current Focus: Phase 44 completed with bounded no-behavior-change refactors across admin navigation/layout reuse, Midtrans helper cleanup, donation admin query parsing cleanup, status transition guard centralization, and login UX hardening (legacy admin code login removed). Added donor dashboard countdown parity and landing fallbacks (logo + default distribution image). Validation passed (`npm run lint`, `npm test` 155/155, `npm run build`). `BETTER_AUTH_SECRET` local warning resolved by replacing with high-entropy value.
-Blockers: Live provider smoke remains required: Telegram public channel broadcast needs `TELEGRAM_PUBLIC_CHANNEL_ID=-100...` plus bot admin/post permission; production `BETTER_AUTH_SECRET` must be high entropy; Midtrans live QRIS and WhatsApp live send need provider credentials/templates; backup/restore production evidence remains required before stable launch.
+Current Focus: Phase 45 blocked before Step 1 pre-flight can begin on real deployment. Domain `berkahkaryo.my.id` is prepared for future live app use, but current app is not deployed there yet. Final live-provider validation cannot run until real deploy target, production env, and operator access exist.
+Blockers: App not yet deployed to live target; production env not provisioned/confirmed; no real admin login on deployed target; Telegram public channel broadcast, WhatsApp live template send, backup/restore production evidence, and Midtrans live QRIS settlement/idempotency smoke all require post-deploy execution.
 
 ### Phase Progress
 
@@ -65,7 +65,7 @@ Blockers: Live provider smoke remains required: Telegram public channel broadcas
 | Phase 42 | Donation Checkout UX Enhancement | Done | 100% |
 | Phase 43 | Donor Auth & Session Hygiene | Done | 100% |
 | Phase 44 | Targeted Refactor | Done | 100% |
-| Phase 45 | Stable MVP Launch Validation | Not Started | 0% |
+| Phase 45 | Stable MVP Launch Validation | Blocked | 50% |
 
 Status values:
 
@@ -79,6 +79,22 @@ Done
 ## 3. Work Log
 
 ### 2026-06-01
+
+- Re-ran Phase 45 automated validation on current workspace to refresh launch evidence before any deploy handoff. `npm run lint` passed, `npm test` passed (`155/155`), and `npm run build` passed. Live-provider smoke remains blocked because no real production deployment, env handoff, or operator access exists yet. Test/build logs still surface local `BETTER_AUTH_SECRET` warning; treat as production env review item, not local code failure.
+
+- Started Phase 45 (`Stable MVP Launch Validation`). Identified current incomplete checklist items: production env verification, Midtrans live QRIS + settlement smoke, Telegram public channel smoke, WhatsApp live template smoke, backup/restore readiness confirmation, stable release notes, and stable launch tag decision. Completed automated validation cycle for this phase: `npm run lint` passed, `npm test` passed (155/155), and `npm run build` passed (rerun with longer timeout after first run timed out during TypeScript stage). Updated blockers to isolate only live-provider and production-readiness checks that cannot be fully completed from local environment.
+
+- Corrected Phase 45 status after user clarification: `berkahkaryo.my.id` is reserved for future live deployment, not current deployed app evidence. Previous domain fetch must not be treated as launch validation for this project. Reset Phase 45 outcome to pre-deploy blocked state: Step 1 pre-flight has not started on a real deployment target, provider smoke has not run, and final decision remains `HOLD` until deploy exists and live evidence is captured by operator.
+
+- Added one-page execution guide `docs/LIVE_PROVIDER_SMOKE_RUNBOOK.md` for Phase 45 live checks (pre-flight, Midtrans live QRIS/webhook idempotency, Telegram `/broadcast_laporan`, WhatsApp template send, backup/restore evidence, pass/fail template, and go-live/hold decision matrix) so final production smoke can run with consistent evidence capture.
+
+- Added draft stable release notes at `docs/RELEASE_NOTES_STABLE_MVP_DRAFT_2026-06-01.md`. Draft summarizes final MVP surface area, latest automated validation (`npm run lint`, `npm test` 155/155, `npm run build`), remaining live-launch blockers, and current recommendation to hold stable tag until Phase 45 live-provider smoke completes.
+
+- Added launch decision draft `docs/STABLE_LAUNCH_TAG_DECISION_DRAFT_2026-06-01.md` with explicit `GO-LIVE` vs `HOLD` matrix, required evidence list, and recommended current status `HOLD` until Midtrans/Telegram/WhatsApp/backup-env production smoke is completed.
+
+- Added `docs/LIVE_PROVIDER_SMOKE_RESULTS_TEMPLATE.md` so production smoke execution can be recorded in one ready-to-fill template (pre-flight, Midtrans, Telegram, WhatsApp, backup/restore, and final go-live/hold decision).
+
+- Added `docs/PRELIVE_AUDIT_MATRIX_2026-06-01.md` as one-page launch audit summary for Jumat Berkah (what is ready, what still needs live proof, when fixes are required, where review should focus, and why large refactor should wait). Expanded Phase 45 in `IMPLEMENTATION_PLAN.md` with exact ordered execution steps: pre-flight -> Telegram -> WhatsApp -> backup/restore -> Midtrans -> final decision/documentation, plus links to all supporting docs so launch validation can be run sequentially from one place.
 
 - Started Phase 44 (`Targeted Refactor`) with one bounded no-behavior-change cleanup in `src/components/admin/admin-sidebar.tsx`. Extracted duplicated nav rendering (dashboard item + grouped menu items) into shared `SidebarNav` component used by both mobile drawer and desktop sidebar. Kept existing route set, open/close group state, mobile close-on-item-click behavior, and desktop collapse behavior intact while reducing maintenance duplication risk.
 
@@ -2913,15 +2929,90 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Confirm production env values are real and safe without exposing secrets.
-- [ ] Run final `npm run lint`, `npm test`, and `npm run build`.
-- [ ] Run Midtrans live QRIS smoke and verify webhook settlement.
-- [ ] Run Telegram public channel smoke.
-- [ ] Run WhatsApp live template smoke.
-- [ ] Confirm backup/restore readiness.
-- [ ] Create stable MVP release notes.
-- [ ] Decide and create stable launch tag.
-- [ ] Update Work Log and Blockers.
+- [ ] Confirm production env values are real and safe without exposing secrets. Blocked: no deployed live target / no production env handoff yet.
+- [x] Run final `npm run lint`, `npm test`, and `npm run build`.
+- [ ] Run Midtrans live QRIS smoke and verify webhook settlement. Blocked until real deploy exists and pre-flight passes.
+- [ ] Run Telegram public channel smoke. Blocked until real deploy exists and pre-flight passes.
+- [ ] Run WhatsApp live template smoke. Blocked until real deploy exists and pre-flight passes.
+- [ ] Confirm backup/restore readiness. Blocked until real deploy exists and production ops access is available.
+- [x] Create stable MVP release notes.
+- [ ] Decide and create stable launch tag. Blocked until all required live evidence passes.
+- [x] Update Work Log and Blockers.
+
+## Current Incomplete Items
+
+- Production deploy target not available yet.
+- Production env handoff/review not available yet.
+- Step 1 pre-flight not started on real deployment.
+- Telegram live smoke not executed.
+- WhatsApp live smoke not executed.
+- Backup/restore production evidence not executed.
+- Midtrans live QRIS settlement/idempotency smoke not executed.
+- Stable launch tag cannot be created while decision remains `HOLD`.
+
+## Ordered Execution
+
+Use this exact order so Phase 45 can run with one clean validation cycle and clear evidence capture.
+
+### Step 1 — Pre-flight production check
+
+Do first:
+- Confirm production env values are real and safe.
+- Check `GET /` returns `200`.
+- Check `GET /laporan` returns `200`.
+- Confirm admin login works.
+
+If this step fails, stop. Do not continue to provider smoke.
+
+### Step 2 — Telegram public channel smoke
+
+Run `/broadcast_laporan` from allowlisted admin chat.
+
+Pass when:
+- bot replies successfully,
+- message appears in target public channel,
+- no donor email/phone is exposed.
+
+### Step 3 — WhatsApp live template smoke
+
+Send one real template to internal test number.
+
+Pass when:
+- provider response is successful,
+- message is received on target device,
+- failure handling remains safe if provider errors occur.
+
+### Step 4 — Backup / restore production evidence
+
+Run fresh backup validation.
+
+Pass when:
+- new backup file exists,
+- checksum is `OK`,
+- restore drill succeeds,
+- verification queries for `users`, `donations`, and `expenses` succeed,
+- temporary restore resources are cleaned up.
+
+### Step 5 — Midtrans live QRIS smoke
+
+Run last because it touches real payment flow.
+
+Pass when:
+- live donation can be created,
+- QRIS page opens,
+- donation starts as `pending`,
+- valid webhook is received,
+- donation ends as `settlement`,
+- duplicate settlement handling stays idempotent.
+
+### Step 6 — Final decision and documentation
+
+After all smoke steps:
+- Fill `docs/LIVE_PROVIDER_SMOKE_RESULTS_TEMPLATE.md`.
+- Review `docs/PRELIVE_AUDIT_MATRIX_2026-06-01.md`.
+- Update `IMPLEMENTATION_PLAN.md` Work Log and Blockers with actual pass/fail evidence.
+- If all required checks pass, finalize release notes and create stable launch tag.
+- If any critical check fails, keep decision `HOLD` and record owner, impact, and ETA.
 
 ## Acceptance Criteria
 
@@ -2938,4 +3029,12 @@ npm test
 npm run build
 ```
 
-Manual/live: Midtrans QRIS payment, Midtrans webhook settlement, Telegram public channel broadcast, WhatsApp template send, production env checklist, and backup/restore readiness check.
+Manual/live: execute in this order — (1) production env + basic health pre-flight, (2) Telegram public channel broadcast, (3) WhatsApp template send, (4) backup/restore readiness check, (5) Midtrans QRIS payment + webhook settlement, then (6) final go-live/hold documentation.
+
+Operational docs for this phase:
+- `docs/PRELIVE_AUDIT_MATRIX_2026-06-01.md`
+- `docs/LIVE_PROVIDER_SMOKE_OPERATOR_CHECKLIST.md`
+- `docs/LIVE_PROVIDER_SMOKE_RUNBOOK.md`
+- `docs/LIVE_PROVIDER_SMOKE_RESULTS_TEMPLATE.md`
+- `docs/RELEASE_NOTES_STABLE_MVP_DRAFT_2026-06-01.md`
+- `docs/STABLE_LAUNCH_TAG_DECISION_DRAFT_2026-06-01.md`

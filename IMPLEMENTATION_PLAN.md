@@ -13,7 +13,7 @@ AI harus bekerja per fase. Jangan loncat fase. Jangan menandai selesai sebelum a
 Current Phase: Phase 44 — Targeted Refactor  
 Overall Progress: 100%  
 Last Updated: 2026-06-01  
-Current Focus: Continued Phase 44 with six bounded no-behavior-change refactors. `src/components/admin/admin-sidebar.tsx` centralizes duplicated mobile/desktop nav rendering into shared `SidebarNav`; `src/lib/midtrans.ts` centralizes repeated Basic auth header generation; `src/app/admin/donasi/page.tsx` centralizes donation-list query parsing and sticky header class reuse; `src/lib/donation-status.ts` centralizes safe donation status transition guard used by webhook + admin check-status endpoints; and `src/app/api/admin/donations/check-status/route.ts` now centralizes duplicated no-change JSON response payload building into one helper. Build instability was traced to stale generated `.next/dev/types/validator.ts`; after clearing `.next`, full validation passed. Validation passed (`npm run lint`, `npm test` 155/155, `npm run build`) with existing local `BETTER_AUTH_SECRET` low-entropy warning only.
+Current Focus: Phase 44 completed with bounded no-behavior-change refactors across admin navigation/layout reuse, Midtrans helper cleanup, donation admin query parsing cleanup, status transition guard centralization, and login UX hardening (legacy admin code login removed). Added donor dashboard countdown parity and landing fallbacks (logo + default distribution image). Validation passed (`npm run lint`, `npm test` 155/155, `npm run build`). `BETTER_AUTH_SECRET` local warning resolved by replacing with high-entropy value.
 Blockers: Live provider smoke remains required: Telegram public channel broadcast needs `TELEGRAM_PUBLIC_CHANNEL_ID=-100...` plus bot admin/post permission; production `BETTER_AUTH_SECRET` must be high entropy; Midtrans live QRIS and WhatsApp live send need provider credentials/templates; backup/restore production evidence remains required before stable launch.
 
 ### Phase Progress
@@ -64,7 +64,7 @@ Blockers: Live provider smoke remains required: Telegram public channel broadcas
 | Phase 41 | Dashboard Layout Final Polish | Done | 100% |
 | Phase 42 | Donation Checkout UX Enhancement | Done | 100% |
 | Phase 43 | Donor Auth & Session Hygiene | Done | 100% |
-| Phase 44 | Targeted Refactor | In Progress | 95% |
+| Phase 44 | Targeted Refactor | Done | 100% |
 | Phase 45 | Stable MVP Launch Validation | Not Started | 0% |
 
 Status values:
@@ -103,6 +103,8 @@ Done
 - Completed sixth bounded refactor in `src/app/api/admin/donations/check-status/route.ts` by extracting duplicated no-change JSON response into `createStatusCheckNoChangeResponse()` helper for unmapped-status and unchanged-status paths. API payload semantics are unchanged; this only centralizes repeated response construction.
 
 - Full validation rerun after sixth refactor passed: `npm run lint`, `npm test` (155/155), and `npm run build`.
+
+- Finalized landing and donor UX follow-up for this refactor phase: removed legacy admin-code option from `/login`, improved login hierarchy and accessibility feedback (`aria-live`) while keeping auth logic unchanged, added `/akun/donasi` cycle countdown parity with admin/landing, switched landing header mark to logo asset, and added default distribution image template when story photo is absent. Re-ran validation (`npm run lint`, `npm test` 155/155, `npm run build`) and confirmed local `BETTER_AUTH_SECRET` warning resolved after rotating to a high-entropy value.
 
 ### 2026-05-31
 
@@ -2861,12 +2863,12 @@ Out-of-scope:
 
 ## Tasks
 
-- [ ] Identify refactor candidates from Phase 40 and Phase 43 notes.
-- [ ] Prioritize small refactors with clear validation.
-- [ ] Add or preserve tests for behavior before moving code.
-- [ ] Refactor one bounded area at a time.
-- [ ] Run targeted and full validation.
-- [ ] Update Work Log.
+- [x] Identify refactor candidates from Phase 40 and Phase 43 notes.
+- [x] Prioritize small refactors with clear validation.
+- [x] Add or preserve tests for behavior before moving code.
+- [x] Refactor one bounded area at a time.
+- [x] Run targeted and full validation.
+- [x] Update Work Log.
 
 ## Acceptance Criteria
 

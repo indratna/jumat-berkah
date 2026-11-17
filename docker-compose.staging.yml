@@ -4,6 +4,9 @@ services:
       context: .
       dockerfile: Dockerfile
       network: host
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-}
+        NEXT_PUBLIC_MIDTRANS_CLIENT_KEY: ${NEXT_PUBLIC_MIDTRANS_CLIENT_KEY:-}
     container_name: jumat-berkah-app
     env_file:
       - .env.production

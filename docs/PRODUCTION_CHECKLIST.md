@@ -14,6 +14,9 @@ Gunakan checklist ini sebelum atau sesudah deploy production. Jangan tulis secre
 ## 2. Database
 
 - [ ] `DATABASE_URL` production menunjuk database benar.
+- [ ] `POSTGRES_PASSWORD` ada di `.env.production` dan sama dengan password di `DATABASE_URL`.
+- [ ] `docker compose -f docker-compose.staging.yml --env-file .env.production config` selesai tanpa error.
+- [ ] Image dibangun dengan `--env-file .env.production` sehingga `NEXT_PUBLIC_APP_URL` dan `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` tidak tertanam kosong.
 - [ ] Migration production sudah diterapkan.
 - [ ] Admin awal sudah dibuat dengan `npm run seed:admin` atau provisioning Better Auth admin.
 - [ ] Backup otomatis aktif.
@@ -21,6 +24,26 @@ Gunakan checklist ini sebelum atau sesudah deploy production. Jangan tulis secre
 - [ ] Akses database dibatasi dari publik.
 
 Smoke:
+
+```bash
+# 1. Build image aplikasi (nilai NEXT_PUBLIC_* ikut tertanam di sini).
+docker compose -f docker-compose.staging.yml --env-file .env.production build
+
+# 2. Migration production. Runner image tidak berisi Prisma CLI, jadi pakai
+#    target migrator. Network dibuat otomatis oleh `compose up`; di host baru
+#    jalankan baris network create lebih dulu.
+docker network create jumat-berkah-network 2>/dev/null || true
+docker build --target migrator -t jumat-berkah-migrate .
+docker run --rm --env-file .env.production \
+  --network jumat-berkah-network jumat-berkah-migrate
+
+# 3. Seed admin. Butuh tsx + Prisma client, yang hanya ada di stage builder.
+docker build --target builder -t jumat-berkah-tools .
+docker run --rm --env-file .env.production \
+  --network jumat-berkah-network jumat-berkah-tools npm run seed:admin
+```
+
+Smoke cepat di host/checkout (opsional, bila `node_modules` tersedia):
 
 ```bash
 npm run db:generate

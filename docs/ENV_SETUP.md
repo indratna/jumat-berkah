@@ -250,6 +250,33 @@ sh -n scripts/restore-drill-postgres.sh
 
 Then follow `docs/BACKUP_RESTORE_RUNBOOK.md` for live backup and restore drill.
 
+## Docker Compose (server)
+
+`docker-compose.staging.yml` membaca beberapa variabel di luar runtime app.
+
+| Env var | Required | Source | Notes | Smoke test |
+|---|---:|---|---|---|
+| `POSTGRES_PASSWORD` | Yes for Docker Compose | Generate random secret | Password init container `jumat-berkah-postgres`. Harus sama persis dengan password di dalam `DATABASE_URL`. Hanya dibaca saat volume data masih kosong; mengganti nilainya tidak mengubah volume yang sudah ada. Server-only. | `docker compose -f docker-compose.staging.yml --env-file .env.production config` tidak error. |
+
+Compose gagal dengan `POSTGRES_PASSWORD is required` bila variabel ini kosong, jadi isi dulu di `.env.production` server sebelum `docker compose up`.
+
+### Nilai `NEXT_PUBLIC_*` ditanam saat build
+
+`NEXT_PUBLIC_APP_URL` dan `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` di-inline Next.js saat `next build`, jadi nilainya harus tersedia sebagai build arg — bukan hanya env runtime. `docker-compose.staging.yml` meneruskannya dari `.env.production`, sehingga build **wajib** memakai `--env-file`:
+
+```bash
+docker compose -f docker-compose.staging.yml --env-file .env.production up -d --build
+```
+
+Tanpa `--env-file` (atau bila variabelnya kosong), build tetap sukses tetapi nilai tersebut tertanam sebagai string kosong: popup Snap jatuh ke mode redirect dan link notifikasi/receipt kehilangan domain. Setelah mengganti salah satu nilai, rebuild image.
+
+Smoke:
+
+```bash
+docker compose -f docker-compose.staging.yml --env-file .env.production config > /dev/null \
+  && echo "compose config ok"
+```
+
 ## Deployment
 
 Common production env:
@@ -258,6 +285,7 @@ Common production env:
 - Provider vars for enabled integrations.
 - Strong `BETTER_AUTH_SECRET`, `AUTH_SECRET`, `CRON_SECRET`, webhook secrets.
 - `NEXT_PUBLIC_APP_URL` set to public HTTPS origin.
+- `POSTGRES_PASSWORD` sama persis dengan password di `DATABASE_URL` (dipakai container postgres Compose).
 
 Deployment smoke:
 

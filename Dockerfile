@@ -3,6 +3,8 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+# prisma/ + prisma.config.ts must be present before `npm ci`: the root
+# postinstall script runs `prisma generate`.
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 RUN npm ci

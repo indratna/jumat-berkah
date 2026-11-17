@@ -1,15 +1,51 @@
+# Dependencies and build output (jangan masuk build context)
 node_modules
 .next
+
+# VCS
 .git
-.env
-.env.*
+
+# Environment files (jangan pernah masuk build context)
+.env*
 !.env.example
+
+# Local-only scratch notes at repo root
+/*.txt
+
+# Logs
+*.log
 npm-debug.log*
+
+# OS / editor
+.DS_Store
+.vscode
+.idea
+.zed
+*.swp
+*.swo
+
+# Local caches / worktrees
+.playwright-mcp
+.vercel
+.worktrees
+
+# Build artifacts
+dist
+build
+coverage
+*.tsbuildinfo
+
+# Docker / deployment files
 Dockerfile
 docker-compose*.yml
-DEPLOYMENT_READINESS.md
-AGENTS.md
-IMPLEMENTATION_PLAN.md
-PRD.md
-TECHNICAL_SPEC.md
-README.md
+
+# Docs / repo meta
+*.md
+!README.md
+docs
+.github
+
+# Local-only helpers
+.freebuff
+Dockerfile.local
+*.bat

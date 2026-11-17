@@ -46,6 +46,8 @@ next-env.d.ts
 # Local developer helpers
 run.bat
 push-github.bat
+.freebuff/
+Dockerfile.local
 
 # Editor settings
 .zed/

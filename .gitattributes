@@ -1,0 +1,17 @@
+# Normalize text files to LF in the repository so Windows checkouts stop
+# producing line-ending-only diffs.
+* text=auto eol=lf
+
+# Binary assets must never be line-ending converted.
+*.woff2 binary
+*.woff binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+
+# Windows helper scripts keep CRLF if they ever get tracked.
+*.bat text eol=crlf
+*.cmd text eol=crlf

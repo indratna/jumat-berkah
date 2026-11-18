@@ -265,10 +265,23 @@ Compose gagal dengan `POSTGRES_PASSWORD is required` bila variabel ini kosong, j
 `NEXT_PUBLIC_APP_URL` dan `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` di-inline Next.js saat `next build`, jadi nilainya harus tersedia sebagai build arg — bukan hanya env runtime. `docker-compose.staging.yml` meneruskannya dari `.env.production`, sehingga build **wajib** memakai `--env-file`:
 
 ```bash
-docker compose -f docker-compose.staging.yml --env-file .env.production up -d --build
+docker compose -f docker-compose.staging.yml --env-file .env.production up -d --build --wait
 ```
 
 Tanpa `--env-file` (atau bila variabelnya kosong), build tetap sukses tetapi nilai tersebut tertanam sebagai string kosong: popup Snap jatuh ke mode redirect dan link notifikasi/receipt kehilangan domain. Setelah mengganti salah satu nilai, rebuild image.
+
+### Healthcheck sebagai gate deploy
+
+Image produksi membawa `HEALTHCHECK` yang memanggil `/login` di dalam container. Itu liveness murni: halaman prerender, jadi tidak menyentuh database dan tidak ikut goyah saat database sedang tidak sehat.
+
+Tidak ada service lain di `docker-compose.staging.yml` yang bisa memakai `depends_on: condition: service_healthy` terhadap app, jadi gate-nya dipakai lewat `--wait`. Perintah `up` menunggu sampai healthcheck `healthy` sebelum dianggap selesai, dan keluar non-zero bila container tidak pernah sehat:
+
+```bash
+docker compose -f docker-compose.staging.yml --env-file .env.production up -d --build --wait
+docker inspect --format '{{.State.Health.Status}}' jumat-berkah-app
+```
+
+Tunnel Cloudflare tetap file compose terpisah dengan host networking. Ia tidak ikut menunggu healthcheck, jadi nyalakan tunnel hanya setelah app `healthy` (mis. pakai `--wait` di atas).
 
 Smoke:
 

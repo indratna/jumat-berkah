@@ -5,12 +5,26 @@
 # Binary assets must never be line-ending converted.
 *.woff2 binary
 *.woff binary
+*.ttf binary
+*.otf binary
+*.eot binary
 *.png binary
 *.jpg binary
 *.jpeg binary
 *.gif binary
 *.ico binary
 *.webp binary
+*.avif binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tar binary
+*.7z binary
+*.mp3 binary
+*.wav binary
+*.mp4 binary
+*.mov binary
+*.webm binary
 
 # Windows helper scripts keep CRLF if they ever get tracked.
 *.bat text eol=crlf

@@ -17,6 +17,7 @@ Gunakan checklist ini sebelum atau sesudah deploy production. Jangan tulis secre
 - [ ] `POSTGRES_PASSWORD` ada di `.env.production` dan sama dengan password di `DATABASE_URL`.
 - [ ] `docker compose -f docker-compose.staging.yml --env-file .env.production config` selesai tanpa error.
 - [ ] Image dibangun dengan `--env-file .env.production` sehingga `NEXT_PUBLIC_APP_URL` dan `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` tidak tertanam kosong.
+- [ ] `docker inspect --format '{{.State.Health.Status}}' jumat-berkah-app` melaporkan `healthy`.
 - [ ] Migration production sudah diterapkan.
 - [ ] Admin awal sudah dibuat dengan `npm run seed:admin` atau provisioning Better Auth admin.
 - [ ] Backup otomatis aktif.
@@ -41,6 +42,10 @@ docker run --rm --env-file .env.production \
 docker build --target builder -t jumat-berkah-tools .
 docker run --rm --env-file .env.production \
   --network jumat-berkah-network jumat-berkah-tools npm run seed:admin
+
+# 4. Jalankan app dan tunggu healthcheck hijau.
+docker compose -f docker-compose.staging.yml --env-file .env.production up -d --build --wait
+docker inspect --format '{{.State.Health.Status}}' jumat-berkah-app
 ```
 
 Smoke cepat di host/checkout (opsional, bila `node_modules` tersedia):

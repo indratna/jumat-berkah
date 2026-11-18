@@ -1,6 +1,7 @@
 import { DonationStatus } from "@/generated/prisma/client";
+import { MIN_DONATION_AMOUNT } from "@/lib/donation-amount";
 
-export const MIN_DONATION_AMOUNT = 1_000;
+export { MIN_DONATION_AMOUNT };
 
 type DonationInput = {
   donorName?: unknown;

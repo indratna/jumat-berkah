@@ -288,7 +288,7 @@ html.dark .btn-outline:hover {
     --craft-cream-strong: #ede3cc;
     --craft-paper: #fbf8f1;
     --craft-ink: #0f2a1f;
-    --craft-ink-soft: rgba(15, 42, 31, 0.72);
+    --craft-ink-soft: rgba(15, 42, 31, 0.78);
     --craft-leaf: #1f5d3f;
     --craft-leaf-strong: #14432d;
     --craft-amber: #e0a458;
@@ -313,6 +313,8 @@ html.dark .btn-outline:hover {
 .landing-craft em {
     font-style: italic;
     color: var(--craft-leaf);
+    /* Negative heading tracking squeezes the space after an italic word. */
+    padding-right: 0.1em;
 }
 
 .landing-craft .craft-card {
@@ -360,6 +362,16 @@ html.dark .btn-outline:hover {
     outline: 2px solid var(--craft-amber);
     outline-offset: 3px;
     border-radius: 0.5rem;
+}
+
+.landing-craft :where(input, textarea, select):focus-visible {
+    outline: 2px solid var(--craft-amber);
+    outline-offset: 1px;
+}
+
+/* Anchored sections should not hide under the sticky-ish mobile CTA. */
+.landing-craft :where(section[id]) {
+    scroll-margin-top: 1.5rem;
 }
 
 .landing-noise {

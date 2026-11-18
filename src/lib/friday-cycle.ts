@@ -28,6 +28,43 @@ export function isWithinNewCycleWindow(now: Date): boolean {
   return now.getTime() - cycle.from.getTime() < 24 * 60 * 60 * 1000;
 }
 
+export type FridayCycleBounds = {
+  from: Date;
+  to: Date;
+  fromDate: string;
+  toDate: string;
+};
+
+/**
+ * Bounds for a stored cycle start (`YYYY-MM-DD` at UTC midnight). Used when a
+ * historical report needs the same Jakarta-based range as the live cycle.
+ */
+export function getFridayCycleBoundsForStart(
+  fromDate: string,
+): FridayCycleBounds | null {
+  const trimmed = fromDate.trim();
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return null;
+  }
+
+  const startDate = new Date(`${trimmed}T00:00:00.000Z`);
+  if (Number.isNaN(startDate.getTime())) {
+    return null;
+  }
+
+  const endDate = new Date(startDate);
+  endDate.setUTCDate(startDate.getUTCDate() + 6);
+  const toDate = formatDateInput(endDate);
+
+  return {
+    from: new Date(`${trimmed}T00:00:00.000+07:00`),
+    to: new Date(`${toDate}T23:59:59.999+07:00`),
+    fromDate: trimmed,
+    toDate,
+  };
+}
+
 function getCurrentFridayCycleRangeBase(now: Date): FridayCycleRangeBase {
   const today = getJakartaDateParts(now);
   const startDate = new Date(Date.UTC(today.year, today.month - 1, today.day));

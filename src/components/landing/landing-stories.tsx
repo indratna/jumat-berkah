@@ -9,21 +9,15 @@ function formatStoryDate(date: Date) {
   }).format(date);
 }
 
-export function LandingStories({ stories }: { stories: LandingStory[] }) {
-  if (stories.length === 0) {
-    return (
-      <section id="cerita" className="craft-card p-8 text-center">
-        <span className="craft-pill mx-auto">Cerita Penyaluran</span>
-        <h2 className="mt-4 text-2xl font-bold leading-tight sm:text-3xl">
-          Cerita pertama akan terbit setelah penyaluran berikutnya.
-        </h2>
-        <p className="mt-3 text-sm leading-6 text-[color:var(--craft-ink-soft)]">
-          Admin akan memublikasikan ringkasan penyaluran tiap siklus Jumat.
-        </p>
-      </section>
-    );
+function formatPortionCount(count: number | null) {
+  if (!count || count <= 0) {
+    return null;
   }
 
+  return `${new Intl.NumberFormat("id-ID").format(count)} porsi`;
+}
+
+export function LandingStories({ stories }: { stories: LandingStory[] }) {
   const [main, ...rest] = stories;
   const sideStories = rest.slice(0, 2);
 
@@ -38,9 +32,9 @@ export function LandingStories({ stories }: { stories: LandingStory[] }) {
         </div>
         <Link
           href="/laporan?period=jumat"
-          className="text-sm font-bold underline decoration-[color:var(--craft-amber)] decoration-2 underline-offset-4 hover:decoration-[color:var(--craft-leaf)]"
+          className="inline-flex min-h-11 items-center text-sm font-bold underline decoration-[color:var(--craft-amber)] decoration-2 underline-offset-4 hover:decoration-[color:var(--craft-leaf)]"
         >
-          Lihat semua cerita →
+          Lihat semua di laporan →
         </Link>
       </header>
       <div
@@ -56,6 +50,26 @@ export function LandingStories({ stories }: { stories: LandingStory[] }) {
         ))}
       </div>
     </section>
+  );
+}
+
+function StoryMeta({ story }: { story: LandingStory }) {
+  const portions = formatPortionCount(story.packageCount);
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[color:var(--craft-ink-soft)]">
+      {portions ? (
+        <span className="rounded-full bg-[color:var(--craft-amber)]/20 px-2.5 py-1 text-[color:var(--craft-ink)]">
+          {portions}
+        </span>
+      ) : null}
+      {story.locationSummary ? (
+        <span className="inline-flex items-center gap-1.5">
+          <span aria-hidden>📍</span>
+          {story.locationSummary}
+        </span>
+      ) : null}
+    </div>
   );
 }
 
@@ -84,6 +98,9 @@ function FeaturedStory({
             src={coverImageUrl}
             alt={`Foto penyaluran ${story.title}`}
             loading="lazy"
+            decoding="async"
+            width={640}
+            height={400}
             className="size-full object-cover"
           />
           <span className="absolute left-4 top-4 craft-pill bg-[color:var(--craft-paper)]/90">
@@ -91,6 +108,7 @@ function FeaturedStory({
           </span>
         </div>
         <div className="flex flex-1 flex-col gap-3 p-6">
+          <StoryMeta story={story} />
           <h3 className="text-2xl font-bold leading-tight sm:text-[1.7rem]">
             {story.title}
           </h3>
@@ -99,7 +117,7 @@ function FeaturedStory({
           </p>
           <Link
             href={`/cerita/${story.id}`}
-            className="mt-auto inline-flex items-center gap-2 text-sm font-bold text-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf-strong)]"
+            className="mt-auto inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf-strong)]"
           >
             Baca cerita lengkap →
           </Link>
@@ -118,6 +136,9 @@ function SecondaryStory({ story }: { story: LandingStory }) {
           src={story.coverImageUrl ?? "/images/distribution-default.svg"}
           alt={`Foto penyaluran ${story.title}`}
           loading="lazy"
+          decoding="async"
+          width={480}
+          height={270}
           className="size-full object-cover"
         />
       </div>
@@ -125,7 +146,15 @@ function SecondaryStory({ story }: { story: LandingStory }) {
         <span className="craft-pill self-start">
           {formatStoryDate(story.cycleStart)}
         </span>
-        <h3 className="text-base font-bold leading-snug">{story.title}</h3>
+        <h3 className="text-base font-bold leading-snug">
+          <Link
+            href={`/cerita/${story.id}`}
+            className="hover:text-[color:var(--craft-leaf)]"
+          >
+            {story.title}
+          </Link>
+        </h3>
+        <StoryMeta story={story} />
         <p className="text-sm leading-6 text-[color:var(--craft-ink-soft)] line-clamp-3">
           {story.summary}
         </p>

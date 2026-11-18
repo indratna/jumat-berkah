@@ -20,8 +20,9 @@ export function PublicHeader({ className = "" }: { className?: string }) {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Close menu when clicking outside
+  // Close menu when clicking outside or pressing Escape.
   useEffect(() => {
     if (!mobileMenuOpen) return;
 
@@ -31,8 +32,19 @@ export function PublicHeader({ className = "" }: { className?: string }) {
       }
     }
 
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMobileMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    }
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [mobileMenuOpen]);
 
   return (
@@ -41,10 +53,9 @@ export function PublicHeader({ className = "" }: { className?: string }) {
     >
       <Link
         href="/"
-        className="inline-flex min-w-0 items-center gap-3 text-[color:var(--craft-ink)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[color:var(--craft-leaf)]"
-        aria-label="Beranda Jumat Berkah Karyo"
+        className="inline-flex min-h-11 min-w-0 flex-1 items-center gap-2 text-[color:var(--craft-ink)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[color:var(--craft-leaf)] sm:gap-3"
       >
-        <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-2xl ring-1 ring-[color:var(--craft-line-strong)]/40">
+        <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-2xl ring-1 ring-[color:var(--craft-line-strong)]/40 sm:size-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/branding/logo-mark.png"
@@ -53,10 +64,10 @@ export function PublicHeader({ className = "" }: { className?: string }) {
           />
         </span>
         <span className="min-w-0">
-          <span className="block truncate text-base font-extrabold tracking-tight">
+          <span className="block truncate text-sm font-extrabold tracking-tight sm:text-base">
             Jumat Berkah Karyo
           </span>
-          <span className="block truncate text-[11px] font-semibold text-[color:var(--craft-ink-soft)] sm:text-xs">
+          <span className="hidden truncate text-xs font-semibold text-[color:var(--craft-ink-soft)] sm:block">
             Jumat Berkah: Donasi Mudah, Laporan Terbuka
           </span>
         </span>
@@ -68,12 +79,15 @@ export function PublicHeader({ className = "" }: { className?: string }) {
       >
         {/* Mobile hamburger button */}
         <button
+          ref={menuButtonRef}
           type="button"
           aria-expanded={mobileMenuOpen}
           aria-controls="mobile-nav-menu"
-          aria-label="Buka menu navigasi"
+          aria-label={
+            mobileMenuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"
+          }
           onClick={() => setMobileMenuOpen((prev) => !prev)}
-          className="inline-flex size-10 items-center justify-center rounded-full border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-cream)]/80 text-[color:var(--craft-ink)] shadow-sm transition-colors hover:bg-[color:var(--craft-leaf)] hover:text-[color:var(--craft-cream)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[color:var(--craft-leaf)] sm:hidden"
+          className="inline-flex size-11 items-center justify-center rounded-full border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-cream)]/80 text-[color:var(--craft-ink)] shadow-sm transition-colors hover:bg-[color:var(--craft-leaf)] hover:text-[color:var(--craft-cream)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[color:var(--craft-leaf)] sm:hidden"
         >
           <svg
             aria-hidden="true"
@@ -119,7 +133,7 @@ export function PublicHeader({ className = "" }: { className?: string }) {
                       setMobileMenuOpen(false);
                     }
                   }}
-                  className={`block px-5 py-3 font-bold transition-colors ${
+                  className={`flex min-h-11 items-center px-5 py-3 font-bold transition-colors ${
                     isActive
                       ? "bg-[color:var(--craft-leaf)] text-[color:var(--craft-cream)]"
                       : "text-[color:var(--craft-ink)] hover:bg-[color:var(--craft-leaf)]/10 hover:text-[color:var(--craft-leaf)]"
@@ -148,7 +162,7 @@ export function PublicHeader({ className = "" }: { className?: string }) {
                 key={link.href}
                 href={link.href}
                 aria-current={isActive ? "page" : undefined}
-                className={`relative z-10 inline-flex min-h-10 w-[6.5rem] items-center justify-center rounded-full px-4 font-bold transition-[color,transform] duration-300 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[color:var(--craft-leaf)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
+                className={`relative z-10 inline-flex min-h-11 w-[6.5rem] items-center justify-center rounded-full px-4 font-bold transition-[color,transform] duration-300 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[color:var(--craft-leaf)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
                   isActive
                     ? "text-[color:var(--craft-cream)]"
                     : "text-[color:var(--craft-ink)] hover:text-[color:var(--craft-leaf)]"
@@ -162,13 +176,14 @@ export function PublicHeader({ className = "" }: { className?: string }) {
         <Link
           href={publicNavCta.href}
           aria-current={isDonationActive ? "page" : undefined}
-          className={`inline-flex min-h-12 items-center rounded-full px-6 font-bold shadow-sm transition-[background-color,color,box-shadow,transform] duration-300 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[color:var(--craft-leaf)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
+          className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm font-bold shadow-sm transition-[background-color,color,box-shadow,transform] duration-300 ease-out hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[color:var(--craft-leaf)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:min-h-12 sm:px-6 sm:text-base ${
             isDonationActive
               ? "bg-[color:var(--craft-leaf-strong)] text-[color:var(--craft-cream)] ring-1 ring-[color:var(--craft-leaf)]"
               : "bg-[color:var(--craft-leaf)] text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)] hover:shadow-md"
           }`}
         >
-          {publicNavCta.label}
+          <span className="sm:hidden">Donasi</span>
+          <span className="hidden sm:inline">{publicNavCta.label}</span>
         </Link>
       </nav>
     </header>

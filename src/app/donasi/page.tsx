@@ -13,6 +13,10 @@ import {
 import Link from "next/link";
 
 import { PublicHeader } from "@/components/landing/public-header";
+import {
+  parseDonationAmount,
+  validateDonationAmount,
+} from "@/lib/donation-amount";
 
 import { DonationForm } from "./donation-form";
 import { DonorAuthBanner } from "./donor-auth-banner";
@@ -26,12 +30,35 @@ const trustPoints = [
 ];
 
 const reassuranceItems = [
-  "Privasi donor dijaga. Email dan WhatsApp tidak ditampilkan di laporan publik.",
-  "Kontak bersifat opsional, dipakai hanya untuk kebutuhan operasional yang relevan.",
-  "Pembayaran QRIS diproses melalui Midtrans, sementara status akhir diverifikasi server.",
+  "Email dan nomor WhatsApp donatur tidak pernah ditampilkan di laporan publik.",
+  "Nama hanya tampil di laporan publik jika Anda mengizinkan. Donasi anonim tampil sebagai Anonim.",
+  "Donasi dihitung sebagai pemasukan hanya setelah pembayaran terkonfirmasi.",
 ];
 
-export default async function DonationPage() {
+type DonationPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function resolveInitialAmount(
+  searchParams: Record<string, string | string[] | undefined>,
+): number | null {
+  const raw = Array.isArray(searchParams.nominal)
+    ? searchParams.nominal[0]
+    : searchParams.nominal;
+
+  if (!raw) {
+    return null;
+  }
+
+  const amount = parseDonationAmount(raw);
+  return amount !== null && validateDonationAmount(amount) === null
+    ? amount
+    : null;
+}
+
+export default async function DonationPage({
+  searchParams,
+}: DonationPageProps) {
   const cookieStore = await cookies();
   const requestHeaders = await headers();
   const legacyAdmin = await requireAdminUser(
@@ -52,6 +79,8 @@ export default async function DonationPage() {
 
   const midtransClientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ?? null;
   const midtransIsProduction = process.env.MIDTRANS_IS_PRODUCTION === "true";
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const initialAmount = resolveInitialAmount(resolvedSearchParams);
 
   return (
     <div className="landing-craft landing-noise min-h-screen">
@@ -75,8 +104,8 @@ export default async function DonationPage() {
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-[color:var(--craft-ink-soft)] sm:text-lg">
                 Isi nominal, lengkapi data seperlunya, lalu lanjutkan ke QRIS.
-                Donasi akan tercatat sebagai pending lebih dulu dan otomatis
-                diperbarui setelah pembayaran berhasil.
+                Donasi tercatat menunggu pembayaran, lalu statusnya diperbarui
+                otomatis setelah pembayaran berhasil.
               </p>
             </div>
 
@@ -120,6 +149,7 @@ export default async function DonationPage() {
 
           <DonationForm
             donor={donor}
+            initialAmount={initialAmount}
             authBanner={
               <DonorAuthBanner variant={bannerVariant} donor={donor} />
             }

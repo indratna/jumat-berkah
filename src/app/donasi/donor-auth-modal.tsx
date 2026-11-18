@@ -1,19 +1,39 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { authClient } from "@/lib/auth-client";
 
 type AuthMode = "login" | "signup";
 
+const FOCUSABLE_SELECTOR = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
+
 export function DonorAuthModalTrigger() {
   const [mode, setMode] = useState<AuthMode>("login");
   const [isOpen, setIsOpen] = useState(false);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
 
   function openModal(nextMode: AuthMode) {
+    previouslyFocused.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     setMode(nextMode);
     setIsOpen(true);
+  }
+
+  function closeModal() {
+    setIsOpen(false);
+    // Return focus to the trigger once the portal has unmounted.
+    window.requestAnimationFrame(() => previouslyFocused.current?.focus());
   }
 
   return (
@@ -22,14 +42,14 @@ export function DonorAuthModalTrigger() {
         <button
           type="button"
           onClick={() => openModal("login")}
-          className="inline-flex min-h-10 items-center rounded-full bg-[color:var(--craft-leaf)] px-4 text-sm font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)]"
+          className="inline-flex min-h-11 items-center rounded-full bg-[color:var(--craft-leaf)] px-4 text-sm font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)]"
         >
           Masuk
         </button>
         <button
           type="button"
           onClick={() => openModal("signup")}
-          className="inline-flex min-h-10 items-center rounded-full border border-[color:var(--craft-line-strong)] px-4 text-sm font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
+          className="inline-flex min-h-11 items-center rounded-full border border-[color:var(--craft-line-strong)] px-4 text-sm font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
         >
           Daftar
         </button>
@@ -39,7 +59,7 @@ export function DonorAuthModalTrigger() {
             <DonorAuthModal
               mode={mode}
               onModeChange={setMode}
-              onClose={() => setIsOpen(false)}
+              onClose={closeModal}
             />,
             document.body,
           )
@@ -57,15 +77,47 @@ function DonorAuthModal({
   onModeChange: (mode: AuthMode) => void;
   onClose: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
 
+    // Move focus into the dialog so keyboard and screen reader users land here.
+    const node = dialogRef.current;
+    const initialFocus = node?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+    initialFocus?.focus();
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         onClose();
+        return;
+      }
+
+      if (event.key !== "Tab" || !node) {
+        return;
+      }
+
+      const focusable = Array.from(
+        node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+      ).filter((element) => element.offsetParent !== null);
+
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
       }
     }
 
@@ -83,8 +135,12 @@ function DonorAuthModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="donor-auth-title"
+      aria-describedby="donor-auth-description"
     >
-      <div className="craft-card-strong max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div
+        ref={dialogRef}
+        className="craft-card-strong max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-[color:var(--craft-leaf)]">
@@ -100,12 +156,20 @@ function DonorAuthModal({
           <button
             type="button"
             onClick={onClose}
-            className="grid size-10 place-items-center rounded-full border border-[color:var(--craft-line-strong)] text-lg font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
+            className="grid size-11 shrink-0 place-items-center rounded-full border border-[color:var(--craft-line-strong)] text-lg font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
             aria-label="Tutup popup akun donatur"
           >
             ×
           </button>
         </div>
+
+        <p
+          id="donor-auth-description"
+          className="mt-3 text-sm leading-6 text-[color:var(--craft-ink-soft)]"
+        >
+          Akun bersifat opsional. Fungsinya menyimpan riwayat donasi; berdonasi
+          tetap bisa tanpa login.
+        </p>
 
         {mode === "login" ? (
           <LoginPanel onSwitchToSignup={() => onModeChange("signup")} />
@@ -163,7 +227,7 @@ function LoginPanel({ onSwitchToSignup }: { onSwitchToSignup: () => void }) {
       <button
         type="button"
         onClick={handleGoogleLogin}
-        className="w-full rounded-full border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] px-5 py-3 font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
+        className="w-full min-h-11 rounded-full border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] px-5 py-3 font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
       >
         Masuk dengan Google
       </button>
@@ -201,7 +265,11 @@ function LoginPanel({ onSwitchToSignup }: { onSwitchToSignup: () => void }) {
             required
           />
         </div>
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {error ? (
+          <p role="alert" className="text-sm font-medium text-red-700">
+            {error}
+          </p>
+        ) : null}
         <button
           type="submit"
           disabled={isSubmitting}
@@ -288,7 +356,7 @@ function SignupPanel({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
       <button
         type="button"
         onClick={handleGoogleSignup}
-        className="w-full rounded-full border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] px-5 py-3 font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
+        className="w-full min-h-11 rounded-full border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] px-5 py-3 font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
       >
         Daftar dengan Google
       </button>
@@ -344,7 +412,11 @@ function SignupPanel({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
             required
           />
         </div>
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {error ? (
+          <p role="alert" className="text-sm font-medium text-red-700">
+            {error}
+          </p>
+        ) : null}
         <button
           type="submit"
           disabled={isSubmitting}

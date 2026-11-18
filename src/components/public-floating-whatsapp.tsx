@@ -29,7 +29,7 @@ export function PublicFloatingWhatsApp() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Hubungi admin via WhatsApp"
-      className="group fixed left-4 top-1/2 z-50 inline-flex -translate-y-1/2 items-center gap-2 rounded-full bg-emerald-600 px-2.5 py-2 text-sm font-bold text-white shadow-xl ring-1 ring-emerald-500/70 transition hover:-translate-y-[52%] hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200"
+      className="group fixed bottom-24 right-4 z-40 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-2.5 py-2 text-sm font-bold text-white shadow-xl ring-1 ring-emerald-500/70 transition hover:-translate-y-0.5 hover:bg-emerald-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200 md:bottom-6"
     >
       <span
         className="grid size-8 place-items-center rounded-full bg-white text-emerald-600"

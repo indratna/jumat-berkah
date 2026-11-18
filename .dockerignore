@@ -12,6 +12,13 @@ node_modules
 # Local-only scratch notes at repo root
 /*.txt
 
+# Locally uploaded files must not enter the image; keep the placeholders so the
+# upload directories exist for the unprivileged runtime user.
+public/uploads/receipts/*
+!public/uploads/receipts/.gitkeep
+public/uploads/distribution/*
+!public/uploads/distribution/.gitkeep
+
 # Logs
 *.log
 npm-debug.log*

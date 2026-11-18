@@ -168,6 +168,32 @@ curl -H "X-Cron-Secret: YOUR_CRON_SECRET" \
   https://your-domain.example.com/api/cron/telegram/health
 ```
 
+### Penjadwalan cron di server
+
+Endpoint ini tidak berjalan sendiri; tanpa penjadwal tidak ada laporan yang terkirim. Pakai `scripts/run-cron-endpoint.sh`, yang membaca `CRON_SECRET` langsung dari `.env.production` sehingga secret tidak pernah ditulis ke crontab:
+
+```bash
+mkdir -p "$HOME/bin"
+install -m 755 scripts/run-cron-endpoint.sh "$HOME/bin/jumat-berkah-cron.sh"
+```
+
+Crontab user pemilik deploy (`crontab -e`):
+
+```cron
+0 20 * * * /home/DEPLOY_USER/bin/jumat-berkah-cron.sh daily >/dev/null 2>&1
+*/15 * * * * /home/DEPLOY_USER/bin/jumat-berkah-cron.sh health >/dev/null 2>&1
+```
+
+Jadwal yang aman untuk kanal publik: hanya `daily` dan `health`. Keduanya mengirim ke chat admin (`TELEGRAM_NOTIFY_CHAT_ID`). Endpoint `weekly` dan `cycle-transition` **memposting ke channel publik** (`TELEGRAM_PUBLIC_CHANNEL_ID`), jadi jangan dijadwalkan tanpa persetujuan pemilik program.
+
+Log hasil panggilan ada di `$HOME/jumat-berkah-cron.log`:
+
+```txt
+2026-11-18T10:26:19+07:00 health http=200 body={"ok":true,"result":{"sent":false,"reason":"healthy"}}
+```
+
+Rotasi secret: ubah `CRON_SECRET` di `.env.production`, lalu recreate container (`docker compose ... up -d --no-deps jumat-berkah-app`). Skrip cron tidak perlu diubah karena membaca nilai terbaru setiap kali jalan.
+
 ## Email / Resend
 
 | Env var | Required | Source | Notes | Smoke test |

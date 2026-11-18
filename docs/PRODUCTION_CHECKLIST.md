@@ -133,7 +133,9 @@ npm run seed:admin
 ## 9. Cron
 
 - [ ] `CRON_SECRET` strong and server-only.
-- [ ] Vercel/host cron configured for daily, weekly, donor reminder, health, and WhatsApp reminders as needed.
+- [ ] `scripts/run-cron-endpoint.sh` terpasang di `$HOME/bin` dan terbukti mengembalikan `http=200`.
+- [ ] Crontab host berisi `daily` (20:00) dan `health` (tiap 15 menit) — lihat `docs/ENV_SETUP.md`.
+- [ ] `weekly`, `cycle-transition`, `donor-reminder`, dan WhatsApp reminder **tidak** dijadwalkan tanpa persetujuan pemilik program (dua yang pertama memposting ke channel publik).
 - [ ] Wrong cron secret returns unauthorized.
 - [ ] Manual health cron succeeds.
 - [ ] Daily/weekly messages are not duplicated unexpectedly.
@@ -143,6 +145,9 @@ Manual smoke:
 ```bash
 curl -H "X-Cron-Secret: YOUR_CRON_SECRET" \
   https://your-domain.example.com/api/cron/telegram/health
+
+# atau lewat skrip yang dipakai cron
+"$HOME/bin/jumat-berkah-cron.sh" health && tail -n 3 "$HOME/jumat-berkah-cron.log"
 ```
 
 ## 10. WhatsApp reminder

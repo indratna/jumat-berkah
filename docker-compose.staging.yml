@@ -16,6 +16,11 @@ services:
       HOSTNAME: "0.0.0.0"
     ports:
       - "127.0.0.1:3010:3000"
+    volumes:
+      # Uploaded expense receipts and distribution photos are written to
+      # /app/public/uploads at runtime. Without a volume they live in the
+      # container filesystem and disappear on every recreate/deploy.
+      - jumat_berkah_uploads:/app/public/uploads
     depends_on:
       jumat-berkah-postgres:
         condition: service_healthy
@@ -44,6 +49,8 @@ services:
 volumes:
   jumat_berkah_postgres_data:
     name: jumat_berkah_postgres_data
+  jumat_berkah_uploads:
+    name: jumat_berkah_uploads
 
 networks:
   jumat-berkah-network:

@@ -163,6 +163,9 @@ curl -H "X-Cron-Secret: YOUR_CRON_SECRET" \
 - [ ] Receipt links expire.
 - [ ] Tampered receipt links rejected.
 - [ ] Public report never links private receipt directly.
+- [ ] Volume `jumat_berkah_uploads` ter-mount di `/app/public/uploads` (`docker inspect jumat-berkah-app --format '{{range .Mounts}}{{.Destination}} {{end}}'`).
+- [ ] Smoke persistensi: unggah satu bukti lewat admin, `docker compose ... up -d --no-deps jumat-berkah-app`, lalu pastikan file masih ada di `/app/public/uploads/receipts`.
+- [ ] `jumat-berkah-backup-uploads.sh` terjadwal dan menghasilkan arsip di `/var/backups/jumat-berkah`.
 
 ## 12. Admin operations
 

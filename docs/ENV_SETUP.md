@@ -270,6 +270,31 @@ docker compose -f docker-compose.staging.yml --env-file .env.production up -d --
 
 Tanpa `--env-file` (atau bila variabelnya kosong), build tetap sukses tetapi nilai tersebut tertanam sebagai string kosong: popup Snap jatuh ke mode redirect dan link notifikasi/receipt kehilangan domain. Setelah mengganti salah satu nilai, rebuild image.
 
+### Jaringan saat build
+
+Build memakai jaringan default Docker. Isi build hanya `npm ci` yang butuh internet, dan jaringan bridge default sudah cukup untuk itu.
+
+Jangan menambahkan `network: host` di bagian `build:`. BuildKit menolak opsi itu kecuali builder-nya diberi entitlement `network.host`, dan builder bawaan Docker Engine (driver `docker`) tidak memberikannya, sehingga build gagal dengan:
+
+```txt
+additional privileges requested: pass "--allow=network.host" to grant requested privileges
+```
+
+Kalau sebuah builder lokal memang butuh host networking, taruh di file override lokal yang tidak di-commit:
+
+```bash
+# docker-compose.local.yml (gitignored)
+services:
+  jumat-berkah-app:
+    build:
+      network: host
+```
+
+```bash
+docker compose -f docker-compose.staging.yml -f docker-compose.local.yml \
+  --env-file .env.production build
+```
+
 ### Healthcheck sebagai gate deploy
 
 Image produksi membawa `HEALTHCHECK` yang memanggil `/login` di dalam container. Itu liveness murni: halaman prerender, jadi tidak menyentuh database dan tidak ikut goyah saat database sedang tidak sehat.

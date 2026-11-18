@@ -48,6 +48,7 @@ run.bat
 push-github.bat
 .freebuff/
 Dockerfile.local
+docker-compose.local.yml
 
 # Editor settings
 .zed/

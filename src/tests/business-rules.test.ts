@@ -640,6 +640,7 @@ test("public report exports hide donor private fields and keep totals", () => {
         description: "Doa publik aman tanpa kontak pribadi",
         amount: 50_000,
         meta: null,
+        sortDate: new Date("2026-05-28T00:00:00.000Z"),
       },
     ],
   };
@@ -682,6 +683,7 @@ test("Friday cycle PDF export returns a PDF buffer", () => {
         description: "Masjid belakang kantor",
         amount: null,
         meta: "50 paket",
+        sortDate: new Date("2026-05-28T00:00:00.000Z"),
       },
     ],
   };

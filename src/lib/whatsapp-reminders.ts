@@ -47,7 +47,7 @@ export type WhatsAppReminderBatchResult = {
 };
 
 export function getWhatsAppReminderConfig(
-  env: NodeJS.ProcessEnv = process.env,
+  env: Record<string, string | undefined> = process.env,
 ): WhatsAppReminderConfig {
   return {
     enabled: env.WHATSAPP_REMINDER_ENABLED === "true",

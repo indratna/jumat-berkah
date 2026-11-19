@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Lint, test, build, audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/jumat_berkah_ci
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      AUTH_URL: http://localhost:3000
+      AUTH_SECRET: ci-only-placeholder-auth-secret-32-chars
+      BETTER_AUTH_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: ci-only-placeholder-better-auth-secret-32-chars
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_LOGIN_CODE: ci-only-placeholder-admin-code
+      DONOR_LOGIN_CODE: ci-only-placeholder-donor-code
+      MIDTRANS_SERVER_KEY: SB-Mid-server-ci-placeholder
+      MIDTRANS_CLIENT_KEY: SB-Mid-client-ci-placeholder
+      NEXT_PUBLIC_MIDTRANS_CLIENT_KEY: SB-Mid-client-ci-placeholder
+      MIDTRANS_IS_PRODUCTION: "false"
+      TELEGRAM_WEBHOOK_SECRET: ci-only-placeholder-telegram-secret
+      RECEIPT_SIGNED_URL_SECRET: ci-only-placeholder-receipt-secret
+      CRON_SECRET: ci-only-placeholder-cron-secret
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit and security tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high

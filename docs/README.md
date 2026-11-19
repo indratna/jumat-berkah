@@ -18,6 +18,10 @@ This directory contains public, reusable documentation for running and maintaini
 
 - `BETTER_AUTH_SETUP.md` — Better Auth and Google OAuth setup.
 
+## Security
+
+- `SECURITY_TESTING.md` — test layers, commands, and manual security checklist.
+
 ## Operations
 
 - `BACKUP_RESTORE_RUNBOOK.md` — PostgreSQL backup and restore drill.

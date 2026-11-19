@@ -53,7 +53,10 @@ test("robots melarang area admin dan api", () => {
 
   assert.ok(disallow.includes("/admin"));
   assert.ok(disallow.includes("/api/"));
-  assert.ok(config.sitemap?.endsWith("/sitemap.xml"));
+  const sitemapUrl = Array.isArray(config.sitemap)
+    ? config.sitemap[0]
+    : config.sitemap;
+  assert.ok(sitemapUrl?.endsWith("/sitemap.xml"));
 });
 
 test("sitemap hanya memuat halaman publik yang diindeks", () => {

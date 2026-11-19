@@ -6,6 +6,14 @@ import {
   getDonorSessionMaxAge,
 } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
+import {
+  RATE_LIMITS,
+  buildRateLimitKey,
+  consumeRateLimit,
+  rateLimitResponse,
+} from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/request-security";
+import { timingSafeEqualString } from "@/lib/secrets";
 
 type DonorLoginPayload = {
   name?: unknown;
@@ -14,6 +22,18 @@ type DonorLoginPayload = {
 };
 
 export async function POST(request: Request) {
+  const rateLimit = consumeRateLimit({
+    key: buildRateLimitKey("donor:login", getClientIp(request)),
+    rule: RATE_LIMITS.donorLogin,
+  });
+
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(
+      rateLimit,
+      "Terlalu banyak percobaan login. Coba lagi beberapa menit lagi.",
+    );
+  }
+
   const payload = (await request.json().catch(() => null)) as DonorLoginPayload | null;
   const name = typeof payload?.name === "string" ? payload.name.trim() : "";
   const email = typeof payload?.email === "string" ? payload.email.trim().toLowerCase() : "";
@@ -34,7 +54,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!loginCode || loginCode !== expectedLoginCode) {
+  if (!loginCode || !timingSafeEqualString(loginCode, expectedLoginCode)) {
     return NextResponse.json(
       { errors: { auth: "Kode donatur tidak valid." } },
       { status: 401 },

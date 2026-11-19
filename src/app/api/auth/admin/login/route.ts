@@ -6,6 +6,14 @@ import {
   getAdminSessionMaxAge,
 } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
+import {
+  RATE_LIMITS,
+  buildRateLimitKey,
+  consumeRateLimit,
+  rateLimitResponse,
+} from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/request-security";
+import { timingSafeEqualString } from "@/lib/secrets";
 import { recordFailedAdminLogin } from "@/lib/telegram-alerts";
 
 type LoginPayload = {
@@ -14,6 +22,18 @@ type LoginPayload = {
 };
 
 export async function POST(request: Request) {
+  const rateLimit = consumeRateLimit({
+    key: buildRateLimitKey("admin:login", getClientIp(request)),
+    rule: RATE_LIMITS.adminLogin,
+  });
+
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(
+      rateLimit,
+      "Terlalu banyak percobaan login. Coba lagi beberapa menit lagi.",
+    );
+  }
+
   const payload = (await request
     .json()
     .catch(() => null)) as LoginPayload | null;
@@ -32,7 +52,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!email || !loginCode || loginCode !== expectedLoginCode) {
+  if (!email || !loginCode || !timingSafeEqualString(loginCode, expectedLoginCode)) {
     await recordFailedAdminLogin({
       email,
       ipAddress: getClientIp(request),
@@ -72,14 +92,4 @@ export async function POST(request: Request) {
   });
 
   return response;
-}
-
-function getClientIp(request: Request): string | null {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-
-  if (forwardedFor) {
-    return forwardedFor.split(",")[0]?.trim() || null;
-  }
-
-  return request.headers.get("x-real-ip");
 }

@@ -1,6 +1,8 @@
+import type { SupportedFileType } from "@/lib/file-signature";
+
 export const MAX_DISTRIBUTION_PHOTO_SIZE_BYTES = 1_048_576;
 
-const allowedMimeTypes = new Map([
+const allowedMimeTypes = new Map<string, SupportedFileType>([
   ["image/jpeg", "jpg"],
   ["image/png", "png"],
   ["image/webp", "webp"],
@@ -48,7 +50,9 @@ export function buildDistributionPhotoFilename(input: {
   return `distribution-photo-${input.randomId}.${extension}`;
 }
 
-export function getDistributionPhotoExtensionFromMime(type: string) {
+export function getDistributionPhotoExtensionFromMime(
+  type: string,
+): SupportedFileType | null {
   return allowedMimeTypes.get(type) ?? null;
 }
 

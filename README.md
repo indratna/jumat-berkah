@@ -112,7 +112,8 @@ Key documents:
 - Money is stored as integer Rupiah.
 - Final payment status comes from verified Midtrans webhooks, not client callbacks.
 
-See `SECURITY.md` for vulnerability reporting and secret handling policy.
+See `SECURITY.md` for vulnerability reporting and secret handling policy, and
+`docs/SECURITY_TESTING.md` for the automated and manual security checks.
 
 ## Contributing
 

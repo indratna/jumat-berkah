@@ -14,6 +14,7 @@ import {
   getDistributionPhotoExtensionFromMime,
   validateDistributionPhotoFile,
 } from "@/lib/distribution-photo-upload";
+import { matchesExpectedExtension } from "@/lib/file-signature";
 
 const PUBLIC_PATH = "/uploads/distribution";
 
@@ -63,6 +64,14 @@ export async function POST(request: Request) {
   const dir = path.join(process.cwd(), "public", "uploads", "distribution");
   const filePath = path.join(dir, filename);
   const bytes = Buffer.from(await file.arrayBuffer());
+
+  // The browser's MIME type is attacker-controlled; verify the real bytes.
+  if (!matchesExpectedExtension(bytes, extension)) {
+    return NextResponse.json(
+      { errors: { file: "Isi file tidak sesuai dengan format yang diklaim." } },
+      { status: 400 },
+    );
+  }
 
   await mkdir(dir, { recursive: true });
   await writeFile(filePath, bytes);

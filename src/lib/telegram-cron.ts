@@ -17,6 +17,7 @@ import {
   isTelegramNotifyEnabled,
   safeSendTelegramMessage,
 } from "@/lib/telegram";
+import { timingSafeEqualString } from "@/lib/secrets";
 
 export const CRON_SECRET_HEADER = "x-cron-secret";
 const LOW_BALANCE_ALERT_ACTION = "telegram.alert.low_balance";
@@ -74,7 +75,7 @@ export function verifyCronSecret(headerValue: string | null): boolean {
     return false;
   }
 
-  return headerValue === secret.trim();
+  return timingSafeEqualString(headerValue, secret.trim());
 }
 
 export function getLowBalanceThreshold(): number | null {

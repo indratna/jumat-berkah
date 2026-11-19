@@ -14,8 +14,27 @@ import {
   MidtransConfigurationError,
 } from "@/lib/midtrans";
 import { createDonationCreatedNotification } from "@/lib/admin-notifications";
+import {
+  RATE_LIMITS,
+  buildRateLimitKey,
+  consumeRateLimit,
+  rateLimitResponse,
+} from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/request-security";
 
 export async function POST(request: Request) {
+  const rateLimit = consumeRateLimit({
+    key: buildRateLimitKey("donation:create", getClientIp(request)),
+    rule: RATE_LIMITS.donationCreate,
+  });
+
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(
+      rateLimit,
+      "Terlalu banyak permintaan donasi. Coba lagi beberapa menit lagi.",
+    );
+  }
+
   const payload: unknown = await request.json().catch(() => null);
 
   if (!payload || typeof payload !== "object") {

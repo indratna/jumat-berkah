@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import {
+  firstHeaderValue,
+  hostFromUrl,
+  isCrossSiteOrigin,
+} from "@/lib/request-security";
+
 const ADMIN_SESSION_COOKIE = "admin_session";
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+const BETTER_AUTH_COOKIE_HINT = "better-auth.session_token";
 
 type ProxyAdminSessionPayload = {
   role: "admin";
@@ -16,11 +24,41 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (isAdminApi && !SAFE_METHODS.has(request.method)) {
+    const allowedHosts = [
+      request.headers.get("host"),
+      firstHeaderValue(request.headers.get("x-forwarded-host")),
+      hostFromUrl(process.env.NEXT_PUBLIC_APP_URL),
+      hostFromUrl(process.env.BETTER_AUTH_URL),
+      hostFromUrl(process.env.AUTH_URL),
+    ];
+
+    if (
+      isCrossSiteOrigin({
+        origin: request.headers.get("origin"),
+        allowedHosts,
+      })
+    ) {
+      return NextResponse.json(
+        { errors: { auth: "Origin tidak diizinkan." } },
+        { status: 403 },
+      );
+    }
+  }
+
   const isAuthenticated = await verifyAdminSession(
     request.cookies.get(ADMIN_SESSION_COOKIE)?.value,
   );
 
   if (isAuthenticated) {
+    return NextResponse.next();
+  }
+
+  // Better Auth issues its own session cookie, and only the app runtime can
+  // verify it against the database. When that cookie is present, defer to the
+  // admin layout and the admin route handlers, which run the authoritative
+  // check; otherwise Google admin logins would be locked out here.
+  if (hasBetterAuthSessionCookie(request)) {
     return NextResponse.next();
   }
 
@@ -38,6 +76,16 @@ export const config = {
   matcher: ["/admin/:path*", "/api/admin/:path*"],
 };
 
+function hasBetterAuthSessionCookie(request: NextRequest) {
+  return request.cookies
+    .getAll()
+    .some(
+      (cookie) =>
+        cookie.name.includes(BETTER_AUTH_COOKIE_HINT) &&
+        cookie.value.length > 0,
+    );
+}
+
 async function verifyAdminSession(session: string | undefined) {
   if (!session) {
     return false;
@@ -51,7 +99,7 @@ async function verifyAdminSession(session: string | undefined) {
 
   const expectedSignature = await signSessionPayload(encodedPayload);
 
-  if (signature !== expectedSignature) {
+  if (!(await safeEqual(signature, expectedSignature))) {
     return false;
   }
 
@@ -83,6 +131,34 @@ async function signSessionPayload(encodedPayload: string) {
   );
 
   return base64UrlEncode(new Uint8Array(signature));
+}
+
+async function safeEqual(received: string, expected: string) {
+  if (!received || !expected) {
+    return false;
+  }
+
+  const [receivedHash, expectedHash] = await Promise.all([
+    sha256(received),
+    sha256(expected),
+  ]);
+
+  let difference = 0;
+
+  for (let index = 0; index < receivedHash.length; index += 1) {
+    difference |= (receivedHash[index] ?? 0) ^ (expectedHash[index] ?? 0);
+  }
+
+  return difference === 0;
+}
+
+async function sha256(value: string) {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(value),
+  );
+
+  return new Uint8Array(digest);
 }
 
 function parsePayload(encodedPayload: string) {

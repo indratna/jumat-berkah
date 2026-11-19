@@ -14,6 +14,7 @@ import {
   getExpenseReceiptExtensionFromMime,
   validateExpenseReceiptFile,
 } from "@/lib/expense-receipt-upload";
+import { matchesExpectedExtension } from "@/lib/file-signature";
 
 const RECEIPT_PUBLIC_PATH = "/uploads/receipts";
 
@@ -68,6 +69,14 @@ export async function POST(request: Request) {
   );
   const uploadPath = path.join(uploadDirectory, filename);
   const bytes = Buffer.from(await file.arrayBuffer());
+
+  // The browser's MIME type is attacker-controlled; verify the real bytes.
+  if (!matchesExpectedExtension(bytes, extension)) {
+    return NextResponse.json(
+      { errors: { file: "Isi file tidak sesuai dengan format yang diklaim." } },
+      { status: 400 },
+    );
+  }
 
   await mkdir(uploadDirectory, { recursive: true });
   await writeFile(uploadPath, bytes);

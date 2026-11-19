@@ -22,7 +22,7 @@ const items = [
   {
     title: "Privasi donatur dilindungi",
     description:
-      "Email dan nomor WhatsApp tidak pernah ditampilkan di laporan publik. Nama hanya tampil jika donatur mengizinkan; anonim ditampilkan sebagai Anonim.",
+      "Email dan nomor WhatsApp tidak pernah ditampilkan di laporan publik. Nama hanya tampil jika donatur mengizinkannya; donatur anonim tampil sebagai Anonim.",
     icon: (
       <svg
         viewBox="0 0 24 24"

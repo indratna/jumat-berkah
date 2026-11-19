@@ -12,17 +12,17 @@ export function LandingFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="overflow-hidden rounded-3xl bg-[color:var(--craft-leaf-strong)] text-[color:var(--craft-cream)]">
+    <footer className="overflow-hidden rounded-3xl bg-[#14432d] text-[#f7f1e6]">
       <div className="grid gap-8 px-6 py-8 sm:px-10 sm:py-10 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
         <div className="space-y-3">
-          <span className="inline-flex items-center rounded-full border border-[color:var(--craft-cream)]/25 bg-[color:var(--craft-cream)]/15 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.18em] text-[color:var(--craft-cream)]">
+          <span className="inline-flex items-center rounded-full border border-[#f7f1e6]/25 bg-[#f7f1e6]/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-[#f7f1e6]">
             Jumat Berkah Karyo
           </span>
-          <p className="text-base leading-7 text-[color:var(--craft-cream)]/90">
+          <p className="text-base leading-7 text-[#f7f1e6]/90">
             Program donasi sosial internal kantor. Setiap rupiah dipakai
             langsung untuk penyaluran nasi Jumat ke masjid sekitar kantor.
           </p>
-          <p className="text-xs leading-5 text-[color:var(--craft-cream)]/80">
+          <p className="text-xs leading-5 text-[#f7f1e6]/85">
             Email dan nomor WhatsApp donatur tidak pernah ditampilkan di laporan
             publik. Hanya admin internal yang melihat data operasional.
           </p>
@@ -31,20 +31,20 @@ export function LandingFooter() {
           title="Donatur"
           links={[
             { href: "/donasi", label: "Donasi" },
-            { href: "/laporan", label: "Laporan" },
-            { href: "/tentang", label: "Tentang program" },
+            { href: "/laporan", label: "Laporan publik" },
+            { href: "/donasi/status", label: "Cek status donasi" },
           ]}
         />
         <FooterColumn
-          title="Dukungan"
+          title="Program"
           links={[
+            { href: "/#cara-berdonasi", label: "Cara berdonasi" },
             { href: "/laporan?period=jumat", label: "Cerita penyaluran" },
-            { href: "/akun/donasi", label: "Riwayat donasi" },
-            { href: "/masuk", label: "Masuk donatur" },
+            { href: "/tentang", label: "Tentang program" },
           ]}
         />
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-[color:var(--craft-cream)]/80">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#f7f1e6]/85">
             Kontak Admin
           </p>
           <div className="mt-1 text-sm font-semibold">
@@ -53,22 +53,22 @@ export function LandingFooter() {
                 href={adminWhatsAppHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center hover:text-[color:var(--craft-amber)]"
+                className="inline-flex min-h-11 items-center hover:text-[#e0a458]"
               >
                 WhatsApp Admin
               </a>
             ) : (
-              <span className="inline-flex min-h-11 items-center text-[color:var(--craft-cream)]/80">
+              <span className="inline-flex min-h-11 items-center text-[#f7f1e6]/85">
                 Hubungi admin
               </span>
             )}
           </div>
-          <p className="text-xs leading-5 text-[color:var(--craft-cream)]/80">
+          <p className="text-xs leading-5 text-[#f7f1e6]/85">
             Sertakan Order ID jika bertanya tentang donasi tertentu.
           </p>
         </div>
       </div>
-      <div className="flex flex-col gap-2 border-t border-[color:var(--craft-cream)]/20 px-6 py-4 text-xs text-[color:var(--craft-cream)]/80 sm:flex-row sm:items-center sm:justify-between sm:px-10">
+      <div className="flex flex-col gap-2 border-t border-[#f7f1e6]/20 px-6 py-4 text-xs text-[#f7f1e6]/85 sm:flex-row sm:items-center sm:justify-between sm:px-10">
         <p>© {year} Jumat Berkah Karyo. Semua donasi dipakai untuk program.</p>
         <p>Jumat Berkah: Donasi Mudah, Laporan Terbuka.</p>
       </div>
@@ -85,7 +85,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-widest text-[color:var(--craft-cream)]/80">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#f7f1e6]/85">
         {title}
       </p>
       <ul className="mt-1 space-y-1 text-sm font-semibold">
@@ -93,7 +93,7 @@ function FooterColumn({
           <li key={link.href}>
             <Link
               href={link.href}
-              className="inline-flex min-h-11 items-center hover:text-[color:var(--craft-amber)]"
+              className="inline-flex min-h-11 items-center hover:text-[#e0a458]"
             >
               {link.label}
             </Link>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { PublicHeader } from "@/components/landing/public-header";
+import { MobileDonationCta } from "@/components/landing/mobile-donation-cta";
 
 const pillars = [
   {
@@ -62,6 +63,7 @@ export default function TentangPage() {
             <div className="space-y-3 p-6">
               <span className="craft-pill">Aksi cepat</span>
               <Link
+                id="hero-cta"
                 href="/donasi"
                 className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[color:var(--craft-leaf)] px-5 text-sm font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)]"
               >
@@ -159,14 +161,7 @@ export default function TentangPage() {
         </section>
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--craft-line-strong)] bg-[color:var(--craft-leaf)] p-3 md:hidden">
-        <Link
-          href="/donasi"
-          className="flex min-h-11 w-full items-center justify-center rounded-full bg-[color:var(--craft-leaf-strong)] px-4 text-sm font-bold text-[color:var(--craft-cream)]"
-        >
-          Donasi Sekarang
-        </Link>
-      </div>
+      <MobileDonationCta />
     </div>
   );
 }

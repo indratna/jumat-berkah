@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { Suspense } from "react";
 
 import { LandingFaq } from "@/components/landing/landing-faq";
 import { LandingFooter } from "@/components/landing/landing-footer";
-import { LandingHero } from "@/components/landing/landing-hero";
+import { LandingHero, LandingHeroFigure } from "@/components/landing/landing-hero";
 import { LandingHowItWorks } from "@/components/landing/landing-how-it-works";
 import {
   SocialProofSkeleton,
@@ -14,6 +13,7 @@ import { LandingSocialProofSection } from "@/components/landing/landing-social-p
 import { LandingStoriesSection } from "@/components/landing/landing-stories-section";
 import { LandingTargetSection } from "@/components/landing/landing-target-section";
 import { LandingTransparency } from "@/components/landing/landing-transparency";
+import { MobileDonationCta } from "@/components/landing/mobile-donation-cta";
 import { PublicHeader } from "@/components/landing/public-header";
 
 export const dynamic = "force-dynamic";
@@ -27,14 +27,24 @@ export default function Home() {
       >
         <PublicHeader />
 
-        <div className="grid items-stretch gap-8 lg:grid-cols-12">
-          <div className="lg:col-span-7">
+        {/*
+          Mobile order is intentional: headline and quick amounts first, then the
+          target card, then the illustration. On desktop the illustration moves
+          back under the hero while the target card sticks in the right column.
+        */}
+        <div className="grid gap-8 lg:grid-cols-12">
+          <div className="lg:col-span-7 lg:row-start-1">
             <LandingHero />
           </div>
-          <div className="lg:col-span-5">
-            <Suspense fallback={<TargetCardSkeleton />}>
-              <LandingTargetSection />
-            </Suspense>
+          <div className="lg:col-span-5 lg:row-span-2 lg:row-start-1">
+            <div className="lg:sticky lg:top-8">
+              <Suspense fallback={<TargetCardSkeleton />}>
+                <LandingTargetSection />
+              </Suspense>
+            </div>
+          </div>
+          <div className="lg:col-span-7 lg:row-start-2">
+            <LandingHeroFigure />
           </div>
         </div>
 
@@ -55,14 +65,7 @@ export default function Home() {
         <LandingFooter />
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--craft-line-strong)] bg-[color:var(--craft-leaf)] p-3 md:hidden">
-        <Link
-          href="/donasi"
-          className="flex min-h-11 w-full items-center justify-center rounded-full bg-[color:var(--craft-leaf-strong)] px-4 text-sm font-bold text-[color:var(--craft-cream)]"
-        >
-          Donasi Sekarang
-        </Link>
-      </div>
+      <MobileDonationCta />
     </div>
   );
 }

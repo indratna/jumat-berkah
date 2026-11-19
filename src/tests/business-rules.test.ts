@@ -374,6 +374,19 @@ test("donation validation accepts anonymous valid amount", () => {
   }
 });
 
+test("donation validation accepts a blank donor name", () => {
+  const result = validateDonationInput({
+    amount: 10_000,
+  });
+
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal(result.data.donorName, null);
+    assert.equal(result.data.isAnonymous, false);
+    assert.equal(result.data.showNamePublicly, true);
+  }
+});
+
 test("donation validation defaults WhatsApp reminder consent off", () => {
   const result = validateDonationInput({
     donorName: "Budi",

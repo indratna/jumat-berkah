@@ -62,7 +62,7 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
                 name="from"
                 type="date"
                 defaultValue={from ?? ""}
-                className="mt-2 w-full rounded-xl border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] px-3 py-2.5 text-sm text-[color:var(--craft-ink)]"
+                className="mt-2 min-h-11 w-full rounded-xl border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] px-3 py-2.5 text-sm text-[color:var(--craft-ink)]"
               />
             </label>
             <label className="text-sm font-semibold text-[color:var(--craft-ink)]">
@@ -71,7 +71,7 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
                 name="to"
                 type="date"
                 defaultValue={to ?? ""}
-                className="mt-2 w-full rounded-xl border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] px-3 py-2.5 text-sm text-[color:var(--craft-ink)]"
+                className="mt-2 min-h-11 w-full rounded-xl border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] px-3 py-2.5 text-sm text-[color:var(--craft-ink)]"
               />
             </label>
             <button className="min-h-11 rounded-full bg-[color:var(--craft-leaf)] px-5 text-sm font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)] sm:col-span-2">
@@ -113,7 +113,7 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
             <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
               {distribution.report.title}
             </h2>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--craft-ink-soft)]">
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-[color:var(--craft-ink-soft)]">
               <span className="craft-pill">{distribution.cycle.label}</span>
               {distribution.report.locationSummary ? (
                 <span className="craft-pill">
@@ -370,7 +370,7 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="craft-card p-5 print:break-inside-avoid print:rounded-xl print:border print:border-slate-200 print:shadow-none">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--craft-ink-soft)]">
+      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[color:var(--craft-ink-soft)]">
         {label}
       </p>
       <p className="craft-num mt-3 text-2xl font-bold tracking-tight print:text-lg">

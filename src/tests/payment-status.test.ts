@@ -2,12 +2,17 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  LAST_ORDER_STORAGE_KEY,
   PAYMENT_REDIRECT_STORAGE_PREFIX,
   getEstimatedPaymentDeadline,
   getPaymentRedirectStorageKey,
+  getPaymentStatusLabel,
   isFinalDonationStatus,
+  isLastOrderFresh,
   isPaymentDeadlineExpired,
+  readLastOrder,
   resolveDonationStatusTone,
+  writeLastOrder,
 } from "@/lib/payment-status";
 
 test("only settlement maps to the success tone", () => {
@@ -42,6 +47,16 @@ test("payment redirect storage key is scoped per order", () => {
   );
 });
 
+test("donor-facing status labels avoid raw Midtrans vocabulary", () => {
+  assert.equal(getPaymentStatusLabel("settlement"), "Pembayaran berhasil");
+  assert.equal(getPaymentStatusLabel("pending"), "Menunggu pembayaran");
+  assert.equal(getPaymentStatusLabel("expire"), "Kedaluwarsa");
+  assert.equal(getPaymentStatusLabel("cancel"), "Tidak berhasil");
+  assert.equal(getPaymentStatusLabel("deny"), "Tidak berhasil");
+  assert.equal(getPaymentStatusLabel("failure"), "Tidak berhasil");
+  assert.equal(getPaymentStatusLabel("refund"), "Tidak berhasil");
+});
+
 test("estimated deadline uses the 24 hour Snap default", () => {
   const createdAt = new Date("2026-11-18T03:00:00.000Z");
   const deadline = getEstimatedPaymentDeadline(createdAt);
@@ -68,5 +83,52 @@ test("deadline expiry is computed from the creation time", () => {
   assert.equal(
     isPaymentDeadlineExpired(createdAt, new Date("2026-11-19T03:00:01.000Z")),
     true,
+  );
+});
+
+test("last order storage round-trips only valid records", () => {
+  const store = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      store.set(key, value);
+    },
+  };
+
+  writeLastOrder(storage, { orderId: "JB-20261119-ABCD1234", amount: 25_000 });
+
+  const snapshot = readLastOrder(storage);
+  assert.ok(snapshot);
+  assert.equal(snapshot.orderId, "JB-20261119-ABCD1234");
+  assert.equal(snapshot.amount, 25_000);
+  assert.equal(store.has(LAST_ORDER_STORAGE_KEY), true);
+
+  store.set(LAST_ORDER_STORAGE_KEY, "{not json");
+  assert.equal(readLastOrder(storage), null);
+
+  store.set(LAST_ORDER_STORAGE_KEY, JSON.stringify({ orderId: "JB-1" }));
+  assert.equal(readLastOrder(storage), null);
+});
+
+test("resume banner only shows orders inside the payment window", () => {
+  const now = Date.now();
+
+  assert.equal(
+    isLastOrderFresh({ orderId: "JB-1", amount: 10_000, savedAt: now }, now),
+    true,
+  );
+  assert.equal(
+    isLastOrderFresh(
+      { orderId: "JB-1", amount: 10_000, savedAt: now - 25 * 60 * 60 * 1000 },
+      now,
+    ),
+    false,
+  );
+  assert.equal(
+    isLastOrderFresh(
+      { orderId: "JB-1", amount: 10_000, savedAt: now + 60_000 },
+      now,
+    ),
+    false,
   );
 });

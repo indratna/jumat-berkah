@@ -66,7 +66,7 @@ export function PaymentDeadlineCountdown({
 
   return (
     <div className="min-h-[5.5rem] rounded-2xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper)] px-4 py-3">
-      <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-[color:var(--craft-ink-soft)]">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--craft-ink-soft)]">
         Perkiraan batas waktu bayar
       </p>
       <p

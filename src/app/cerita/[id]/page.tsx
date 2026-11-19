@@ -160,7 +160,7 @@ export default async function StoryPage({ params }: StoryPageProps) {
                   href={`/cerita/${nav.previous.id}`}
                   className="rounded-xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper-soft)] px-4 py-3 text-sm hover:border-[color:var(--craft-leaf)]"
                 >
-                  <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--craft-ink-soft)]">
+                  <span className="block text-xs font-semibold uppercase tracking-[0.1em] text-[color:var(--craft-ink-soft)]">
                     Cerita Sebelumnya
                   </span>
                   <span className="mt-1 block font-semibold text-[color:var(--craft-ink)]">
@@ -176,7 +176,7 @@ export default async function StoryPage({ params }: StoryPageProps) {
                   href={`/cerita/${nav.next.id}`}
                   className="rounded-xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper-soft)] px-4 py-3 text-sm hover:border-[color:var(--craft-leaf)] sm:text-right"
                 >
-                  <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--craft-ink-soft)]">
+                  <span className="block text-xs font-semibold uppercase tracking-[0.1em] text-[color:var(--craft-ink-soft)]">
                     Cerita Berikutnya
                   </span>
                   <span className="mt-1 block font-semibold text-[color:var(--craft-ink)]">

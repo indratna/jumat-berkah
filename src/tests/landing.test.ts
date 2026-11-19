@@ -5,6 +5,8 @@ import {
   buildPublicDonorIdentity,
   countDistinctDonors,
   formatRelativeTime,
+  getSocialProofHeading,
+  shouldShowRecentDonations,
   type DonationIdentityRow,
 } from "@/lib/landing-stats";
 import { getFridayCycleBoundsForStart } from "@/lib/friday-cycle";
@@ -70,6 +72,17 @@ test("hidden names are not used as donor identity", () => {
     }),
     "donation:donation-1",
   );
+});
+
+test("social proof heading stays neutral until support is established", () => {
+  assert.equal(getSocialProofHeading(1), "Mereka yang sudah berbagi.");
+  assert.equal(getSocialProofHeading(4), "Mereka yang sudah berbagi.");
+  assert.equal(getSocialProofHeading(5), "Sudah banyak yang ikut berbagi.");
+});
+
+test("recent donation list only appears with at least three successes", () => {
+  assert.equal(shouldShowRecentDonations(2), false);
+  assert.equal(shouldShowRecentDonations(3), true);
 });
 
 test("relative time is human readable and never negative", () => {

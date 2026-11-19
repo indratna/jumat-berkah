@@ -1,9 +1,17 @@
+import Link from "next/link";
+
 import { CycleCountdown } from "@/components/cycle-countdown";
+import {
+  PRESET_DONATION_AMOUNTS,
+  buildDonationHref,
+} from "@/lib/donation-amount";
 import { formatRupiah } from "@/lib/format";
 import { estimatePortionCount } from "@/lib/portion-estimate";
 import type { WeeklyTargetProgress } from "@/lib/weekly-target";
 
 const JAKARTA_TIME_ZONE = "Asia/Jakarta";
+const LABEL_CLASS =
+  "text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--craft-ink-soft)]";
 
 function formatDistributionFriday(cycleToDate: string): string {
   // Cycle ends Thursday (cycleToDate). The Nasi Jumat Berkah is served the next day (Friday).
@@ -62,10 +70,10 @@ export function LandingTargetProgress({
 
   return (
     <section
-      className="craft-card-strong h-full overflow-hidden"
+      className="craft-card-strong overflow-hidden"
       aria-labelledby="target-minggu-ini"
     >
-      <div className="flex h-full flex-col gap-6 px-6 py-6 sm:px-8 sm:py-8">
+      <div className="flex flex-col gap-6 px-6 py-6 sm:px-8 sm:py-8">
         <div>
           <span className="craft-pill">Target Minggu Ini</span>
           <h2
@@ -74,7 +82,9 @@ export function LandingTargetProgress({
           >
             {hasTarget
               ? "Pantau pencapaian dana siklus Jumat."
-              : "Jadilah donatur pertama minggu ini."}
+              : progress.collected > 0
+                ? "Donasi minggu ini sudah berjalan."
+                : "Jadilah donatur pertama minggu ini."}
           </h2>
           {progress.cycle.isNewCycle ? (
             <span className="mt-3 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
@@ -92,16 +102,14 @@ export function LandingTargetProgress({
           <p className="mt-3 max-w-md text-sm leading-6 text-[color:var(--craft-ink-soft)]">
             {hasTarget
               ? `Donasi yang masuk akan digunakan untuk Nasi Jumat Berkah ${distributionDateLabel}.`
-              : `Target dana belum ditetapkan, tetapi setiap donasi tetap dicatat untuk Nasi Jumat Berkah ${distributionDateLabel}.`}
+              : `Donasi ditutup ${deadlineLabel}. Nasi dimasak dan disalurkan ${distributionDateLabel}.`}
           </p>
         </div>
 
         {hasTarget ? (
-          <div className="mt-auto flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
             <div className="flex items-end justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-[color:var(--craft-ink-soft)]">
-                Progress
-              </p>
+              <p className={LABEL_CLASS}>Progress</p>
               <p className="craft-num text-3xl text-[color:var(--craft-leaf)] sm:text-4xl">
                 {collectedPercent}%
               </p>
@@ -137,7 +145,7 @@ export function LandingTargetProgress({
                 hint={collectedPortions}
               />
               <div className="col-span-2 rounded-2xl bg-[color:var(--craft-paper)] px-3 py-3">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-[color:var(--craft-ink-soft)]">
+                <p className={LABEL_CLASS}>
                   {progress.reachedTarget ? "Status" : "Sisa menuju target"}
                 </p>
                 <p className="craft-num mt-1 text-base text-[color:var(--craft-ink)] sm:text-lg">
@@ -149,12 +157,10 @@ export function LandingTargetProgress({
             </div>
           </div>
         ) : (
-          <div className="mt-auto flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
             {progress.collected > 0 ? (
               <div className="rounded-2xl bg-[color:var(--craft-paper)] px-4 py-3">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-[color:var(--craft-ink-soft)]">
-                  Terkumpul minggu ini
-                </p>
+                <p className={LABEL_CLASS}>Terkumpul minggu ini</p>
                 <p className="craft-num mt-1 text-xl text-[color:var(--craft-ink)]">
                   {formatRupiah(progress.collected)}
                 </p>
@@ -165,17 +171,29 @@ export function LandingTargetProgress({
                 ) : null}
               </div>
             ) : null}
-            <a
+
+            <div>
+              <p className={LABEL_CLASS}>Pilih nominal cepat</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {PRESET_DONATION_AMOUNTS.map((preset) => (
+                  <Link
+                    key={preset}
+                    href={buildDonationHref(preset)}
+                    className="inline-flex min-h-11 items-center rounded-full border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] px-4 text-sm font-semibold text-[color:var(--craft-ink)] transition hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
+                  >
+                    {formatRupiah(preset)}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <Link
               href="/donasi"
               className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[color:var(--craft-leaf)] px-5 text-sm font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)]"
             >
               Donasi Sekarang
               <span aria-hidden>→</span>
-            </a>
-            <p className="text-xs leading-5 text-[color:var(--craft-ink-soft)]">
-              Donasi tidak perlu login. Nama Anda hanya tampil di laporan publik
-              jika Anda mengizinkannya.
-            </p>
+            </Link>
           </div>
         )}
       </div>
@@ -194,16 +212,12 @@ function Stat({
 }) {
   return (
     <div className="rounded-2xl bg-[color:var(--craft-paper)] px-3 py-3">
-      <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-[color:var(--craft-ink-soft)]">
-        {label}
-      </p>
+      <p className={LABEL_CLASS}>{label}</p>
       <p className="craft-num mt-1 text-base text-[color:var(--craft-ink)] sm:text-lg">
         {value}
       </p>
       {hint ? (
-        <p className="mt-1 text-xs text-[color:var(--craft-ink-soft)]">
-          {hint}
-        </p>
+        <p className="mt-1 text-xs text-[color:var(--craft-ink-soft)]">{hint}</p>
       ) : null}
     </div>
   );

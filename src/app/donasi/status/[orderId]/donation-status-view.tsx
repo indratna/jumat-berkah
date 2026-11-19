@@ -335,8 +335,9 @@ export function DonationStatusView({
               </ol>
               <p className="mt-3 text-xs leading-5 text-[color:var(--craft-ink-soft)]">
                 Jangan transfer ke rekening pribadi. Pembayaran resmi hanya lewat
-                QRIS Midtrans. Simpan tangkapan layar QR jika ingin membayar
-                nanti.
+                QRIS Midtrans. Di halaman pembayaran Midtrans tersedia tombol
+                &ldquo;Download QRIS&rdquo; untuk menyimpan kode QR bila ingin
+                membayar nanti.
               </p>
             </div>
           ) : null}

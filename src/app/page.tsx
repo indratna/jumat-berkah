@@ -1,30 +1,24 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { LandingFaq } from "@/components/landing/landing-faq";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { LandingHero } from "@/components/landing/landing-hero";
 import { LandingHowItWorks } from "@/components/landing/landing-how-it-works";
-import { LandingStories } from "@/components/landing/landing-stories";
-import { LandingTargetProgress } from "@/components/landing/landing-target-progress";
+import {
+  SocialProofSkeleton,
+  StoriesSkeleton,
+  TargetCardSkeleton,
+} from "@/components/landing/landing-skeletons";
+import { LandingSocialProofSection } from "@/components/landing/landing-social-proof-section";
+import { LandingStoriesSection } from "@/components/landing/landing-stories-section";
+import { LandingTargetSection } from "@/components/landing/landing-target-section";
 import { LandingTransparency } from "@/components/landing/landing-transparency";
 import { PublicHeader } from "@/components/landing/public-header";
-import {
-  getLandingMetrics,
-  getLandingProgress,
-  getLandingStories,
-} from "@/lib/landing";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
-  const [metrics, progress, stories] = await Promise.all([
-    getLandingMetrics(),
-    getLandingProgress(),
-    getLandingStories(3),
-  ]);
-
-  const collectedPercent = Math.round(progress.progressRatio * 100);
-
+export default function Home() {
   return (
     <div className="landing-craft landing-noise min-h-screen">
       <main
@@ -35,17 +29,22 @@ export default async function Home() {
 
         <div className="grid items-stretch gap-8 lg:grid-cols-12">
           <div className="lg:col-span-7">
-            <LandingHero metrics={metrics} />
+            <LandingHero />
           </div>
           <div className="lg:col-span-5">
-            <LandingTargetProgress
-              progress={progress}
-              collectedPercent={collectedPercent}
-            />
+            <Suspense fallback={<TargetCardSkeleton />}>
+              <LandingTargetSection />
+            </Suspense>
           </div>
         </div>
 
-        <LandingStories stories={stories} />
+        <Suspense fallback={<SocialProofSkeleton />}>
+          <LandingSocialProofSection />
+        </Suspense>
+
+        <Suspense fallback={<StoriesSkeleton />}>
+          <LandingStoriesSection />
+        </Suspense>
 
         <LandingHowItWorks />
 

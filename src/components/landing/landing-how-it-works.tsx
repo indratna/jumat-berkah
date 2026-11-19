@@ -1,7 +1,8 @@
 const steps = [
   {
     title: "Pilih nominal donasi",
-    description: "Tanpa wajib login, isi sesuai keinginan.",
+    description:
+      "Pilih nominal cepat atau isi sendiri. Tidak perlu login dan nama bisa disamarkan.",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -11,6 +12,7 @@ const steps = [
         strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
+        aria-hidden="true"
       >
         <path d="M12 1v22" />
         <path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6" />
@@ -19,7 +21,8 @@ const steps = [
   },
   {
     title: "Bayar via QRIS",
-    description: "Sistem buat transaksi Midtrans dan tampilkan QRIS.",
+    description:
+      "Pembayaran QRIS diproses Midtrans. Nominal dan batas waktu tampil di halaman pembayaran.",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -29,6 +32,7 @@ const steps = [
         strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
+        aria-hidden="true"
       >
         <rect x="3" y="3" width="7" height="7" rx="1" />
         <rect x="14" y="3" width="7" height="7" rx="1" />
@@ -40,8 +44,9 @@ const steps = [
     ),
   },
   {
-    title: "Status terupdate otomatis",
-    description: "Webhook Midtrans memperbarui status & laporan publik.",
+    title: "Status diperbarui otomatis",
+    description:
+      "Status donasi diperbarui otomatis setelah pembayaran berhasil, lalu masuk ke laporan publik.",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -51,6 +56,7 @@ const steps = [
         strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
+        aria-hidden="true"
       >
         <path d="M21 12a9 9 0 1 1-3.51-7.13" />
         <path d="M21 4v5h-5" />
@@ -61,15 +67,18 @@ const steps = [
 
 export function LandingHowItWorks() {
   return (
-    <section className="space-y-6">
+    <section className="space-y-6" aria-labelledby="cara-berdonasi">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-xl">
           <span className="craft-pill">Cara Berdonasi</span>
-          <h2 className="mt-3 text-2xl font-bold leading-tight sm:text-3xl">
+          <h2
+            id="cara-berdonasi"
+            className="mt-3 text-2xl font-bold leading-tight sm:text-3xl"
+          >
             Tiga langkah ringkas, tidak perlu login.
           </h2>
         </div>
-        <p className="text-sm text-[color:var(--craft-ink-soft)] sm:max-w-xs">
+        <p className="text-sm leading-6 text-[color:var(--craft-ink-soft)] sm:max-w-xs">
           Dirancang sederhana supaya donatur bisa langsung berdonasi dalam
           hitungan menit.
         </p>

@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
 
+import { PublicHeader } from "@/components/landing/public-header";
 import { DONOR_SESSION_COOKIE, getDonorUser } from "@/lib/auth";
 import { getBetterAuthDonorUser } from "@/lib/better-auth-guards";
 import { getPrisma } from "@/lib/db";
+
+import { DonationStatusView } from "./donation-status-view";
 import { DonorSignupCta } from "./donor-signup-cta";
 
 type DonationStatusPageProps = {
@@ -12,42 +15,99 @@ type DonationStatusPageProps = {
   }>;
 };
 
+type DonationSnapshotRecord = {
+  orderId: string;
+  amount: number;
+  status: string;
+  createdAt: Date;
+  paidAt: Date | null;
+  donorName: string | null;
+  donorEmail: string | null;
+  userId: string | null;
+  isAnonymous: boolean;
+  showNamePublicly: boolean;
+};
+
+export const metadata = {
+  title: "Status Donasi",
+  description: "Pantau status pembayaran donasi Jumat Berkah Anda.",
+};
+
 export default async function DonationStatusPage({
   params,
 }: DonationStatusPageProps) {
   const { orderId } = await params;
   const prisma = getPrisma();
-  const donation = await prisma.donation.findUnique({
-    where: { orderId },
-    select: {
-      orderId: true,
-      amount: true,
-      status: true,
-      paidAt: true,
-      donorName: true,
-      donorEmail: true,
-      userId: true,
-      isAnonymous: true,
-      showNamePublicly: true,
-    },
-  });
+
+  let donation: DonationSnapshotRecord | null = null;
+  let loadFailed = false;
+
+  try {
+    donation = await prisma.donation.findUnique({
+      where: { orderId },
+      select: {
+        orderId: true,
+        amount: true,
+        status: true,
+        createdAt: true,
+        paidAt: true,
+        donorName: true,
+        donorEmail: true,
+        userId: true,
+        isAnonymous: true,
+        showNamePublicly: true,
+      },
+    });
+  } catch (error) {
+    console.error("Donation status page failed to load", error);
+    loadFailed = true;
+  }
+
+  if (loadFailed) {
+    return (
+      <StatusPageShell>
+        <section className="craft-card-strong px-6 py-8 text-center sm:px-8">
+          <span className="craft-pill mx-auto">Gangguan sementara</span>
+          <h1 className="mt-4 text-2xl font-bold leading-tight sm:text-3xl">
+            Status donasi belum bisa dimuat.
+          </h1>
+          <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[color:var(--craft-ink-soft)]">
+            Data pembayaran sedang tidak dapat diakses. Donasi Anda tetap
+            tercatat di sistem Midtrans dan laporan akan diperbarui setelah
+            layanan pulih.
+          </p>
+          <a
+            href={`/donasi/status/${encodeURIComponent(orderId)}`}
+            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-[color:var(--craft-leaf)] px-6 text-sm font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)]"
+          >
+            Muat ulang halaman
+          </a>
+        </section>
+      </StatusPageShell>
+    );
+  }
 
   if (!donation) {
     return (
-      <main className="page-shell text-slate-900">
-        <section className="mx-auto max-w-2xl rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-red-700">
-            Tidak ditemukan
+      <StatusPageShell>
+        <section className="craft-card-strong px-6 py-8 text-center sm:px-8">
+          <span className="craft-pill mx-auto">Tidak ditemukan</span>
+          <h1 className="mt-4 text-2xl font-bold leading-tight sm:text-3xl">
+            Donasi dengan Order ID ini tidak ada.
+          </h1>
+          <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[color:var(--craft-ink-soft)]">
+            Periksa kembali tautan atau Order ID dari pesan konfirmasi Anda. Jika
+            baru saja berdonasi, buka tautan status yang tampil setelah
+            pembayaran.
           </p>
-          <h1 className="mt-4 text-3xl font-bold">Donasi tidak ditemukan.</h1>
           <Link
             href="/donasi"
-            className="mt-6 inline-flex rounded-lg bg-green-700 px-5 py-3 font-semibold text-white"
+            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-[color:var(--craft-leaf)] px-6 text-sm font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)]"
           >
-            Kembali Donasi
+            Kembali ke halaman donasi
           </Link>
         </section>
-      </main>
+      </StatusPageShell>
     );
   }
 
@@ -55,104 +115,49 @@ export default async function DonationStatusPage({
   const donor =
     (await getDonorUser(cookieStore.get(DONOR_SESSION_COOKIE)?.value)) ??
     (await getBetterAuthDonorUser(await headers()));
-  const content = getStatusContent(donation.status);
 
   return (
-    <main className="page-shell text-slate-900">
-      <section className="mx-auto max-w-2xl rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-        <p className="text-sm font-semibold uppercase tracking-[0.08em] text-green-700">
-          Status Donasi
-        </p>
-        <h1 className="mt-4 text-3xl font-bold">{content.title}</h1>
-        <p className="mt-3 leading-7 text-slate-600">{content.description}</p>
+    <StatusPageShell>
+      <DonationStatusView
+        initialSnapshot={{
+          orderId: donation.orderId,
+          amount: donation.amount,
+          status: donation.status,
+          createdAt: donation.createdAt.toISOString(),
+          paidAt: donation.paidAt?.toISOString() ?? null,
+        }}
+        receiptName={getReceiptDonorName(donation)}
+      />
 
-        <div className="mt-8 space-y-3 rounded-xl bg-slate-50 p-5 text-sm">
-          <div className="flex justify-between gap-4">
-            <span className="text-slate-600">Order ID</span>
-            <strong className="text-right">{donation.orderId}</strong>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-slate-600">Nominal</span>
-            <strong>{formatRupiah(donation.amount)}</strong>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-slate-600">Status</span>
-            <strong>{donation.status}</strong>
-          </div>
-        </div>
+      {!donor && !donation.userId ? (
+        <DonorSignupCta
+          donorEmail={donation.donorEmail}
+          donorName={donation.donorName}
+        />
+      ) : null}
 
-        {donation.status === "settlement" ? (
-          <div className="mt-6 rounded-xl border border-slate-300 bg-slate-50 p-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.08em] text-green-700">
-              Badge Terima Kasih
-            </p>
-            <p className="mt-3 text-lg font-bold">
-              🌿 Terima kasih, {getReceiptDonorName(donation)}
-            </p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Donasi {formatRupiah(donation.amount)} untuk Jumat Berkah sudah
-              diterima. Order {donation.orderId} aman dibagikan sebagai bukti
-              tanpa data kontak pribadi.
-            </p>
-            <div className="mt-4 rounded-xl bg-white p-4 text-sm text-slate-950 ring-1 ring-slate-200">
-              {buildShareText(donation.orderId, donation.amount)}
-            </div>
-          </div>
-        ) : null}
-
-        {!donor && !donation.userId ? (
-          <DonorSignupCta
-            donorEmail={donation.donorEmail}
-            donorName={donation.donorName}
-          />
-        ) : null}
-
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/donasi"
-            className="rounded-lg bg-green-700 px-5 py-3 text-center font-semibold text-white"
-          >
-            Donasi Lagi
-          </Link>
-          <Link
-            href="/laporan"
-            className="rounded-lg border border-slate-300 px-5 py-3 text-center font-semibold text-green-700"
-          >
-            Lihat Laporan
-          </Link>
-        </div>
-      </section>
-    </main>
+      <Link
+        href="/"
+        className="inline-flex min-h-11 items-center justify-center gap-2 text-sm font-bold text-[color:var(--craft-ink)] underline decoration-[color:var(--craft-amber)] decoration-2 underline-offset-4 hover:decoration-[color:var(--craft-leaf)]"
+      >
+        Kembali ke beranda
+      </Link>
+    </StatusPageShell>
   );
 }
 
-function getStatusContent(status: string) {
-  if (status === "settlement") {
-    return {
-      title: "Pembayaran berhasil. Terima kasih.",
-      description: "Donasi sudah diterima dan akan masuk laporan pemasukan.",
-    };
-  }
-
-  if (status === "expire") {
-    return {
-      title: "Pembayaran kedaluwarsa.",
-      description: "Silakan buat donasi baru jika masih ingin berdonasi.",
-    };
-  }
-
-  if (["cancel", "deny", "failure"].includes(status)) {
-    return {
-      title: "Pembayaran gagal.",
-      description: "Pembayaran belum berhasil. Silakan coba buat donasi baru.",
-    };
-  }
-
-  return {
-    title: "Menunggu pembayaran.",
-    description:
-      "Donasi sudah dicatat. Status akan berubah setelah Midtrans mengirim konfirmasi pembayaran.",
-  };
+function StatusPageShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="landing-craft landing-noise min-h-screen">
+      <main
+        id="main-content"
+        className="mx-auto flex max-w-3xl flex-col gap-6 px-4 pb-16 pt-6 sm:px-6 lg:py-12"
+      >
+        <PublicHeader />
+        {children}
+      </main>
+    </div>
+  );
 }
 
 function getReceiptDonorName(input: {
@@ -163,17 +168,6 @@ function getReceiptDonorName(input: {
   if (input.isAnonymous || !input.showNamePublicly || !input.donorName) {
     return "Anonim";
   }
+
   return input.donorName;
-}
-
-function buildShareText(orderId: string, amount: number) {
-  return `Alhamdulillah, donasi ${formatRupiah(amount)} untuk Jumat Berkah sudah diterima. Order: ${orderId}. Semoga menjadi berkah.`;
-}
-
-function formatRupiah(amount: number) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(amount);
 }

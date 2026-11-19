@@ -1,16 +1,6 @@
-import Link from "next/link";
+import { HeroAmountPicker } from "@/components/landing/hero-amount-picker";
 
-import type { LandingMetrics } from "@/lib/landing";
-
-function formatLastUpdated(date: Date) {
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Jakarta",
-  }).format(date);
-}
-
-export function LandingHero({ metrics }: { metrics: LandingMetrics }) {
+export function LandingHero() {
   return (
     <section className="flex flex-col">
       <span className="craft-pill self-start">
@@ -21,27 +11,33 @@ export function LandingHero({ metrics }: { metrics: LandingMetrics }) {
         Sediakan <em>nasi Jumat</em> untuk masjid sekitar kantor.
       </h1>
       <p className="mt-5 max-w-2xl text-base leading-7 text-[color:var(--craft-ink-soft)] sm:text-lg">
-        Donasi via QRIS, dana langsung dipakai memasak nasi Jumat. Setiap
-        rupiah yang masuk dan keluar tercatat dan terbuka.
+        Donasi via QRIS, dana dipakai memasak nasi Jumat untuk masjid sekitar
+        kantor. Status donasi diperbarui otomatis setelah pembayaran berhasil,
+        dan laporan bisa dibuka siapa saja.
       </p>
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <Link
-          href="/donasi"
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[color:var(--craft-leaf)] px-6 text-sm font-bold text-[color:var(--craft-cream)] transition hover:bg-[color:var(--craft-leaf-strong)]"
-        >
-          Donasi Sekarang
-          <span aria-hidden>→</span>
-        </Link>
-        <Link
-          href="/laporan"
-          className="inline-flex min-h-12 items-center gap-2 text-sm font-bold text-[color:var(--craft-ink)] underline decoration-[color:var(--craft-amber)] decoration-2 underline-offset-4 hover:decoration-[color:var(--craft-leaf)]"
-        >
-          Lihat laporan transparansi
-        </Link>
-      </div>
-      <p className="mt-6 text-xs text-[color:var(--craft-ink-soft)]">
-        Diperbarui {formatLastUpdated(metrics.lastUpdatedAt)}
+
+      <HeroAmountPicker />
+
+      <p className="mt-4 max-w-xl text-xs leading-5 text-[color:var(--craft-ink-soft)]">
+        Nama Anda hanya tampil di laporan publik jika Anda mengizinkannya. Email
+        dan nomor WhatsApp tidak pernah ditampilkan.
       </p>
+
+      <figure className="mt-10 overflow-hidden rounded-[1.5rem] border border-[color:var(--craft-line)] bg-[color:var(--craft-cream-strong)]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/hero-placeholder.svg"
+          alt="Ilustrasi nasi Jumat, kotak makan, dan masjid sekitar kantor"
+          width={1200}
+          height={800}
+          loading="lazy"
+          decoding="async"
+          className="aspect-[3/2] w-full object-cover"
+        />
+        <figcaption className="border-t border-[color:var(--craft-line)] bg-[color:var(--craft-paper)] px-4 py-2.5 text-xs leading-5 text-[color:var(--craft-ink-soft)]">
+          Ilustrasi sementara. Foto penyaluran asli akan dipasang di sini.
+        </figcaption>
+      </figure>
     </section>
   );
 }

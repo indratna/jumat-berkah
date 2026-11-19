@@ -2,32 +2,66 @@ const items = [
   {
     question: "Apa itu Jumat Berkah Karyo?",
     answer:
-      "Program internal kantor untuk menyediakan nasi Jumat ke masjid sekitar. Donasi dikumpulkan secara digital dan dipakai memasak nasi setiap pekan.",
+      "Program sosial internal kantor untuk menyediakan nasi Jumat bagi masjid di sekitar kantor. Donasi dikumpulkan secara digital, lalu dipakai memasak dan menyalurkan nasi setiap pekan.",
   },
   {
-    question: "Bagaimana donasi disalurkan?",
+    question: "Bagaimana cara berdonasi?",
     answer:
-      "Setiap minggu admin memasak nasi sesuai dana yang masuk lalu mendistribusikannya ke masjid. Cerita penyaluran dibagikan di laporan siklus.",
+      "Pilih nominal, isi nama atau pilih anonim, lalu lanjutkan ke pembayaran QRIS. Tidak perlu membuat akun atau login. Setelah pembayaran berhasil, status donasi diperbarui otomatis.",
   },
   {
-    question: "Apakah donatur perlu login?",
+    question: "Berapa nominal minimum donasi?",
     answer:
-      "Tidak wajib. Donatur publik bisa langsung donasi via QRIS. Login opsional jika ingin melihat riwayat donasi pribadi.",
+      "Nominal minimum Rp1.000. Anda bisa memilih nominal cepat Rp10.000, Rp25.000, Rp50.000, atau Rp100.000, atau mengisi nominal lain sesuai keinginan.",
   },
   {
-    question: "Bagaimana laporan dicek?",
+    question: "Bagaimana saya tahu donasi berhasil?",
     answer:
-      "Buka halaman Laporan untuk melihat pemasukan, pengeluaran, dan saldo siklus berjalan secara terbuka.",
+      "Halaman status donasi akan berubah menjadi berhasil setelah pembayaran diterima. Simpan Order ID yang tampil sebagai bukti. Jangan pernah membagikan data kontak pribadi di ruang publik.",
+  },
+  {
+    question: "Kapan laporan dan cerita penyaluran terbit?",
+    answer:
+      "Laporan publik mengikuti siklus Jumat sampai Kamis. Ringkasan dana diperbarui setelah pembayaran berhasil dan pengeluaran disetujui, sedangkan cerita penyaluran terbit setelah admin mempublikasikannya.",
+  },
+  {
+    question: "Bagaimana cara menghubungi admin?",
+    answer:
+      "Gunakan tombol WhatsApp admin di halaman ini. Sertakan Order ID jika bertanya tentang donasi tertentu. Email dan nomor WhatsApp donatur tidak pernah ditampilkan di laporan publik.",
   },
 ];
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: items.map((item) => ({
+    "@type": "Question",
+    name: item.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.answer,
+    },
+  })),
+};
+
 export function LandingFaq() {
   return (
-    <section className="craft-card-strong p-6 sm:p-8">
+    <section
+      id="faq"
+      className="craft-card-strong p-6 sm:p-8"
+      aria-labelledby="faq-title"
+    >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <span className="craft-pill">Pertanyaan Umum</span>
-          <h2 className="mt-3 text-2xl font-bold leading-tight sm:text-3xl">
+          <h2
+            id="faq-title"
+            className="mt-3 text-2xl font-bold leading-tight sm:text-3xl"
+          >
             Hal yang sering ditanyakan donatur.
           </h2>
         </div>
@@ -36,13 +70,14 @@ export function LandingFaq() {
         {items.map((item) => (
           <details
             key={item.question}
-            className="group py-4 [&_summary::-webkit-details-marker]:hidden"
+            className="group py-1 [&_summary::-webkit-details-marker]:hidden"
           >
-            <summary className="flex cursor-pointer items-center justify-between gap-4 text-left text-base font-bold text-[color:var(--craft-ink)]">
+            <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-4 rounded-lg py-3 text-left text-base font-bold text-[color:var(--craft-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--craft-amber)]">
               <span>{item.question}</span>
               <svg
                 viewBox="0 0 24 24"
-                className="size-5 shrink-0 text-[color:var(--craft-leaf)] transition group-open:rotate-45"
+                aria-hidden="true"
+                className="size-5 shrink-0 text-[color:var(--craft-leaf)] transition group-open:rotate-45 motion-reduce:transition-none"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.8"
@@ -53,7 +88,7 @@ export function LandingFaq() {
                 <path d="M5 12h14" />
               </svg>
             </summary>
-            <p className="mt-3 text-sm leading-6 text-[color:var(--craft-ink-soft)]">
+            <p className="mb-4 mt-1 text-sm leading-6 text-[color:var(--craft-ink-soft)]">
               {item.answer}
             </p>
           </details>

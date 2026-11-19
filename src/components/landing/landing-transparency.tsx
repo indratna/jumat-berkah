@@ -1,8 +1,8 @@
 const items = [
   {
-    title: "Laporan publik real-time",
+    title: "Laporan publik terbuka",
     description:
-      "Pemasukan, pengeluaran, dan saldo program bisa dilihat siapa saja.",
+      "Pemasukan, pengeluaran, dan saldo program bisa dilihat siapa saja tanpa perlu akun.",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -12,6 +12,7 @@ const items = [
         strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
+        aria-hidden="true"
       >
         <path d="M3 3v18h18" />
         <path d="M7 14l3-3 4 4 5-7" />
@@ -20,7 +21,8 @@ const items = [
   },
   {
     title: "Privasi donatur dilindungi",
-    description: "Email dan WhatsApp tidak ditampilkan pada laporan publik.",
+    description:
+      "Email dan nomor WhatsApp tidak pernah ditampilkan di laporan publik. Nama hanya tampil jika donatur mengizinkan; anonim ditampilkan sebagai Anonim.",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -30,6 +32,7 @@ const items = [
         strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
+        aria-hidden="true"
       >
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </svg>
@@ -37,7 +40,8 @@ const items = [
   },
   {
     title: "Audit lengkap di sisi admin",
-    description: "Setiap perubahan dana tercatat di audit log internal.",
+    description:
+      "Setiap perubahan dana dan persetujuan pengeluaran tercatat di audit log internal.",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -47,6 +51,7 @@ const items = [
         strokeWidth="1.6"
         strokeLinecap="round"
         strokeLinejoin="round"
+        aria-hidden="true"
       >
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
         <path d="M14 2v6h6" />
@@ -59,17 +64,20 @@ const items = [
 
 export function LandingTransparency() {
   return (
-    <section className="space-y-6">
+    <section className="space-y-6" aria-labelledby="transparansi-title">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-xl">
           <span className="craft-pill">Transparansi</span>
-          <h2 className="mt-3 text-2xl font-bold leading-tight sm:text-3xl">
+          <h2
+            id="transparansi-title"
+            className="mt-3 text-2xl font-bold leading-tight sm:text-3xl"
+          >
             Dana publik dijaga secara terbuka.
           </h2>
         </div>
-        <p className="text-sm text-[color:var(--craft-ink-soft)] sm:max-w-xs">
-          Setiap transaksi tercatat dan dapat ditelusuri kembali tanpa
-          mengorbankan privasi donatur.
+        <p className="text-sm leading-6 text-[color:var(--craft-ink-soft)] sm:max-w-xs">
+          Setiap transaksi tercatat dan dapat ditelusuri tanpa mengorbankan
+          privasi donatur.
         </p>
       </header>
       <div className="grid gap-4 sm:grid-cols-3">

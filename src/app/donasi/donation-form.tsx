@@ -1,7 +1,18 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import Link from "next/link";
+import { FormEvent, useRef, useState } from "react";
 import type { ReactNode } from "react";
+
+import {
+  PRESET_DONATION_AMOUNTS,
+  formatAmountDigits,
+  isPresetDonationAmount,
+  parseDonationAmount,
+  validateDonationAmount,
+} from "@/lib/donation-amount";
+import { formatRupiah } from "@/lib/format";
+import { getPaymentRedirectStorageKey } from "@/lib/payment-status";
 
 import {
   canUseSnapPopup,
@@ -21,16 +32,29 @@ type ErrorResponse = {
   errors?: Record<string, string>;
 };
 
-const presetAmounts = [10_000, 25_000, 50_000, 100_000];
+function rememberPaymentRedirect(orderId: string, redirectUrl: string) {
+  try {
+    window.sessionStorage.setItem(
+      getPaymentRedirectStorageKey(orderId),
+      redirectUrl,
+    );
+  } catch {
+    // Storage can be unavailable in private mode; the status page still works.
+  }
+}
 
 export function DonationForm({
   donor,
   authBanner,
+  initialAmount = null,
 }: {
   donor?: { name: string | null; email: string } | null;
   authBanner?: ReactNode;
+  initialAmount?: number | null;
 }) {
-  const [amount, setAmount] = useState("50000");
+  const [amount, setAmount] = useState(() =>
+    formatAmountDigits(initialAmount ?? 50_000),
+  );
   const [donorName, setDonorName] = useState(donor?.name ?? "");
   const [donorEmail, setDonorEmail] = useState(donor?.email ?? "");
   const [donorPhone, setDonorPhone] = useState("");
@@ -41,87 +65,151 @@ export function DonationForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [result, setResult] = useState<DonationResponse | null>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
+
+  const parsedAmount = parseDonationAmount(amount);
+  const amountError = errors.amount ?? null;
+
+  function clearAmountError() {
+    setErrors((previous) => {
+      if (!previous.amount) {
+        return previous;
+      }
+      const next = { ...previous };
+      delete next.amount;
+      return next;
+    });
+  }
+
+  function handleAmountChange(value: string) {
+    setAmount(formatAmountDigits(value));
+    clearAmountError();
+  }
+
+  function handleAmountBlur() {
+    const validationError = validateDonationAmount(amount);
+    if (validationError) {
+      setErrors((previous) => ({ ...previous, amount: validationError }));
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    const amountValidation = validateDonationAmount(amount);
+    if (amountValidation || parsedAmount === null) {
+      setErrors((previous) => ({
+        ...previous,
+        amount: amountValidation ?? "Masukkan nominal donasi lebih dulu.",
+      }));
+      amountInputRef.current?.focus();
+      return;
+    }
+
     setIsSubmitting(true);
     setErrors({});
     setResult(null);
 
-    const response = await fetch("/api/donations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        donorName,
-        donorEmail,
-        donorPhone,
-        whatsappReminderOptIn,
-        isAnonymous,
-        showNamePublicly,
-        amount: Number(amount),
-        message,
-      }),
-    });
+    try {
+      const response = await fetch("/api/donations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          donorName,
+          donorEmail,
+          donorPhone,
+          whatsappReminderOptIn,
+          isAnonymous,
+          showNamePublicly,
+          amount: parsedAmount,
+          message,
+        }),
+      });
 
-    if (!response.ok) {
-      const errorBody = (await response
-        .json()
-        .catch(() => ({}))) as ErrorResponse;
-      setErrors(errorBody.errors ?? { form: "Donasi belum bisa diproses." });
+      if (!response.ok) {
+        const errorBody = (await response
+          .json()
+          .catch(() => ({}))) as ErrorResponse;
+        setErrors(
+          errorBody.errors ?? {
+            form: "Donasi belum bisa diproses. Coba lagi sebentar.",
+          },
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      const donation = (await response.json()) as DonationResponse;
+
+      if (donation.payment?.redirectUrl) {
+        rememberPaymentRedirect(donation.orderId, donation.payment.redirectUrl);
+      }
+
+      if (canUseSnapPopup(donation.payment, window)) {
+        const snapWindow = window as SnapWindow;
+        const snapToken = donation.payment!.snapToken;
+
+        snapWindow.snap?.pay(snapToken, {
+          onSuccess: () => {
+            window.location.assign(
+              resolveSnapCallbackDestination({
+                orderId: donation.orderId,
+                callback: "success",
+              }),
+            );
+          },
+          onPending: () => {
+            window.location.assign(
+              resolveSnapCallbackDestination({
+                orderId: donation.orderId,
+                callback: "pending",
+              }),
+            );
+          },
+          onError: () => {
+            window.location.assign(
+              resolveSnapCallbackDestination({
+                orderId: donation.orderId,
+                callback: "error",
+              }),
+            );
+          },
+          onClose: () => {
+            window.location.assign(
+              resolveSnapCallbackDestination({
+                orderId: donation.orderId,
+                callback: "close",
+              }),
+            );
+          },
+        });
+        return;
+      }
+
+      if (donation.payment?.redirectUrl) {
+        window.location.assign(
+          resolveFallbackRedirect({
+            payment: donation.payment,
+            orderId: donation.orderId,
+          }),
+        );
+        return;
+      }
+
+      setResult(donation);
       setIsSubmitting(false);
-      return;
-    }
-
-    const donation = (await response.json()) as DonationResponse;
-
-    if (canUseSnapPopup(donation.payment, window)) {
-      const snapWindow = window as SnapWindow;
-      const snapToken = donation.payment!.snapToken;
-
-      snapWindow.snap?.pay(snapToken, {
-        onSuccess: () => {
-          window.location.href = resolveSnapCallbackDestination({
-            orderId: donation.orderId,
-            callback: "success",
-          });
-        },
-        onPending: () => {
-          window.location.href = resolveSnapCallbackDestination({
-            orderId: donation.orderId,
-            callback: "pending",
-          });
-        },
-        onError: () => {
-          window.location.href = resolveSnapCallbackDestination({
-            orderId: donation.orderId,
-            callback: "error",
-          });
-        },
-        onClose: () => {
-          window.location.href = resolveSnapCallbackDestination({
-            orderId: donation.orderId,
-            callback: "close",
-          });
-        },
+    } catch {
+      setErrors({
+        form: "Koneksi terputus. Periksa internet Anda, lalu coba lagi.",
       });
-      return;
+      setIsSubmitting(false);
     }
-
-    if (donation.payment?.redirectUrl) {
-      window.location.href = resolveFallbackRedirect({
-        payment: donation.payment,
-        orderId: donation.orderId,
-      });
-      return;
-    }
-
-    setResult(donation);
-    setIsSubmitting(false);
   }
 
   return (
     <form
       onSubmit={handleSubmit}
+      noValidate
       className="craft-card-strong space-y-6 p-5 sm:p-6 lg:p-7"
     >
       <div className="space-y-3">
@@ -131,61 +219,123 @@ export function DonationForm({
             Lanjutkan ke pembayaran QRIS.
           </h2>
           <p className="mt-2 text-sm leading-6 text-[color:var(--craft-ink-soft)]">
-            Email dan WhatsApp bersifat opsional. Nama publik dapat disamarkan
-            sesuai pilihan Anda.
+            Email dan WhatsApp opsional. Nama publik bisa Anda pilih sendiri,
+            dan pembayaran tidak perlu login.
           </p>
         </div>
       </div>
 
       <div>
-        <label
-          className="text-sm font-semibold text-[color:var(--craft-ink)]"
-          htmlFor="amount"
-        >
-          Nominal donasi
-        </label>
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {presetAmounts.map((presetAmount) => (
+        <fieldset>
+          <legend className="text-sm font-semibold text-[color:var(--craft-ink)]">
+            Nominal donasi
+          </legend>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {PRESET_DONATION_AMOUNTS.map((presetAmount) => {
+              const isActive = parsedAmount === presetAmount;
+
+              return (
+                <button
+                  key={presetAmount}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => {
+                    setAmount(formatAmountDigits(presetAmount));
+                    clearAmountError();
+                  }}
+                  className={`min-h-11 rounded-full border px-3 py-2 text-sm font-semibold transition ${
+                    isActive
+                      ? "border-[color:var(--craft-leaf)] bg-[color:var(--craft-leaf)] text-[color:var(--craft-cream)]"
+                      : "border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
+                  }`}
+                >
+                  {formatRupiah(presetAmount)}
+                </button>
+              );
+            })}
             <button
-              key={presetAmount}
               type="button"
-              onClick={() => setAmount(String(presetAmount))}
-              className={`min-h-11 rounded-full border px-3 py-2 text-sm font-semibold transition ${amount === String(presetAmount) ? "border-[color:var(--craft-leaf)] bg-[color:var(--craft-leaf)] text-[color:var(--craft-cream)]" : "border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"}`}
+              aria-pressed={
+                parsedAmount !== null && !isPresetDonationAmount(parsedAmount)
+              }
+              onClick={() => amountInputRef.current?.focus()}
+              className={`min-h-11 rounded-full border px-3 py-2 text-sm font-semibold transition ${
+                parsedAmount !== null && !isPresetDonationAmount(parsedAmount)
+                  ? "border-[color:var(--craft-leaf)] bg-[color:var(--craft-leaf)] text-[color:var(--craft-cream)]"
+                  : "border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
+              }`}
             >
-              {formatRupiah(presetAmount)}
+              Nominal lain
             </button>
-          ))}
+          </div>
+        </fieldset>
+
+        <div className="mt-3">
+          <label
+            htmlFor="amount"
+            className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--craft-ink-soft)]"
+          >
+            Atau isi nominal lain
+          </label>
+          <div
+            className={`mt-2 flex min-h-12 items-center rounded-2xl border bg-[color:var(--craft-paper)] px-4 focus-within:ring-2 focus-within:ring-[color:var(--craft-amber)]/30 ${
+              amountError
+                ? "border-red-700"
+                : "border-[color:var(--craft-line-strong)] focus-within:border-[color:var(--craft-amber)]"
+            }`}
+          >
+            <span className="text-sm font-semibold text-[color:var(--craft-ink-soft)]">
+              Rp
+            </span>
+            <input
+              ref={amountInputRef}
+              id="amount"
+              name="amount"
+              inputMode="numeric"
+              autoComplete="off"
+              value={amount}
+              onChange={(event) => handleAmountChange(event.target.value)}
+              onBlur={handleAmountBlur}
+              aria-invalid={amountError ? true : undefined}
+              aria-describedby={amountError ? "amount-error" : "amount-hint"}
+              className="min-h-12 w-full bg-transparent px-2 text-base font-semibold text-[color:var(--craft-ink)] outline-none numeric"
+              placeholder="25.000"
+            />
+          </div>
+          {amountError ? (
+            <p
+              id="amount-error"
+              role="alert"
+              className="mt-2 text-sm font-medium text-red-700"
+            >
+              {amountError}
+            </p>
+          ) : (
+            <p
+              id="amount-hint"
+              className="mt-2 text-xs text-[color:var(--craft-ink-soft)]"
+            >
+              Nominal minimal Rp1.000.
+            </p>
+          )}
         </div>
-        <input
-          id="amount"
-          name="amount"
-          inputMode="numeric"
-          min="1000"
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
-          className="mt-3 min-h-12 w-full rounded-2xl border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] px-4 py-3 text-base text-[color:var(--craft-ink)] outline-none transition placeholder:text-[color:var(--craft-ink-soft)] focus:border-[color:var(--craft-amber)] focus:ring-2 focus:ring-[color:var(--craft-amber)]/30 numeric"
-          required
-        />
-        {errors.amount ? (
-          <p className="mt-2 text-sm text-red-600">{errors.amount}</p>
-        ) : null}
       </div>
 
       {authBanner ? <div>{authBanner}</div> : null}
 
-      <label className="flex items-center gap-3 rounded-2xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper)] p-4 text-sm font-semibold text-[color:var(--craft-ink)]">
+      <label className="flex min-h-11 items-center gap-3 rounded-2xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper)] p-4 text-sm font-semibold text-[color:var(--craft-ink)]">
         <input
           type="checkbox"
           checked={isAnonymous}
           onChange={(event) => setIsAnonymous(event.target.checked)}
-          className="size-4 accent-green-700"
+          className="size-4 accent-[#1f5d3f]"
         />
         Donasi sebagai Anonim
       </label>
 
       <div>
         <label
-          className="text-sm font-semibold text-slate-800"
+          className="text-sm font-semibold text-[color:var(--craft-ink)]"
           htmlFor="donorName"
         >
           Nama donatur
@@ -197,18 +347,28 @@ export function DonationForm({
           value={donorName}
           onChange={(event) => setDonorName(event.target.value)}
           disabled={isAnonymous}
+          aria-required={!isAnonymous}
+          aria-describedby="donor-name-hint"
           className="field mt-2 disabled:bg-slate-100"
-          placeholder="Nama Anda…"
+          placeholder="Nama Anda..."
         />
+        <p
+          id="donor-name-hint"
+          className="mt-1 text-xs text-[color:var(--craft-ink-soft)]"
+        >
+          Wajib diisi kecuali Anda memilih donasi anonim.
+        </p>
         {errors.donorName ? (
-          <p className="mt-2 text-sm text-red-600">{errors.donorName}</p>
+          <p role="alert" className="mt-2 text-sm font-medium text-red-700">
+            {errors.donorName}
+          </p>
         ) : null}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label
-            className="text-sm font-semibold text-slate-800"
+            className="text-sm font-semibold text-[color:var(--craft-ink)]"
             htmlFor="donorEmail"
           >
             Email opsional
@@ -222,15 +382,17 @@ export function DonationForm({
             value={donorEmail}
             onChange={(event) => setDonorEmail(event.target.value)}
             className="field mt-2"
-            placeholder="nama@email.com…"
+            placeholder="nama@email.com..."
           />
           {errors.donorEmail ? (
-            <p className="mt-2 text-sm text-red-600">{errors.donorEmail}</p>
+            <p role="alert" className="mt-2 text-sm font-medium text-red-700">
+              {errors.donorEmail}
+            </p>
           ) : null}
         </div>
         <div>
           <label
-            className="text-sm font-semibold text-slate-800"
+            className="text-sm font-semibold text-[color:var(--craft-ink)]"
             htmlFor="donorPhone"
           >
             WhatsApp opsional
@@ -244,21 +406,21 @@ export function DonationForm({
             value={donorPhone}
             onChange={(event) => setDonorPhone(event.target.value)}
             className="field mt-2"
-            placeholder="08123456789…"
+            placeholder="08123456789..."
           />
         </div>
       </div>
 
-      <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-700">
+      <label className="flex min-h-11 items-start gap-3 rounded-xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper)] p-3 text-sm font-medium text-[color:var(--craft-ink)]">
         <input
           type="checkbox"
           checked={whatsappReminderOptIn}
           onChange={(event) => setWhatsappReminderOptIn(event.target.checked)}
-          className="mt-1 size-4 accent-green-700"
+          className="mt-1 size-4 accent-[#1f5d3f]"
         />
         <span>
           Saya bersedia menerima pengingat donasi Jumat Berkah via WhatsApp.
-          Consent hanya disimpan jika nomor WhatsApp diisi. Untuk berhenti,
+          Persetujuan hanya disimpan jika nomor WhatsApp diisi. Untuk berhenti,
           balas pesan WhatsApp dengan kata STOP saat fitur pengingat sudah
           aktif.
         </span>
@@ -266,7 +428,7 @@ export function DonationForm({
 
       <div>
         <label
-          className="text-sm font-semibold text-slate-800"
+          className="text-sm font-semibold text-[color:var(--craft-ink)]"
           htmlFor="message"
         >
           Pesan atau doa opsional
@@ -278,50 +440,83 @@ export function DonationForm({
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           className="field mt-2 min-h-28"
-          placeholder="Semoga berkah untuk semua…"
+          placeholder="Semoga berkah untuk semua..."
         />
       </div>
 
-      <label className="flex items-center gap-3 text-sm font-medium text-slate-700">
-        <input
-          type="checkbox"
-          checked={showNamePublicly}
-          onChange={(event) => setShowNamePublicly(event.target.checked)}
-          disabled={isAnonymous}
-          className="size-4 accent-green-700"
-        />
-        Tampilkan nama saya di laporan publik
-      </label>
+      <div>
+        <label className="flex min-h-11 items-center gap-3 text-sm font-medium text-[color:var(--craft-ink)]">
+          <input
+            type="checkbox"
+            checked={showNamePublicly}
+            onChange={(event) => setShowNamePublicly(event.target.checked)}
+            disabled={isAnonymous}
+            className="size-4 accent-[#1f5d3f]"
+          />
+          Tampilkan nama saya di laporan publik
+        </label>
+        <p className="mt-1 text-xs leading-5 text-[color:var(--craft-ink-soft)]">
+          Email dan nomor WhatsApp tidak pernah ditampilkan di laporan publik.
+          Jika nama tidak ditampilkan, donasi muncul sebagai Anonim.
+        </p>
+      </div>
 
       {errors.form ? (
-        <p className="text-sm text-red-600">{errors.form}</p>
+        <p
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"
+        >
+          {errors.form}
+        </p>
       ) : null}
+
+      <div className="rounded-2xl bg-[color:var(--craft-paper)] px-4 py-3">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-[color:var(--craft-ink-soft)]">
+          Total donasi
+        </p>
+        <p className="craft-num mt-1 text-2xl text-[color:var(--craft-ink)]">
+          {parsedAmount ? formatRupiah(parsedAmount) : "Belum diisi"}
+        </p>
+      </div>
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="btn-primary w-full disabled:cursor-not-allowed disabled:bg-slate-300"
+        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[color:var(--craft-leaf)] px-5 text-sm font-bold text-[color:var(--craft-cream)] transition hover:bg-[color:var(--craft-leaf-strong)] disabled:cursor-not-allowed disabled:bg-slate-300"
       >
-        {isSubmitting ? "Menyimpan donasi…" : "Lanjutkan Donasi"}
+        {isSubmitting ? (
+          <>
+            <span
+              aria-hidden="true"
+              className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+            />
+            Menyiapkan pembayaran...
+          </>
+        ) : (
+          "Donasi Sekarang"
+        )}
       </button>
 
+      <p className="text-center text-xs leading-5 text-[color:var(--craft-ink-soft)]">
+        Dengan melanjutkan, Anda akan diarahkan ke halaman QRIS Midtrans.
+      </p>
+
       {result ? (
-        <div className="rounded-xl border border-green-100 bg-green-50 p-3 text-sm text-green-900">
-          Donasi pending tersimpan dengan order ID{" "}
-          <strong>{result.orderId}</strong> sebesar{" "}
-          <strong>{formatRupiah(result.amount)}</strong>. Jika popup atau
-          halaman pembayaran tidak terbuka, cek status donasi dari halaman
-          status.
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
+          <p className="font-bold">Donasi menunggu pembayaran.</p>
+          <p className="mt-1 leading-6">
+            Order <strong>{result.orderId}</strong> sebesar{" "}
+            <strong>{formatRupiah(result.amount)}</strong> sudah tercatat. Jika
+            halaman pembayaran tidak terbuka, lanjutkan dari halaman status.
+          </p>
+          <Link
+            href={`/donasi/status/${result.orderId}`}
+            className="mt-3 inline-flex min-h-11 items-center rounded-full bg-[color:var(--craft-leaf)] px-5 text-sm font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)]"
+          >
+            Buka status donasi
+          </Link>
         </div>
       ) : null}
     </form>
   );
-}
-
-function formatRupiah(amount: number) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(amount);
 }

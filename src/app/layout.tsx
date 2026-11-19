@@ -1,5 +1,5 @@
 import localFont from "next/font/local";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
 import { PublicFloatingWhatsApp } from "@/components/public-floating-whatsapp";
@@ -58,10 +58,61 @@ const body = localFont({
   display: "swap",
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const siteDescription =
+  "Donasi nasi Jumat untuk masjid sekitar kantor lewat QRIS. Laporan pemasukan, pengeluaran, dan penyaluran terbuka untuk siapa saja.";
+
 export const metadata: Metadata = {
-  title: "Jumat Berkah Karyo",
-  description: "Aplikasi donasi Jumat Berkah via QRIS dan laporan transparan.",
+  metadataBase: safeUrl(siteUrl),
+  title: {
+    default: "Jumat Berkah Karyo — Donasi Nasi Jumat via QRIS",
+    template: "%s | Jumat Berkah Karyo",
+  },
+  description: siteDescription,
+  applicationName: "Jumat Berkah Karyo",
+  keywords: [
+    "donasi Jumat Berkah",
+    "nasi Jumat",
+    "donasi QRIS",
+    "laporan donasi transparan",
+    "sedekah kantor",
+  ],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    url: "/",
+    siteName: "Jumat Berkah Karyo",
+    title: "Jumat Berkah Karyo — Donasi Nasi Jumat via QRIS",
+    description: siteDescription,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Jumat Berkah Karyo — Donasi Nasi Jumat via QRIS",
+    description: siteDescription,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#f7f1e6",
+  colorScheme: "light",
+};
+
+function safeUrl(value: string): URL {
+  try {
+    return new URL(value);
+  } catch {
+    // A malformed env value must not break metadata rendering.
+    return new URL("http://localhost:3000");
+  }
+}
 
 export default function RootLayout({
   children,

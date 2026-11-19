@@ -12,7 +12,10 @@ import {
   validateDonationAmount,
 } from "@/lib/donation-amount";
 import { formatRupiah } from "@/lib/format";
-import { getPaymentRedirectStorageKey } from "@/lib/payment-status";
+import {
+  getPaymentRedirectStorageKey,
+  writeLastOrder,
+} from "@/lib/payment-status";
 
 import {
   canUseSnapPopup,
@@ -43,6 +46,14 @@ function rememberPaymentRedirect(orderId: string, redirectUrl: string) {
   }
 }
 
+function rememberLastOrder(orderId: string, amount: number) {
+  try {
+    writeLastOrder(window.localStorage, { orderId, amount });
+  } catch {
+    // Storage can be unavailable in private mode; the status page still works.
+  }
+}
+
 export function DonationForm({
   donor,
   authBanner,
@@ -66,9 +77,11 @@ export function DonationForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [result, setResult] = useState<DonationResponse | null>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const submittingRef = useRef(false);
 
   const parsedAmount = parseDonationAmount(amount);
   const amountError = errors.amount ?? null;
+  const formError = errors.form ?? errors.payment ?? null;
 
   function clearAmountError() {
     setErrors((previous) => {
@@ -96,6 +109,11 @@ export function DonationForm({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    // Snap can stay open while the request resolves; never create two orders.
+    if (submittingRef.current) {
+      return;
+    }
+
     const amountValidation = validateDonationAmount(amount);
     if (amountValidation || parsedAmount === null) {
       setErrors((previous) => ({
@@ -106,6 +124,7 @@ export function DonationForm({
       return;
     }
 
+    submittingRef.current = true;
     setIsSubmitting(true);
     setErrors({});
     setResult(null);
@@ -135,11 +154,14 @@ export function DonationForm({
             form: "Donasi belum bisa diproses. Coba lagi sebentar.",
           },
         );
+        submittingRef.current = false;
         setIsSubmitting(false);
         return;
       }
 
       const donation = (await response.json()) as DonationResponse;
+
+      rememberLastOrder(donation.orderId, donation.amount);
 
       if (donation.payment?.redirectUrl) {
         rememberPaymentRedirect(donation.orderId, donation.payment.redirectUrl);
@@ -197,11 +219,13 @@ export function DonationForm({
       }
 
       setResult(donation);
+      submittingRef.current = false;
       setIsSubmitting(false);
     } catch {
       setErrors({
         form: "Koneksi terputus. Periksa internet Anda, lalu coba lagi.",
       });
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   }
@@ -273,7 +297,7 @@ export function DonationForm({
         <div className="mt-3">
           <label
             htmlFor="amount"
-            className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--craft-ink-soft)]"
+            className="text-xs font-semibold uppercase tracking-[0.1em] text-[color:var(--craft-ink-soft)]"
           >
             Atau isi nominal lain
           </label>
@@ -323,16 +347,6 @@ export function DonationForm({
 
       {authBanner ? <div>{authBanner}</div> : null}
 
-      <label className="flex min-h-11 items-center gap-3 rounded-2xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper)] p-4 text-sm font-semibold text-[color:var(--craft-ink)]">
-        <input
-          type="checkbox"
-          checked={isAnonymous}
-          onChange={(event) => setIsAnonymous(event.target.checked)}
-          className="size-4 accent-[#1f5d3f]"
-        />
-        Donasi sebagai Anonim
-      </label>
-
       <div>
         <label
           className="text-sm font-semibold text-[color:var(--craft-ink)]"
@@ -346,17 +360,16 @@ export function DonationForm({
           autoComplete="name"
           value={donorName}
           onChange={(event) => setDonorName(event.target.value)}
-          disabled={isAnonymous}
-          aria-required={!isAnonymous}
           aria-describedby="donor-name-hint"
-          className="field mt-2 disabled:bg-slate-100"
+          className="field mt-2"
           placeholder="Nama Anda..."
         />
         <p
           id="donor-name-hint"
           className="mt-1 text-xs text-[color:var(--craft-ink-soft)]"
         >
-          Wajib diisi kecuali Anda memilih donasi anonim.
+          Opsional. Jika kosong atau memilih Anonim, donasi tampil sebagai
+          Anonim.
         </p>
         {errors.donorName ? (
           <p role="alert" className="mt-2 text-sm font-medium text-red-700">
@@ -364,6 +377,43 @@ export function DonationForm({
           </p>
         ) : null}
       </div>
+
+      <fieldset className="rounded-2xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper)] p-4">
+        <legend className="px-1 text-sm font-semibold text-[color:var(--craft-ink)]">
+          Nama di laporan publik
+        </legend>
+        <div className="mt-2 space-y-1">
+          <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-[color:var(--craft-ink)]">
+            <input
+              type="radio"
+              name="visibility"
+              checked={!isAnonymous && showNamePublicly}
+              onChange={() => {
+                setIsAnonymous(false);
+                setShowNamePublicly(true);
+              }}
+              className="size-4 accent-[#1f5d3f]"
+            />
+            Tampilkan nama saya
+          </label>
+          <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-[color:var(--craft-ink)]">
+            <input
+              type="radio"
+              name="visibility"
+              checked={isAnonymous || !showNamePublicly}
+              onChange={() => {
+                setIsAnonymous(true);
+                setShowNamePublicly(false);
+              }}
+              className="size-4 accent-[#1f5d3f]"
+            />
+            Anonim
+          </label>
+        </div>
+        <p className="mt-2 text-xs leading-5 text-[color:var(--craft-ink-soft)]">
+          Jika memilih Anonim, donasi tampil sebagai “Anonim” di laporan publik.
+        </p>
+      </fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -381,6 +431,7 @@ export function DonationForm({
             spellCheck={false}
             value={donorEmail}
             onChange={(event) => setDonorEmail(event.target.value)}
+            aria-describedby="contact-hint"
             className="field mt-2"
             placeholder="nama@email.com..."
           />
@@ -405,76 +456,92 @@ export function DonationForm({
             autoComplete="tel"
             value={donorPhone}
             onChange={(event) => setDonorPhone(event.target.value)}
+            aria-describedby="contact-hint"
             className="field mt-2"
             placeholder="08123456789..."
           />
         </div>
       </div>
 
-      <label className="flex min-h-11 items-start gap-3 rounded-xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper)] p-3 text-sm font-medium text-[color:var(--craft-ink)]">
-        <input
-          type="checkbox"
-          checked={whatsappReminderOptIn}
-          onChange={(event) => setWhatsappReminderOptIn(event.target.checked)}
-          className="mt-1 size-4 accent-[#1f5d3f]"
-        />
-        <span>
-          Saya bersedia menerima pengingat donasi Jumat Berkah via WhatsApp.
-          Persetujuan hanya disimpan jika nomor WhatsApp diisi. Untuk berhenti,
-          balas pesan WhatsApp dengan kata STOP saat fitur pengingat sudah
-          aktif.
-        </span>
-      </label>
+      <p
+        id="contact-hint"
+        className="text-xs leading-5 text-[color:var(--craft-ink-soft)]"
+      >
+        Email atau WhatsApp opsional. Hanya dipakai untuk bukti donasi dan tidak
+        pernah ditampilkan di laporan publik.
+      </p>
 
-      <div>
-        <label
-          className="text-sm font-semibold text-[color:var(--craft-ink)]"
-          htmlFor="message"
-        >
-          Pesan atau doa opsional
-        </label>
-        <textarea
-          id="message"
-          name="message"
-          autoComplete="off"
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
-          className="field mt-2 min-h-28"
-          placeholder="Semoga berkah untuk semua..."
-        />
-      </div>
+      <details className="group rounded-2xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper)] p-4">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-[color:var(--craft-ink)] [&::-webkit-details-marker]:hidden">
+          <span>
+            Pesan, doa, dan pengingat WhatsApp{" "}
+            <span className="font-normal text-[color:var(--craft-ink-soft)]">
+              (opsional)
+            </span>
+          </span>
+          <span
+            aria-hidden="true"
+            className="text-[color:var(--craft-ink-soft)] transition-transform group-open:rotate-180 motion-reduce:transition-none"
+          >
+            ▾
+          </span>
+        </summary>
 
-      <div>
-        <label className="flex min-h-11 items-center gap-3 text-sm font-medium text-[color:var(--craft-ink)]">
-          <input
-            type="checkbox"
-            checked={showNamePublicly}
-            onChange={(event) => setShowNamePublicly(event.target.checked)}
-            disabled={isAnonymous}
-            className="size-4 accent-[#1f5d3f]"
-          />
-          Tampilkan nama saya di laporan publik
-        </label>
-        <p className="mt-1 text-xs leading-5 text-[color:var(--craft-ink-soft)]">
-          Email dan nomor WhatsApp tidak pernah ditampilkan di laporan publik.
-          Jika nama tidak ditampilkan, donasi muncul sebagai Anonim.
-        </p>
-      </div>
+        <div className="mt-4 space-y-4">
+          <div>
+            <label
+              className="text-sm font-semibold text-[color:var(--craft-ink)]"
+              htmlFor="message"
+            >
+              Pesan atau doa
+            </label>
+            <textarea
+              id="message"
+              name="message"
+              autoComplete="off"
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              className="field mt-2 min-h-24"
+              placeholder="Semoga berkah untuk semua..."
+            />
+          </div>
 
-      {errors.form ? (
+          <label className="flex min-h-11 items-start gap-3 text-sm font-medium text-[color:var(--craft-ink)]">
+            <input
+              type="checkbox"
+              checked={whatsappReminderOptIn}
+              onChange={(event) =>
+                setWhatsappReminderOptIn(event.target.checked)
+              }
+              className="mt-1 size-4 accent-[#1f5d3f]"
+            />
+            <span>
+              Saya bersedia menerima pengingat donasi Jumat Berkah via WhatsApp.
+              Persetujuan hanya disimpan jika nomor WhatsApp diisi. Untuk
+              berhenti, balas pesan WhatsApp dengan kata STOP saat fitur
+              pengingat sudah aktif.
+            </span>
+          </label>
+        </div>
+      </details>
+
+      {formError ? (
         <p
           role="alert"
           className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"
         >
-          {errors.form}
+          {formError}
         </p>
       ) : null}
 
       <div className="rounded-2xl bg-[color:var(--craft-paper)] px-4 py-3">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-[color:var(--craft-ink-soft)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--craft-ink-soft)]">
           Total donasi
         </p>
-        <p className="craft-num mt-1 text-2xl text-[color:var(--craft-ink)]">
+        <p
+          aria-live="polite"
+          className="craft-num mt-1 text-2xl text-[color:var(--craft-ink)]"
+        >
           {parsedAmount ? formatRupiah(parsedAmount) : "Belum diisi"}
         </p>
       </div>
@@ -488,7 +555,7 @@ export function DonationForm({
           <>
             <span
               aria-hidden="true"
-              className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+              className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white motion-reduce:animate-none"
             />
             Menyiapkan pembayaran...
           </>

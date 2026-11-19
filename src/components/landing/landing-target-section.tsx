@@ -40,7 +40,7 @@ export async function LandingTargetSection() {
 
 function TargetErrorCard() {
   return (
-    <section className="craft-card-strong flex h-full min-h-[26rem] flex-col justify-center gap-3 p-6 text-center sm:p-8">
+    <section className="craft-card-strong flex flex-col gap-3 p-6 text-center sm:p-8">
       <span className="craft-pill mx-auto">Target Minggu Ini</span>
       <h2 className="mt-2 text-2xl font-bold leading-tight">
         Data target belum bisa dimuat.

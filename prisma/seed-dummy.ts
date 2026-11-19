@@ -18,6 +18,16 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is required to seed dummy data.");
 }
 
+// Dummy rows must never be written to a production database by accident.
+if (
+  process.env.NODE_ENV === "production" &&
+  process.env.ALLOW_DUMMY_SEED !== "1"
+) {
+  throw new Error(
+    "Refusing to seed dummy data in production. Set ALLOW_DUMMY_SEED=1 only when you are certain.",
+  );
+}
+
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: databaseUrl }),
 });

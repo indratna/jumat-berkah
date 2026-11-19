@@ -83,7 +83,7 @@ export function CycleCountdown({
   return (
     <div>
       <p
-        className={`mb-2 min-h-[1.1rem] text-xs font-semibold uppercase tracking-[0.14em] ${labelClass}`}
+        className={`mb-2 min-h-[1.1rem] text-xs font-semibold uppercase tracking-[0.1em] ${labelClass}`}
       >
         {expired ? "Waktu donasi siklus ini sudah habis" : label}
       </p>
@@ -109,11 +109,11 @@ export function CycleCountdown({
             key={part.label}
             className={`min-h-[4.25rem] rounded-2xl border px-3 py-3 ${toneClass}`}
           >
-            <p className="text-2xl font-bold tabular-nums sm:text-3xl">
+            <p className="text-2xl font-bold tabular-nums whitespace-nowrap sm:text-3xl">
               {part.value}
             </p>
             <p
-              className={`mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${labelClass}`}
+              className={`mt-1 text-xs font-semibold uppercase tracking-[0.1em] ${labelClass}`}
             >
               {part.label}
             </p>

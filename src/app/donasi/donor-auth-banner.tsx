@@ -22,7 +22,7 @@ export function DonorAuthBanner({
     return (
       <div className="craft-card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.16em] text-[color:var(--craft-leaf)]">
+          <p className="text-sm font-bold uppercase tracking-[0.1em] text-[color:var(--craft-leaf)]">
             Akun donatur aktif
           </p>
           <h2 className="mt-2 text-xl font-extrabold text-[color:var(--craft-ink)]">
@@ -48,7 +48,7 @@ export function DonorAuthBanner({
   return (
     <div className="craft-card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p className="text-sm font-bold uppercase tracking-[0.16em] text-[color:var(--craft-leaf)]">
+        <p className="text-sm font-bold uppercase tracking-[0.1em] text-[color:var(--craft-leaf)]">
           Akun donatur
         </p>
         <h2 className="mt-2 text-xl font-extrabold text-[color:var(--craft-ink)]">

@@ -67,3 +67,18 @@ export function formatRelativeTime(date: Date, now = new Date()): string {
     timeZone: "Asia/Jakarta",
   }).format(date);
 }
+
+/**
+ * Social proof must not claim broad support while the program is still new.
+ * Five successful donations is the point where the stronger heading is honest.
+ */
+export function getSocialProofHeading(settlementCount: number): string {
+  return settlementCount >= 5
+    ? "Sudah banyak yang ikut berbagi."
+    : "Mereka yang sudah berbagi.";
+}
+
+/** A short recent-donation list needs at least three rows to look meaningful. */
+export function shouldShowRecentDonations(settlementCount: number): boolean {
+  return settlementCount >= 3;
+}

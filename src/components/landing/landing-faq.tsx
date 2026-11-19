@@ -25,9 +25,24 @@ const items = [
       "Laporan publik mengikuti siklus Jumat sampai Kamis. Ringkasan dana diperbarui setelah pembayaran berhasil dan pengeluaran disetujui, sedangkan cerita penyaluran terbit setelah admin mempublikasikannya.",
   },
   {
+    question: "Apakah saya perlu akun atau login?",
+    answer:
+      "Tidak perlu. Donasi bisa dilakukan tanpa akun atau login. Setelah pembayaran, simpan Order ID untuk mengecek status donasi kapan saja.",
+  },
+  {
+    question: "Bagaimana cara cek status donasi tanpa akun?",
+    answer:
+      "Buka halaman Cek status donasi, lalu masukkan Order ID yang tampil setelah pembayaran. Status juga diperbarui otomatis di halaman status tanpa perlu memuat ulang.",
+  },
+  {
+    question: "Apakah nominal donasi ditambah kode unik?",
+    answer:
+      "Tidak. Nominal yang tampil di laporan adalah nominal pembayaran yang berhasil diterima, tanpa biaya tambahan atau kode unik. Pembayaran resmi hanya lewat QRIS Midtrans.",
+  },
+  {
     question: "Bagaimana cara menghubungi admin?",
     answer:
-      "Gunakan tombol WhatsApp admin di halaman ini. Sertakan Order ID jika bertanya tentang donasi tertentu. Email dan nomor WhatsApp donatur tidak pernah ditampilkan di laporan publik.",
+      "Gunakan tombol WhatsApp admin di halaman ini. Sertakan Order ID jika bertanya tentang donasi tertentu.",
   },
 ];
 

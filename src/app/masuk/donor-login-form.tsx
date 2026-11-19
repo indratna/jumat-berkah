@@ -61,14 +61,14 @@ export function DonorLoginForm({
         Masuk dengan Google
       </button>
 
-      <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--craft-ink-soft)]">
+      <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.1em] text-[color:var(--craft-ink-soft)]">
         <span className="h-px flex-1 bg-[color:var(--craft-line)]" />
         atau
         <span className="h-px flex-1 bg-[color:var(--craft-line)]" />
       </div>
 
       <form onSubmit={handlePasswordSignIn} className="space-y-5">
-        <p className="text-sm font-bold uppercase tracking-[0.14em] text-[color:var(--craft-leaf)]">
+        <p className="text-sm font-bold uppercase tracking-[0.1em] text-[color:var(--craft-leaf)]">
           Masuk dengan email
         </p>
         <div>

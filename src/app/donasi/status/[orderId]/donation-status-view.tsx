@@ -7,6 +7,7 @@ import { PaymentDeadlineCountdown } from "@/components/payment-deadline-countdow
 import { formatRupiah } from "@/lib/format";
 import {
   getPaymentRedirectStorageKey,
+  getPaymentStatusLabel,
   isFinalDonationStatus,
   resolveDonationStatusTone,
   type DonationStatusTone,
@@ -52,6 +53,9 @@ const toneStyles: Record<
     label: "Pembayaran kedaluwarsa",
   },
 };
+
+const LABEL_CLASS =
+  "text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--craft-ink-soft)]";
 
 function formatDateTime(value: string) {
   const date = new Date(value);
@@ -107,6 +111,9 @@ export function DonationStatusView({
   const [pollError, setPollError] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [announcement, setAnnouncement] = useState("");
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
+    "idle",
+  );
   const previousStatus = useRef(initialSnapshot.status);
   const inFlight = useRef(false);
 
@@ -218,10 +225,28 @@ export function DonationStatusView({
   const createdAtLabel = formatDateTime(snapshot.createdAt);
   const paidAtLabel = snapshot.paidAt ? formatDateTime(snapshot.paidAt) : null;
 
+  async function copyOrderId() {
+    try {
+      await navigator.clipboard.writeText(snapshot.orderId);
+      setCopyState("copied");
+    } catch {
+      setCopyState("failed");
+    }
+
+    window.setTimeout(() => setCopyState("idle"), 2_500);
+  }
+
   return (
     <>
       <div role="status" aria-live="polite" className="sr-only">
         {announcement}
+      </div>
+      <div role="status" aria-live="polite" className="sr-only">
+        {copyState === "copied"
+          ? "Order ID tersalin."
+          : copyState === "failed"
+            ? "Gagal menyalin. Salin Order ID secara manual."
+            : ""}
       </div>
 
       <section
@@ -230,7 +255,7 @@ export function DonationStatusView({
       >
         <div className="space-y-3 border-b border-[color:var(--craft-line)] px-5 py-6 sm:px-8">
           <span
-            className={`inline-flex items-center rounded-full px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.18em] ${styles.badge}`}
+            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] ${styles.badge}`}
           >
             {styles.label}
           </span>
@@ -259,20 +284,34 @@ export function DonationStatusView({
 
         <div className="space-y-5 px-5 py-6 sm:px-8">
           <div className="rounded-2xl bg-[color:var(--craft-paper)] px-4 py-4">
-            <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-[color:var(--craft-ink-soft)]">
-              Nominal donasi
-            </p>
+            <p className={LABEL_CLASS}>Nominal donasi</p>
             <p className="craft-num mt-1 text-3xl text-[color:var(--craft-ink)] sm:text-4xl">
               {formatRupiah(snapshot.amount)}
             </p>
           </div>
 
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
-            <Detail label="Order ID" value={snapshot.orderId} mono />
             <Detail
-              label="ID status Midtrans"
-              value={snapshot.status}
+              label="Order ID"
+              value={snapshot.orderId}
               mono
+              action={
+                <button
+                  type="button"
+                  onClick={() => void copyOrderId()}
+                  className="mt-2 inline-flex min-h-11 items-center rounded-full border border-[color:var(--craft-line-strong)] px-3 text-xs font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
+                >
+                  {copyState === "copied"
+                    ? "Tersalin"
+                    : copyState === "failed"
+                      ? "Salin manual"
+                      : "Salin Order ID"}
+                </button>
+              }
+            />
+            <Detail
+              label="Status pembayaran"
+              value={getPaymentStatusLabel(snapshot.status)}
             />
             {createdAtLabel ? (
               <Detail label="Dibuat" value={`${createdAtLabel} WIB`} />
@@ -281,6 +320,26 @@ export function DonationStatusView({
               <Detail label="Dibayar" value={`${paidAtLabel} WIB`} />
             ) : null}
           </dl>
+
+          {tone === "waiting" ? (
+            <div className="rounded-2xl border border-[color:var(--craft-line)] bg-[color:var(--craft-paper)] px-4 py-4">
+              <p className={LABEL_CLASS}>Cara membayar</p>
+              <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm leading-6 text-[color:var(--craft-ink-soft)]">
+                <li>Buka aplikasi m-banking atau e-wallet, lalu pilih menu QRIS.</li>
+                <li>
+                  Pindai QR di halaman pembayaran Midtrans dan periksa nominalnya.
+                </li>
+                <li>
+                  Selesaikan pembayaran. Status di halaman ini berubah otomatis.
+                </li>
+              </ol>
+              <p className="mt-3 text-xs leading-5 text-[color:var(--craft-ink-soft)]">
+                Jangan transfer ke rekening pribadi. Pembayaran resmi hanya lewat
+                QRIS Midtrans. Simpan tangkapan layar QR jika ingin membayar
+                nanti.
+              </p>
+            </div>
+          ) : null}
 
           {tone === "waiting" ? (
             <PaymentDeadlineCountdown createdAtIso={snapshot.createdAt} />
@@ -297,6 +356,24 @@ export function DonationStatusView({
               <p className="mt-3 rounded-xl bg-white/70 px-3 py-2 text-xs leading-5 text-emerald-950">
                 {buildShareText(snapshot.orderId, snapshot.amount)}
               </p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(
+                    buildShareText(snapshot.orderId, snapshot.amount),
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-emerald-300 bg-white px-4 text-sm font-bold text-emerald-900 hover:bg-emerald-100"
+                >
+                  Bagikan ke WhatsApp
+                </a>
+                <Link
+                  href="/laporan"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-emerald-300 bg-white px-4 text-sm font-bold text-emerald-900 hover:bg-emerald-100"
+                >
+                  Lihat laporan publik
+                </Link>
+              </div>
             </div>
           ) : null}
 
@@ -342,21 +419,23 @@ export function DonationStatusView({
                 href="/donasi"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-[color:var(--craft-leaf)] px-5 text-sm font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)]"
               >
-                Buat donasi baru
+                {tone === "success" ? "Donasi lagi" : "Buat QR baru"}
               </Link>
             )}
 
-            <Link
-              href="/laporan"
-              className="inline-flex min-h-12 items-center justify-center rounded-full border border-[color:var(--craft-line-strong)] px-5 text-sm font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
-            >
-              Lihat laporan
-            </Link>
+            {tone !== "success" ? (
+              <Link
+                href="/laporan"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-[color:var(--craft-line-strong)] px-5 text-sm font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
+              >
+                Lihat laporan
+              </Link>
+            ) : null}
           </div>
 
           <p className="text-xs leading-5 text-[color:var(--craft-ink-soft)]">
-            Hanya pembayaran berstatus <strong>settlement</strong> yang dihitung
-            sebagai pemasukan. Nominal, email, dan nomor WhatsApp Anda tidak
+            Hanya donasi dengan pembayaran berhasil yang dihitung sebagai
+            pemasukan program. Nominal, email, dan nomor WhatsApp Anda tidak
             pernah ditampilkan di laporan publik.
           </p>
         </div>
@@ -369,16 +448,16 @@ function Detail({
   label,
   value,
   mono = false,
+  action,
 }: {
   label: string;
   value: string;
   mono?: boolean;
+  action?: React.ReactNode;
 }) {
   return (
     <div className="min-w-0 rounded-xl border border-[color:var(--craft-line)] px-3 py-2">
-      <dt className="text-[0.65rem] font-semibold uppercase tracking-widest text-[color:var(--craft-ink-soft)]">
-        {label}
-      </dt>
+      <dt className={LABEL_CLASS}>{label}</dt>
       <dd
         className={`mt-1 break-all text-sm font-bold text-[color:var(--craft-ink)] ${
           mono ? "font-mono" : ""
@@ -386,6 +465,7 @@ function Detail({
       >
         {value}
       </dd>
+      {action ? <div>{action}</div> : null}
     </div>
   );
 }

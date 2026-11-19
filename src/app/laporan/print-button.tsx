@@ -5,7 +5,7 @@ export function PrintButton() {
     <button
       type="button"
       onClick={() => window.print()}
-      className="rounded-lg bg-green-800 px-5 py-2 text-center font-semibold text-white shadow-sm transition hover:bg-emerald-800"
+      className="inline-flex min-h-11 items-center justify-center rounded-full border border-[color:var(--craft-line-strong)] bg-[color:var(--craft-paper)] px-5 text-center text-sm font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)]"
     >
       Cetak Laporan A4
     </button>

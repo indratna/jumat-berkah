@@ -143,7 +143,7 @@ function DonorAuthModal({
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.16em] text-[color:var(--craft-leaf)]">
+            <p className="text-sm font-bold uppercase tracking-[0.1em] text-[color:var(--craft-leaf)]">
               Akun donatur
             </p>
             <h2
@@ -441,7 +441,7 @@ function SignupPanel({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
 
 function Divider() {
   return (
-    <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--craft-ink-soft)]">
+    <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.1em] text-[color:var(--craft-ink-soft)]">
       <span className="h-px flex-1 bg-[color:var(--craft-line)]" />
       atau
       <span className="h-px flex-1 bg-[color:var(--craft-line)]" />

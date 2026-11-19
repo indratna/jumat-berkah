@@ -34,9 +34,9 @@ export function HeroAmountPicker() {
   }
 
   return (
-    <div className="mt-8">
+    <div className="mt-6">
       <fieldset>
-        <legend className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--craft-ink-soft)]">
+        <legend className="text-xs font-semibold uppercase tracking-[0.1em] text-[color:var(--craft-ink-soft)]">
           Pilih nominal cepat
         </legend>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -125,7 +125,10 @@ export function HeroAmountPicker() {
         </div>
       ) : null}
 
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div
+        id="hero-cta"
+        className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center"
+      >
         {parsedAmount && !error ? (
           <Link
             href={buildDonationHref(parsedAmount)}

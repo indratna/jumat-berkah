@@ -1,7 +1,11 @@
 import Link from "next/link";
 
-import { formatRupiah } from "@/lib/format";
 import type { LandingSocialProof } from "@/lib/landing";
+import {
+  getSocialProofHeading,
+  shouldShowRecentDonations,
+} from "@/lib/landing-stats";
+import { formatRupiah } from "@/lib/format";
 
 function formatCount(value: number) {
   return new Intl.NumberFormat("id-ID").format(value);
@@ -12,6 +16,9 @@ export function LandingSocialProofCard({
 }: {
   proof: LandingSocialProof;
 }) {
+  const showPortions = proof.totalPortions > 0;
+  const showRecentDonations = shouldShowRecentDonations(proof.settlementCount);
+
   return (
     <section aria-labelledby="bukti-sosial" className="space-y-5">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -21,43 +28,42 @@ export function LandingSocialProofCard({
             id="bukti-sosial"
             className="mt-3 text-2xl font-bold leading-tight sm:text-3xl"
           >
-            Sudah banyak yang ikut berbagi.
+            {getSocialProofHeading(proof.settlementCount)}
           </h2>
         </div>
         <p className="text-sm leading-6 text-[color:var(--craft-ink-soft)] sm:max-w-xs">
-          Ringkasan diambil dari donasi yang sudah berhasil dan penyaluran yang
-          sudah dipublikasikan.
+          Ringkasan diambil dari donasi yang sudah berhasil.
         </p>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div
+        className={`grid gap-4 ${
+          showPortions ? "sm:grid-cols-3" : "sm:grid-cols-2"
+        }`}
+      >
         <Metric
           label="Donatur"
           value={formatCount(proof.donorCount)}
           unit="orang"
-          note="Donatur anonim dihitung tanpa membuka identitas."
+          note="Dihitung dari donasi yang berhasil."
         />
-        <Metric
-          label="Porsi tersalurkan"
-          value={
-            proof.totalPortions > 0 ? formatCount(proof.totalPortions) : "—"
-          }
-          unit={proof.totalPortions > 0 ? "porsi" : undefined}
-          note={
-            proof.totalPortions > 0
-              ? "Dari cerita penyaluran yang sudah terbit."
-              : "Menunggu laporan penyaluran pertama."
-          }
-        />
+        {showPortions ? (
+          <Metric
+            label="Porsi tersalurkan"
+            value={formatCount(proof.totalPortions)}
+            unit="porsi"
+            note="Dari laporan penyaluran yang sudah terbit."
+          />
+        ) : null}
         <Metric
           label="Donasi berhasil"
           value={formatCount(proof.settlementCount)}
           unit="donasi"
-          note="Hanya pembayaran settlement yang dihitung."
+          note="Hanya pembayaran berhasil yang dihitung."
         />
       </div>
 
-      {proof.recentDonations.length > 0 ? (
+      {showRecentDonations ? (
         <div className="craft-card p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-base font-bold text-[color:var(--craft-ink)]">
@@ -90,10 +96,6 @@ export function LandingSocialProofCard({
               </li>
             ))}
           </ul>
-          <p className="mt-3 border-t border-[color:var(--craft-line)] pt-3 text-xs leading-5 text-[color:var(--craft-ink-soft)]">
-            Email dan nomor WhatsApp donatur tidak pernah ditampilkan. Donatur
-            yang memilih anonim tampil sebagai “Anonim”.
-          </p>
         </div>
       ) : null}
     </section>
@@ -113,7 +115,7 @@ function Metric({
 }) {
   return (
     <article className="craft-card flex flex-col gap-1 p-5">
-      <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-[color:var(--craft-ink-soft)]">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--craft-ink-soft)]">
         {label}
       </p>
       <p className="craft-num flex items-baseline gap-1.5 text-3xl text-[color:var(--craft-leaf)]">

@@ -45,9 +45,9 @@ export function validateDonationInput(
   const message = normalizeOptionalString(input.message);
   const amount = normalizeAmount(input.amount);
 
-  if (!isAnonymous && !donorName) {
-    errors.donorName = "Nama wajib diisi atau pilih donasi anonim.";
-  }
+  // Donor name is optional. A blank name is stored as null and shown publicly
+  // as "Anonim" by getPublicDonorName, so the donor can stay anonymous without
+  // an extra step.
 
   if (donorEmail && !isValidEmail(donorEmail)) {
     errors.donorEmail = "Format email tidak valid.";

@@ -80,17 +80,26 @@ curl -i -X POST http://localhost:3000/api/admin/expenses \
   -H "Content-Type: application/json" \
   -d '{}'
 
-# Donation creation is rate limited
+# Donation creation is rate limited. The empty body fails validation, so the
+# requests consume limiter slots without creating a donation.
 for i in $(seq 1 12); do
   curl -s -o /dev/null -w "%{http_code}\n" \
     -X POST http://localhost:3000/api/donations \
     -H "Content-Type: application/json" \
-    -d '{"amount":1000}'
+    -d '{}'
 done
 ```
 
 Expected: guest admin requests return `401`, a foreign `Origin` returns `403`,
 and the donation burst eventually returns `429` with a `Retry-After` header.
+
+The same checks are packaged for deploy preflight:
+
+```bash
+npm run smoke:security -- --base-url https://staging.example.com
+```
+
+See `docs/PREFLIGHT_SMOKE_RUNBOOK.md` for the flags and the rate-limit warning.
 
 Also confirm cookies are `HttpOnly`, `Secure` in production, and `SameSite=Lax`,
 and that the response includes the security headers from `next.config.ts`.

@@ -21,6 +21,7 @@ This directory contains public, reusable documentation for running and maintaini
 ## Security
 
 - `SECURITY_TESTING.md` — test layers, commands, and manual security checklist.
+- `PREFLIGHT_SMOKE_RUNBOOK.md` — post-deploy smoke checks for guards, headers, and rate limits.
 
 ## Operations
 

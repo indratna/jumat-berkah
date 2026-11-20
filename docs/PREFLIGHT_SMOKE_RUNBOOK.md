@@ -27,6 +27,12 @@ The base URL can also come from an environment variable:
 SMOKE_BASE_URL=https://your-domain.example npm run smoke:security
 ```
 
+On Windows PowerShell:
+
+```powershell
+$env:SMOKE_BASE_URL = "https://your-domain.example"; npm run smoke:security
+```
+
 The default run is read-only:
 
 | Check | Expected |

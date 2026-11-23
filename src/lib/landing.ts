@@ -136,17 +136,33 @@ export async function getLandingSocialProof(
 ): Promise<LandingSocialProof | null> {
   const prisma = getPrisma();
 
-  const [settlementCount, donorRows, portions] = await Promise.all([
-    prisma.donation.count({ where: { status: DonationStatus.settlement } }),
+  const donationWhere = { status: DonationStatus.settlement } as const;
+  const donationOrderBy = { paidAt: "desc" } as const;
+
+  const [settlementCount, identityRows, recentRows, portions] = await Promise.all([
+    prisma.donation.count({ where: donationWhere }),
+    // Only the fields needed for donor deduplication. Email and phone stay on
+    // the server and never reach the public display mapping.
     prisma.donation.findMany({
-      where: { status: DonationStatus.settlement },
-      orderBy: { paidAt: "desc" },
+      where: donationWhere,
+      orderBy: donationOrderBy,
       take: MAX_SETTLEMENTS_SCANNED,
       select: {
         id: true,
         userId: true,
         donorEmail: true,
         donorPhone: true,
+        donorName: true,
+        isAnonymous: true,
+        showNamePublicly: true,
+      },
+    }),
+    prisma.donation.findMany({
+      where: donationWhere,
+      orderBy: donationOrderBy,
+      take: RECENT_DONATION_LIMIT,
+      select: {
+        id: true,
         donorName: true,
         isAnonymous: true,
         showNamePublicly: true,
@@ -167,23 +183,21 @@ export async function getLandingSocialProof(
 
   return {
     settlementCount,
-    donorCount: countDistinctDonors(donorRows),
+    donorCount: countDistinctDonors(identityRows),
     totalPortions: portions._sum.packageCount ?? 0,
-    recentDonations: donorRows
-      .slice(0, RECENT_DONATION_LIMIT)
-      .map((donation) => ({
-        id: donation.id,
-        donorName: getPublicDonorName({
-          donorName: donation.donorName,
-          isAnonymous: donation.isAnonymous,
-          showNamePublicly: donation.showNamePublicly,
-        }),
-        amount: donation.amount,
-        relativeTime: formatRelativeTime(
-          donation.paidAt ?? donation.createdAt,
-          now,
-        ),
-      })),
+    recentDonations: recentRows.map((donation) => ({
+      id: donation.id,
+      donorName: getPublicDonorName({
+        donorName: donation.donorName,
+        isAnonymous: donation.isAnonymous,
+        showNamePublicly: donation.showNamePublicly,
+      }),
+      amount: donation.amount,
+      relativeTime: formatRelativeTime(
+        donation.paidAt ?? donation.createdAt,
+        now,
+      ),
+    })),
   };
 }
 

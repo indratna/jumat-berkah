@@ -17,6 +17,7 @@ export const RATE_LIMITS = {
   donationStatus: { limit: 60, windowMs: 10 * 60_000 },
   adminLogin: { limit: 5, windowMs: 15 * 60_000 },
   donorLogin: { limit: 10, windowMs: 15 * 60_000 },
+  cspReport: { limit: 60, windowMs: 10 * 60_000 },
 } satisfies Record<string, RateLimitRule>;
 
 type Bucket = {

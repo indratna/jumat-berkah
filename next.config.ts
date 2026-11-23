@@ -1,8 +1,13 @@
 import type { NextConfig } from "next";
 
-// Baseline hardening headers. A Content-Security-Policy is intentionally absent:
-// Midtrans Snap injects its own scripts from the Midtrans domains, so a CSP needs
-// a nonce-based setup and a real payment-flow test before it can ship safely.
+import {
+  buildCspReportOnlyPolicy,
+  buildReportingEndpointsHeader,
+} from "./src/lib/csp";
+
+// Baseline hardening headers. The CSP is report-only on purpose: it collects
+// would-be violations without blocking Midtrans Snap. See CSP_REPORT_ONLY.md
+// for the path to enforcement.
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
@@ -12,6 +17,13 @@ const securityHeaders = [
     value: "camera=(), microphone=(), geolocation=()",
   },
   { key: "Strict-Transport-Security", value: "max-age=31536000" },
+  {
+    key: "Content-Security-Policy-Report-Only",
+    value: buildCspReportOnlyPolicy({
+      isDev: process.env.NODE_ENV !== "production",
+    }),
+  },
+  { key: "Reporting-Endpoints", value: buildReportingEndpointsHeader() },
 ];
 
 const nextConfig: NextConfig = {

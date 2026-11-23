@@ -22,15 +22,15 @@
     "@prisma/client": "^7.10.1",
     "better-auth": "^1.7.26",
     "next": "^16.4.6",
-    "pg": "^8.21.0",
+    "pg": "^8.23.1",
     "prisma": "^7.10.1",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-    "@types/pg": "^8.20.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",

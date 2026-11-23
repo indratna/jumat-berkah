@@ -2,7 +2,7 @@
 
 export default function LaporanError({ reset }: { reset: () => void }) {
   return (
-    <main className="page-shell text-slate-900">
+    <main id="main-content" className="page-shell text-slate-900">
       <section className="mx-auto max-w-3xl rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
         <p className="text-sm font-semibold uppercase tracking-[0.08em] text-green-700">
           Laporan Publik
@@ -17,7 +17,7 @@ export default function LaporanError({ reset }: { reset: () => void }) {
         <button
           type="button"
           onClick={reset}
-          className="mt-6 rounded-lg bg-green-700 px-5 py-2 font-semibold text-white"
+          className="mt-6 inline-flex min-h-11 items-center rounded-lg bg-green-700 px-5 py-2 font-semibold text-white"
         >
           Muat ulang
         </button>

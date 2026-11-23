@@ -35,7 +35,7 @@ export function DonorAuthBanner({
         <div className="flex flex-wrap gap-2">
           <Link
             href="/akun/donasi"
-            className="inline-flex min-h-10 items-center rounded-full bg-[color:var(--craft-leaf)] px-4 text-sm font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)]"
+            className="inline-flex min-h-11 items-center rounded-full bg-[color:var(--craft-leaf)] px-4 text-sm font-bold text-[color:var(--craft-cream)] hover:bg-[color:var(--craft-leaf-strong)]"
           >
             Lihat riwayat donasi
           </Link>

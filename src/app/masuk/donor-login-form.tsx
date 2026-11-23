@@ -83,6 +83,7 @@ export function DonorLoginForm({
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
+            aria-describedby={error ? "donor-login-error" : undefined}
             className="field mt-2"
             required
           />
@@ -99,17 +100,22 @@ export function DonorLoginForm({
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            aria-describedby={error ? "donor-login-error" : undefined}
             className="field mt-2"
             required
           />
         </div>
 
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {error ? (
+          <p id="donor-login-error" role="alert" className="text-sm text-red-700">
+            {error}
+          </p>
+        ) : null}
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="btn-primary w-full disabled:bg-slate-300"
+          className="btn-primary w-full disabled:bg-slate-200 disabled:text-slate-700"
         >
           {isSubmitting ? "Masuk…" : "Masuk"}
         </button>

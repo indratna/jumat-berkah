@@ -8,6 +8,9 @@ export function LogoutButton() {
       fetch("/api/auth/admin/logout", { method: "POST" }),
       authClient.signOut(),
     ]);
+    // signOut() does not auto-redirect. A full load discards the cached admin
+    // RSC payload (which contains financial data) and re-runs the server guard.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = "/login";
   }
 

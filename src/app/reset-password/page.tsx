@@ -12,7 +12,7 @@ export default async function ResetPasswordPage({
   const error = params.error;
 
   return (
-    <main className="page-shell text-slate-900">
+    <main id="main-content" className="page-shell text-slate-900">
       <section className="mx-auto max-w-md rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
         <Link
           href="/login"
@@ -25,7 +25,7 @@ export default async function ResetPasswordPage({
         </p>
         <h1 className="mt-4 text-3xl font-bold">Atur password baru.</h1>
         {error ? (
-          <p className="mt-3 text-sm font-semibold text-rose-700">
+          <p role="alert" className="mt-3 text-sm font-semibold text-rose-700">
             Tautan reset tidak valid atau sudah kedaluwarsa.
           </p>
         ) : (

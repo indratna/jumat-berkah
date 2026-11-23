@@ -1,6 +1,7 @@
 export default function LaporanLoading() {
   return (
-    <main className="page-shell text-slate-900">
+    <main id="main-content" className="page-shell text-slate-900" aria-busy="true">
+      <span className="sr-only">Memuat laporan…</span>
       <section className="mx-auto max-w-6xl space-y-6">
         <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
           <div className="h-4 w-40 animate-pulse rounded-lg bg-slate-100" />

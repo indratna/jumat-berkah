@@ -141,7 +141,7 @@ export function HeroAmountPicker() {
           <button
             type="button"
             disabled
-            className="inline-flex min-h-12 cursor-not-allowed items-center justify-center gap-2 rounded-full bg-[color:var(--craft-leaf)]/50 px-6 text-sm font-bold text-[color:var(--craft-cream)]"
+            className="inline-flex min-h-12 cursor-not-allowed items-center justify-center gap-2 rounded-full bg-slate-200 px-6 text-sm font-bold text-slate-700"
           >
             Donasi Sekarang
           </button>

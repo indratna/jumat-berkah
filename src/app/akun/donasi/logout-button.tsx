@@ -13,6 +13,9 @@ export function DonorLogoutButton() {
       fetch("/api/auth/donor/logout", { method: "POST" }),
       authClient.signOut(),
     ]);
+    // Legacy donor_session and the Better Auth session are both cleared here;
+    // a full load guarantees the guarded account RSC is refetched as a guest.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = "/";
   }
 

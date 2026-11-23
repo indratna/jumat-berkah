@@ -40,18 +40,18 @@ export function PasswordResetRequestForm() {
       <button
         type="submit"
         disabled={status === "sending"}
-        className="btn-primary w-full disabled:bg-slate-300"
+        className="btn-primary w-full disabled:bg-slate-200 disabled:text-slate-700"
       >
         {status === "sending" ? "Mengirim…" : "Kirim tautan reset"}
       </button>
       {status === "sent" ? (
-        <p className="text-sm font-semibold text-green-700">
+        <p role="status" className="text-sm font-semibold text-green-700">
           Jika email terdaftar, tautan reset sudah dikirim. Local development:
           cek terminal `run.bat` untuk URL reset.
         </p>
       ) : null}
       {status === "error" ? (
-        <p className="text-sm font-semibold text-rose-700">
+        <p role="alert" className="text-sm font-semibold text-rose-700">
           Permintaan reset gagal. Coba lagi.
         </p>
       ) : null}

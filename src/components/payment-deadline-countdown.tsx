@@ -70,6 +70,8 @@ export function PaymentDeadlineCountdown({
         Perkiraan batas waktu bayar
       </p>
       <p
+        role="status"
+        aria-live="polite"
         className={`mt-1 text-sm font-bold ${
           state?.expired
             ? "text-[color:var(--craft-ink)]"

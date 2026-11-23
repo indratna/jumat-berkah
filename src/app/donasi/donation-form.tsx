@@ -360,7 +360,10 @@ export function DonationForm({
           autoComplete="name"
           value={donorName}
           onChange={(event) => setDonorName(event.target.value)}
-          aria-describedby="donor-name-hint"
+          aria-invalid={errors.donorName ? true : undefined}
+          aria-describedby={
+            errors.donorName ? "donor-name-hint donor-name-error" : "donor-name-hint"
+          }
           className="field mt-2"
           placeholder="Nama Anda..."
         />
@@ -372,7 +375,11 @@ export function DonationForm({
           Anonim.
         </p>
         {errors.donorName ? (
-          <p role="alert" className="mt-2 text-sm font-medium text-red-700">
+          <p
+            id="donor-name-error"
+            role="alert"
+            className="mt-2 text-sm font-medium text-red-700"
+          >
             {errors.donorName}
           </p>
         ) : null}
@@ -431,12 +438,19 @@ export function DonationForm({
             spellCheck={false}
             value={donorEmail}
             onChange={(event) => setDonorEmail(event.target.value)}
-            aria-describedby="contact-hint"
+            aria-invalid={errors.donorEmail ? true : undefined}
+            aria-describedby={
+              errors.donorEmail ? "contact-hint donor-email-error" : "contact-hint"
+            }
             className="field mt-2"
             placeholder="nama@email.com..."
           />
           {errors.donorEmail ? (
-            <p role="alert" className="mt-2 text-sm font-medium text-red-700">
+            <p
+              id="donor-email-error"
+              role="alert"
+              className="mt-2 text-sm font-medium text-red-700"
+            >
               {errors.donorEmail}
             </p>
           ) : null}
@@ -456,10 +470,22 @@ export function DonationForm({
             autoComplete="tel"
             value={donorPhone}
             onChange={(event) => setDonorPhone(event.target.value)}
-            aria-describedby="contact-hint"
+            aria-invalid={errors.donorPhone ? true : undefined}
+            aria-describedby={
+              errors.donorPhone ? "contact-hint donor-phone-error" : "contact-hint"
+            }
             className="field mt-2"
             placeholder="08123456789..."
           />
+          {errors.donorPhone ? (
+            <p
+              id="donor-phone-error"
+              role="alert"
+              className="mt-2 text-sm font-medium text-red-700"
+            >
+              {errors.donorPhone}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -549,7 +575,7 @@ export function DonationForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[color:var(--craft-leaf)] px-5 text-sm font-bold text-[color:var(--craft-cream)] transition hover:bg-[color:var(--craft-leaf-strong)] disabled:cursor-not-allowed disabled:bg-slate-300"
+        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[color:var(--craft-leaf)] px-5 text-sm font-bold text-[color:var(--craft-cream)] transition hover:bg-[color:var(--craft-leaf-strong)] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-700"
       >
         {isSubmitting ? (
           <>
@@ -569,7 +595,11 @@ export function DonationForm({
       </p>
 
       {result ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
+        <div
+          role="status"
+          aria-live="polite"
+          className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950"
+        >
           <p className="font-bold">Donasi menunggu pembayaran.</p>
           <p className="mt-1 leading-6">
             Order <strong>{result.orderId}</strong> sebesar{" "}

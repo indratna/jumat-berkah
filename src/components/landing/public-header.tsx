@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -56,10 +57,13 @@ export function PublicHeader({ className = "" }: { className?: string }) {
         className="inline-flex min-h-11 min-w-0 flex-1 items-center gap-2 text-[color:var(--craft-ink)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[color:var(--craft-leaf)] sm:gap-3"
       >
         <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-2xl ring-1 ring-[color:var(--craft-line-strong)]/40 sm:size-10">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/branding/logo-mark.png"
             alt="Logo Jumat Berkah"
+            width={40}
+            height={40}
+            sizes="40px"
+            priority
             className="size-full object-cover"
           />
         </span>

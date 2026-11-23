@@ -23,9 +23,11 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
     if (to) params.set("to", to);
   }
 
-  const report = await getPublicReport(parseReportDateRange(params));
-  const fridayProgress = await getWeeklyTargetProgress();
-  const distribution = await getPublishedDistributionReportForCurrentCycle();
+  const [report, fridayProgress, distribution] = await Promise.all([
+    getPublicReport(parseReportDateRange(params)),
+    getWeeklyTargetProgress(),
+    getPublishedDistributionReportForCurrentCycle(),
+  ]);
 
   const periodLabel =
     period === "jumat" ? "Siklus Jumat berjalan" : "Periode pilihan";
@@ -131,7 +133,7 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
             </p>
             {distribution.report.photoUrls.length > 0 ? (
               <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {distribution.report.photoUrls.map((url) => (
+                {distribution.report.photoUrls.map((url, index) => (
                   <a
                     key={url}
                     href={url}
@@ -142,7 +144,7 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={url}
-                      alt="Foto kegiatan penyaluran"
+                      alt={`Foto kegiatan penyaluran ke-${index + 1}`}
                       width={640}
                       height={400}
                       className="aspect-[16/10] w-full object-cover"
@@ -175,6 +177,11 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
               </p>
             </div>
             <div
+              role="progressbar"
+              aria-label="Progres target siklus Jumat"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.min(progressPercent, 100)}
               className="mt-4 h-3 overflow-hidden rounded-full"
               style={{ background: "rgba(15, 42, 31, 0.08)" }}
             >

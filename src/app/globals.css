@@ -77,7 +77,8 @@ html.dark textarea {
 
 input::placeholder,
 textarea::placeholder {
-    color: #94a3b8;
+    /* #94a3b8 on white is only ~2.6:1; this darkened slate clears 4.5:1. */
+    color: #64748b;
 }
 
 button:focus-visible,
@@ -113,6 +114,8 @@ textarea:focus-visible {
     font-weight: 700;
 }
 
+/* Some assistive-tech/browser combinations fire :focus without :focus-visible. */
+.skip-link:focus,
 .skip-link:focus-visible {
     transform: translateY(0);
 }

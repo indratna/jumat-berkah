@@ -411,7 +411,7 @@ export function DonationStatusView({
                 type="button"
                 onClick={() => void checkStatus()}
                 disabled={isChecking}
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-[color:var(--craft-line-strong)] px-5 text-sm font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-[color:var(--craft-line-strong)] px-5 text-sm font-bold text-[color:var(--craft-ink)] hover:border-[color:var(--craft-leaf)] hover:text-[color:var(--craft-leaf)] disabled:cursor-not-allowed disabled:text-slate-600"
               >
                 Cek status sekarang
               </button>

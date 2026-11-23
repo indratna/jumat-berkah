@@ -16,7 +16,10 @@ import { LandingTransparency } from "@/components/landing/landing-transparency";
 import { MobileDonationCta } from "@/components/landing/mobile-donation-cta";
 import { PublicHeader } from "@/components/landing/public-header";
 
-export const dynamic = "force-dynamic";
+// The landing tree has no cookies/headers/searchParams reads, so it can be
+// cached. Keep this in sync with the Friday-cycle caveat in the plan: data may
+// be up to 60 seconds stale around the weekly boundary.
+export const revalidate = 60;
 
 export default function Home() {
   return (

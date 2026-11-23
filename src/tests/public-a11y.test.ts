@@ -94,7 +94,7 @@ test("public auth forms announce errors and status messages", () => {
     "src/app/lupa-password/password-reset-request-form.tsx",
     "src/app/reset-password/reset-password-form.tsx",
     "src/app/reset-password/page.tsx",
-    "src/app/donasi/donor-auth-modal.tsx",
+    "src/app/donasi/donor-auth-modal-panel.tsx",
   ]) {
     const source = readSource(relativePath);
     assert.match(
@@ -109,7 +109,7 @@ test("disabled public buttons keep readable text", () => {
   for (const relativePath of [
     "src/app/donasi/donation-form.tsx",
     "src/components/landing/hero-amount-picker.tsx",
-    "src/app/donasi/donor-auth-modal.tsx",
+    "src/app/donasi/donor-auth-modal-panel.tsx",
     "src/app/daftar/donor-signup-form.tsx",
     "src/app/masuk/donor-login-form.tsx",
     "src/app/login/admin-login-form.tsx",
@@ -137,7 +137,7 @@ test("intentional hard navigations are documented for lint", () => {
     "src/app/admin/logout-button.tsx",
     "src/app/akun/donasi/logout-button.tsx",
     "src/app/login/admin-login-form.tsx",
-    "src/app/donasi/donor-auth-modal.tsx",
+    "src/app/donasi/donor-auth-modal-panel.tsx",
   ]) {
     const source = readSource(relativePath);
     assert.match(
@@ -146,4 +146,40 @@ test("intentional hard navigations are documented for lint", () => {
       `${relativePath} perlu justifikasi hard navigation`,
     );
   }
+});
+
+test("landing uses ISR instead of forcing a dynamic render", () => {
+  const source = readSource("src/app/page.tsx");
+  assert.match(source, /export const revalidate = 60/);
+  assert.doesNotMatch(source, /force-dynamic/);
+});
+
+test("the unused display font weight is not preloaded", () => {
+  const source = readSource("src/app/layout.tsx");
+  assert.doesNotMatch(source, /plus-jakarta-sans-latin-400-normal/);
+  assert.equal(source.match(/path: "\.\/fonts\//g)?.length, 7);
+});
+
+test("the public header is a server shell with a client navigation island", () => {
+  const header = readSource("src/components/landing/public-header.tsx");
+  assert.doesNotMatch(header, /"use client"/);
+  assert.match(header, /from "next\/image"/);
+  assert.match(header, /sizes="40px"/);
+  assert.match(header, /<PublicHeaderNav \/>/);
+
+  const nav = readSource("src/components/landing/public-header-nav.tsx");
+  assert.match(nav, /"use client"/);
+  assert.match(nav, /usePathname\(\)/);
+  assert.match(nav, /aria-label="Navigasi utama"/);
+});
+
+test("the auth modal panel is lazy-loaded from a client trigger", () => {
+  const trigger = readSource("src/app/donasi/donor-auth-modal.tsx");
+  assert.match(trigger, /next\/dynamic/);
+  assert.match(trigger, /ssr: false/);
+  assert.match(trigger, /createPortal/);
+
+  const panel = readSource("src/app/donasi/donor-auth-modal-panel.tsx");
+  assert.match(panel, /export function DonorAuthModal/);
+  assert.match(panel, /role="dialog"/);
 });

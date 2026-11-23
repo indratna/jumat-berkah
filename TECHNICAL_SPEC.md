@@ -1129,9 +1129,10 @@ Rules:
 Implemented direction:
 
 - Midtrans Snap transaction creation stays server-side.
-- `/donasi` server page reads `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` and `MIDTRANS_IS_PRODUCTION` and passes them to a client `MidtransSnapScript` component which mounts `next/script` with `strategy="afterInteractive"` for either `https://app.sandbox.midtrans.com/snap/snap.js` or `https://app.midtrans.com/snap/snap.js`.
-- Client `DonationForm` calls `/api/donations`, then prefers `window.snap.pay(snapToken, ...)` for inline checkout. Snap callbacks (`onSuccess`, `onPending`, `onError`, `onClose`) only navigate the donor to `/donasi/status/[orderId]`.
-- If Snap script or `window.snap.pay` is unavailable, the client falls back to redirecting the donor to `payment.redirectUrl` returned by `/api/donations`.
+- `/donasi` server page reads `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` and `MIDTRANS_IS_PRODUCTION` and passes both to `DonationForm` as props. The Snap script is not loaded on page load.
+- When the donor submits the form, `DonationForm` starts loading `https://app.sandbox.midtrans.com/snap/snap.js` or `https://app.midtrans.com/snap/snap.js` in parallel with the `/api/donations` request. `src/app/donasi/load-snap.ts` is a single-flight, bounded promise (5-second timeout) that resolves a boolean and never rejects; an existing script tag is adopted instead of duplicated.
+- After the donation API responds, the client waits for that promise and uses `chooseDonationHandoff` to prefer `window.snap.pay(snapToken, ...)` only when Snap is actually ready. Snap callbacks (`onSuccess`, `onPending`, `onError`, `onClose`) only navigate the donor to `/donasi/status/[orderId]`.
+- If Snap is not ready, missing, or failed, the client redirects to `payment.redirectUrl` returned by `/api/donations`; the redirect URL is also saved in session storage for the status page.
 - Snap script loading must fail safely when the client key is missing; the redirect-only fallback path stays correct.
 
 Technical rules:
@@ -1141,7 +1142,7 @@ Technical rules:
 - Post-popup navigation routes donor to `/donasi/status/[orderId]` so status display still comes from server/database state.
 - Snap-popup checkout UX changes must not alter request validation, order creation, donor privacy rules, or payment amount rules.
 - Snap script loading must fail safely without blocking donor from paying via redirect flow.
-- Helpers `buildDonationStatusUrl`, `resolveSnapCallbackDestination`, `canUseSnapPopup`, and `resolveFallbackRedirect` in `src/app/donasi/snap-checkout.ts` centralize popup vs redirect decisions and are covered by unit tests.
+- Helpers `buildDonationStatusUrl`, `resolveSnapCallbackDestination`, `canUseSnapPopup`, `resolveFallbackRedirect`, `getMidtransSnapScriptSrc`, and `chooseDonationHandoff` in `src/app/donasi/snap-checkout.ts` centralize popup vs redirect decisions and are covered by unit tests. `src/app/donasi/load-snap.ts` covers script readiness, deduplication, timeout, and fallback.
 
 ### 15.19 Donor Auth & Session Hygiene
 

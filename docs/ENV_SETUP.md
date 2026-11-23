@@ -90,9 +90,9 @@ See also `docs/BETTER_AUTH_SETUP.md`.
 |---|---:|---|---|---|
 | `MIDTRANS_SERVER_KEY` | Yes | Midtrans dashboard | Server key for transaction create and webhook signature. Server-only. | Create sandbox donation and verify webhook signature. |
 | `MIDTRANS_CLIENT_KEY` | Yes | Midtrans dashboard | Client key. Server-only side; mirror to `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` for browser. | Snap/redirect opens. |
-| `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` | Yes | Midtrans dashboard | Same value as `MIDTRANS_CLIENT_KEY`, intentionally exposed to browser so the Snap popup script on `/donasi` can attach `data-client-key`. Required for Snap popup checkout; missing value safely degrades to redirect-only flow. | Snap popup opens on `/donasi` after submit. |
+| `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` | Yes | Midtrans dashboard | Same value as `MIDTRANS_CLIENT_KEY`, intentionally exposed to browser so the Snap popup script loaded on demand after form submit can attach `data-client-key`. Required for Snap popup checkout; missing value safely degrades to redirect-only flow. | Snap popup opens on `/donasi` after submit. |
 | `MIDTRANS_MERCHANT_ID` | Yes | Midtrans dashboard | Merchant ID used by payload/simulation. | Midtrans dashboard shows matching merchant. |
-| `MIDTRANS_IS_PRODUCTION` | Yes | App owner decision | `false` for sandbox, `true` for live. Read server-side; client `MidtransSnapScript` receives the boolean as a prop to pick sandbox vs production Snap script. | Sandbox/live endpoint matches expected mode. |
+| `MIDTRANS_IS_PRODUCTION` | Yes | App owner decision | `false` for sandbox, `true` for live. Read server-side and passed to `DonationForm` as a prop to pick sandbox vs production Snap script when the donor submits. | Sandbox/live endpoint matches expected mode. |
 | `MIDTRANS_ENABLED_PAYMENTS` | No | App owner decision | Comma-separated methods; use `qris` for MVP. | Payment page offers QRIS. |
 
 Webhook setup:

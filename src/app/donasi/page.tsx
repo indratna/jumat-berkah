@@ -21,7 +21,6 @@ import {
 import { DonationForm } from "./donation-form";
 import { DonorAuthBanner } from "./donor-auth-banner";
 import { resolveDonorAuthBannerVariant } from "./donor-auth-banner-rules";
-import { MidtransSnapScript } from "./midtrans-snap-script";
 import { ResumeDonationBanner } from "./resume-donation-banner";
 
 const trustPoints = [
@@ -89,10 +88,6 @@ export default async function DonationPage({
         id="main-content"
         className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pb-16 pt-6 text-[color:var(--craft-ink)] sm:px-6 lg:px-8 lg:py-12"
       >
-        <MidtransSnapScript
-          clientKey={midtransClientKey}
-          isProduction={midtransIsProduction}
-        />
         <PublicHeader />
 
         <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-start lg:gap-8">
@@ -116,6 +111,8 @@ export default async function DonationPage({
             <DonationForm
               donor={donor}
               initialAmount={initialAmount}
+              snapClientKey={midtransClientKey}
+              snapIsProduction={midtransIsProduction}
               authBanner={
                 <DonorAuthBanner variant={bannerVariant} donor={donor} />
               }

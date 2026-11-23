@@ -1,6 +1,6 @@
 # Production Readiness Checklist — Jumat Berkah
 
-Gunakan checklist ini sebelum atau sesudah deploy production. Jangan tulis secret asli di checklist hasil audit.
+Gunakan checklist ini sebelum atau sesudah deploy production. Jangan tulis secret asli di checklist hasil audit. Untuk urutan verifikasi langsung setelah deploy, lihat `DEPLOY_SMOKE_CHECKLIST.md`.
 
 ## 1. Build dan test
 

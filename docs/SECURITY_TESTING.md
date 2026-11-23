@@ -23,6 +23,8 @@ requests to `main`. A pull request should not be merged when any of them fails.
 |---|---|---|
 | Production dependency CVEs | `npm audit --omit=dev --audit-level=high` | CI fails on high or critical findings. |
 | Full dependency audit | `npm audit` | Dev-only findings are reviewed but do not block by default. |
+| PR dependency diff | `dependency-review` CI job | Fails high/critical advisories in dependency changes on a pull request. |
+| Scheduled updates | `.github/dependabot.yml` | Weekly grouped npm and GitHub Actions PRs; review and validate before merge. |
 | Secret scan | `docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect -s /repo` | Run before publishing or rotating credentials. |
 | Tracked secret files | `git ls-files | Select-String "\.env"` | Only `.env.example` may be tracked. |
 
@@ -51,6 +53,8 @@ when routes live in `src/app`. Keep the file next to `src/app`.
 
 Existing tests also cover:
 
+- CSP policy output, report parsing/sanitizing, deduplication, and collector
+  statuses (`src/tests/csp-report.test.ts`);
 - security headers, `robots.txt`, and `sitemap.xml`
   (`src/tests/security-headers.test.ts`);
 - Midtrans signature validation and status mapping
@@ -92,6 +96,19 @@ done
 
 Expected: guest admin requests return `401`, a foreign `Origin` returns `403`,
 and the donation burst eventually returns `429` with a `Retry-After` header.
+
+The report-only CSP is observable on the same instance:
+
+```bash
+curl -sI http://localhost:3000/ | grep -i "content-security-policy-report-only\|reporting-endpoints"
+
+# Collector contract: 204 for a report, 405 for a read
+curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:3000/api/csp-report \
+  -H "Content-Type: application/csp-report" -d '{"csp-report":{"effective-directive":"frame-src"}}'
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/api/csp-report
+```
+
+See `CSP_REPORT_ONLY.md` for the policy contents and log format.
 
 The same checks are packaged for deploy preflight:
 
@@ -138,8 +155,9 @@ Manual checklist before a public launch:
 - The proxy cannot verify Better Auth sessions because it has no database
   access, so requests carrying only a Better Auth cookie are passed to the admin
   layout and route handlers for the authoritative check.
-- There is no Content-Security-Policy yet because Midtrans Snap injects its own
-  scripts. Add a nonce-based policy only after a real payment smoke test.
+- The Content-Security-Policy is report-only, so it collects violations without
+  blocking. Do not switch it to enforcement until a nonce design and a real
+  payment smoke test are in place; see `CSP_REPORT_ONLY.md`.
 - Automated tests prove regression safety, not the absence of vulnerabilities.
   A focused penetration test is still recommended before handling real money at
   scale.

@@ -17,9 +17,9 @@ import {
   writeLastOrder,
 } from "@/lib/payment-status";
 
+import { loadSnapScript } from "./load-snap";
 import {
-  canUseSnapPopup,
-  resolveFallbackRedirect,
+  chooseDonationHandoff,
   resolveSnapCallbackDestination,
 } from "./snap-checkout";
 import type { DonationPaymentHandoff, SnapWindow } from "./snap-types";
@@ -58,10 +58,14 @@ export function DonationForm({
   donor,
   authBanner,
   initialAmount = null,
+  snapClientKey,
+  snapIsProduction,
 }: {
   donor?: { name: string | null; email: string } | null;
   authBanner?: ReactNode;
   initialAmount?: number | null;
+  snapClientKey: string | null;
+  snapIsProduction: boolean;
 }) {
   const [amount, setAmount] = useState(() =>
     formatAmountDigits(initialAmount ?? 50_000),
@@ -129,6 +133,15 @@ export function DonationForm({
     setErrors({});
     setResult(null);
 
+    // Start the third-party script download in parallel with the Midtrans API
+    // call so it is usually ready when the payment token arrives.
+    const snapReadyPromise = snapClientKey
+      ? loadSnapScript({
+          clientKey: snapClientKey,
+          isProduction: snapIsProduction,
+        })
+      : Promise.resolve(false);
+
     try {
       const response = await fetch("/api/donations", {
         method: "POST",
@@ -167,11 +180,17 @@ export function DonationForm({
         rememberPaymentRedirect(donation.orderId, donation.payment.redirectUrl);
       }
 
-      if (canUseSnapPopup(donation.payment, window)) {
-        const snapWindow = window as SnapWindow;
-        const snapToken = donation.payment!.snapToken;
+      const snapReady = await snapReadyPromise;
+      const handoff = chooseDonationHandoff({
+        payment: donation.payment,
+        orderId: donation.orderId,
+        snapReady,
+      });
 
-        snapWindow.snap?.pay(snapToken, {
+      if (handoff.kind === "popup") {
+        const snapWindow = window as SnapWindow;
+
+        snapWindow.snap?.pay(handoff.snapToken, {
           onSuccess: () => {
             window.location.assign(
               resolveSnapCallbackDestination({
@@ -208,13 +227,8 @@ export function DonationForm({
         return;
       }
 
-      if (donation.payment?.redirectUrl) {
-        window.location.assign(
-          resolveFallbackRedirect({
-            payment: donation.payment,
-            orderId: donation.orderId,
-          }),
-        );
+      if (handoff.kind === "redirect") {
+        window.location.assign(handoff.url);
         return;
       }
 

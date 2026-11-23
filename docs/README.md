@@ -23,6 +23,7 @@ This directory contains public, reusable documentation for running and maintaini
 - `SECURITY_TESTING.md` — test layers, commands, and manual security checklist.
 - `CSP_REPORT_ONLY.md` — report-only CSP, allowlist rationale, report logs, and enforcement path.
 - `PREFLIGHT_SMOKE_RUNBOOK.md` — post-deploy smoke checks for guards, headers, and rate limits.
+- `DEPLOY_SMOKE_CHECKLIST.md` — urutan smoke pasca-deploy termasuk alur Snap.js dan webhook.
 
 ## Operations
 

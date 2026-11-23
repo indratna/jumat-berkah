@@ -79,7 +79,10 @@ export default async function StoryPage({ params }: StoryPageProps) {
   const nav = await getPublishedDistributionStoryNav(report.id);
 
   return (
-    <main className="landing-craft landing-noise min-h-screen bg-[color:var(--craft-paper)] text-[color:var(--craft-ink)]">
+    <main
+      id="main-content"
+      className="landing-craft landing-noise min-h-screen bg-[color:var(--craft-paper)] text-[color:var(--craft-ink)]"
+    >
       <PublicHeader />
       <div className="mx-auto w-full max-w-6xl px-4 pb-20 pt-8 sm:px-6 lg:px-8 lg:pt-12">
         <article className="craft-card overflow-hidden p-6 sm:p-8">

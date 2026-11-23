@@ -35,7 +35,8 @@ export function LandingHeroFigure() {
         alt="Ilustrasi nasi Jumat, kotak makan, dan masjid sekitar kantor"
         width={1200}
         height={800}
-        loading="lazy"
+        loading="eager"
+        fetchPriority="high"
         decoding="async"
         className="aspect-[3/2] w-full object-cover"
       />

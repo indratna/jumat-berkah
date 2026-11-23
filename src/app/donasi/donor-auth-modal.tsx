@@ -3,6 +3,8 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { useRouter } from "next/navigation";
+
 import { authClient } from "@/lib/auth-client";
 
 type AuthMode = "login" | "signup";
@@ -170,6 +172,11 @@ function DonorAuthModal({
           Akun bersifat opsional. Fungsinya menyimpan riwayat donasi; berdonasi
           tetap bisa tanpa login.
         </p>
+        <p role="status" aria-live="polite" className="sr-only">
+          {mode === "login"
+            ? "Form masuk akun dibuka"
+            : "Form pendaftaran dibuka"}
+        </p>
 
         {mode === "login" ? (
           <LoginPanel onSwitchToSignup={() => onModeChange("signup")} />
@@ -219,6 +226,10 @@ function LoginPanel({ onSwitchToSignup }: { onSwitchToSignup: () => void }) {
       return;
     }
 
+    // signIn.email already hard-navigates through Better Auth's redirect plugin.
+    // Removing the modal state here would require also dropping callbackURL,
+    // which is reused for email verification, so keep the explicit navigation.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = "/donasi";
   }
 
@@ -273,7 +284,7 @@ function LoginPanel({ onSwitchToSignup }: { onSwitchToSignup: () => void }) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="btn-primary w-full disabled:bg-slate-300"
+          className="btn-primary w-full disabled:bg-slate-200 disabled:text-slate-700"
         >
           {isSubmitting ? "Masuk…" : "Masuk"}
         </button>
@@ -293,6 +304,7 @@ function LoginPanel({ onSwitchToSignup }: { onSwitchToSignup: () => void }) {
 }
 
 function SignupPanel({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -348,7 +360,11 @@ function SignupPanel({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
       return;
     }
 
-    window.location.href = `/cek-email?email=${encodeURIComponent(trimmedEmail)}&next=${encodeURIComponent("/donasi")}`;
+    // No session exists until email verification, so replace() unmounts the
+    // portal cleanly and keeps the submitted form out of browser history.
+    router.replace(
+      `/cek-email?email=${encodeURIComponent(trimmedEmail)}&next=${encodeURIComponent("/donasi")}`,
+    );
   }
 
   return (
@@ -420,7 +436,7 @@ function SignupPanel({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="btn-primary w-full disabled:bg-slate-300"
+          className="btn-primary w-full disabled:bg-slate-200 disabled:text-slate-700"
         >
           {isSubmitting ? "Mendaftar…" : "Daftar akun donatur"}
         </button>

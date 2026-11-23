@@ -2,6 +2,8 @@
 
 import { FormEvent, useMemo, useState } from "react";
 
+import { useRouter } from "next/navigation";
+
 import { authClient } from "@/lib/auth-client";
 
 export function DonorSignupForm({
@@ -18,6 +20,7 @@ export function DonorSignupForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
   const checkEmailUrl = useMemo(
     () => `/cek-email?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`,
     [email, next],
@@ -72,7 +75,11 @@ export function DonorSignupForm({
       return;
     }
 
-    window.location.href = `/cek-email?email=${encodeURIComponent(trimmedEmail)}&next=${encodeURIComponent(next)}`;
+    // Email verification means no session was created, so a soft navigation is
+    // safe here and keeps the signup flow inside the app router.
+    router.push(
+      `/cek-email?email=${encodeURIComponent(trimmedEmail)}&next=${encodeURIComponent(next)}`,
+    );
   }
 
   return (
@@ -134,9 +141,17 @@ export function DonorSignupForm({
           />
         </div>
 
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {error ? (
+          <p role="alert" className="text-sm text-red-700">
+            {error}
+          </p>
+        ) : null}
 
-        <button type="submit" disabled={isSubmitting} className="btn-primary w-full disabled:bg-slate-300">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="btn-primary w-full disabled:bg-slate-200 disabled:text-slate-700"
+        >
           {isSubmitting ? "Mendaftar…" : "Daftar akun donatur"}
         </button>
       </form>

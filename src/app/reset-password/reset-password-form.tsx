@@ -82,16 +82,20 @@ export function ResetPasswordForm({ token }: { token: string }) {
       <button
         type="submit"
         disabled={status === "saving" || !token}
-        className="btn-primary w-full disabled:bg-slate-300"
+        className="btn-primary w-full disabled:bg-slate-200 disabled:text-slate-700"
       >
         {status === "saving" ? "Menyimpan..." : "Simpan password baru"}
       </button>
       {status === "success" ? (
-        <p className="text-sm font-semibold text-green-700">
+        <p role="status" className="text-sm font-semibold text-green-700">
           Password berhasil direset. Silakan masuk dengan password baru.
         </p>
       ) : null}
-      {error ? <p className="text-sm font-semibold text-rose-700">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="text-sm font-semibold text-rose-700">
+          {error}
+        </p>
+      ) : null}
     </form>
   );
 }

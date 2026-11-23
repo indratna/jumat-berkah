@@ -4,7 +4,7 @@ import { PasswordResetRequestForm } from "./password-reset-request-form";
 
 export default function ForgotPasswordPage() {
   return (
-    <main className="page-shell text-slate-900">
+    <main id="main-content" className="page-shell text-slate-900">
       <section className="mx-auto max-w-md rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
         <Link
           href="/login"

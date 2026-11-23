@@ -17,7 +17,10 @@ export default async function CheckEmailPage({ searchParams }: CheckEmailPagePro
   const loginHref = `/masuk?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`;
 
   return (
-    <main className="landing-craft landing-noise min-h-screen px-4 py-10 text-[color:var(--craft-ink)]">
+    <main
+      id="main-content"
+      className="landing-craft landing-noise min-h-screen px-4 py-10 text-[color:var(--craft-ink)]"
+    >
       <section className="craft-card-strong mx-auto max-w-xl p-8">
         <span className="craft-pill">Verifikasi email</span>
         <h1 className="mt-5 text-4xl font-extrabold">Cek email Anda</h1>

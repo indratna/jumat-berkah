@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 import { DonorSignupForm } from "./donor-signup-form";
@@ -21,7 +22,10 @@ export default async function DonorSignupPage({
   const next = sanitizeNext(readQuery(params.next) || "/akun/donasi");
 
   return (
-    <main className="landing-craft landing-noise min-h-screen px-4 py-10 text-[color:var(--craft-ink)]">
+    <main
+      id="main-content"
+      className="landing-craft landing-noise min-h-screen px-4 py-10 text-[color:var(--craft-ink)]"
+    >
       <section className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
         <div className="space-y-5">
           <Link
@@ -29,10 +33,13 @@ export default async function DonorSignupPage({
             className="inline-flex items-center gap-3 font-extrabold"
           >
             <span className="grid size-10 place-items-center overflow-hidden rounded-2xl ring-1 ring-[color:var(--craft-line-strong)]/40">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src="/branding/logo-mark.png"
                 alt="Logo Jumat Berkah"
+                width={40}
+                height={40}
+                sizes="40px"
+                priority
                 className="size-full object-cover"
               />
             </span>

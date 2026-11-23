@@ -36,6 +36,10 @@ export function AdminLoginForm() {
       return;
     }
 
+    // Better Auth's redirect plugin already hard-navigates via callbackURL.
+    // Keeping this explicit fallback avoids relying on router cache after the
+    // admin guard previously redirected to /login.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = "/admin";
   }
 
@@ -82,7 +86,7 @@ export function AdminLoginForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="btn-primary w-full shadow-sm transition hover:-translate-y-0.5 disabled:bg-slate-300 disabled:hover:translate-y-0"
+          className="btn-primary w-full shadow-sm transition hover:-translate-y-0.5 disabled:bg-slate-200 disabled:text-slate-700 disabled:hover:translate-y-0"
         >
           {isSubmitting ? "Masuk…" : "Masuk dengan Password"}
         </button>
